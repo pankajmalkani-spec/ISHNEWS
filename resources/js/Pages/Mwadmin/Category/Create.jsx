@@ -198,32 +198,56 @@ export default function CategoryCreate({ authUser = {} }) {
                         <div className="mwadmin-form-grid-full">
                             <label>Banner Image</label>
                             <div className="mwadmin-category-image-field">
-                                <div className="mwadmin-category-image-preview-wrap">
+                                <div
+                                    className="mwadmin-category-image-preview-wrap mwadmin-category-image-preview-wrap--clickable"
+                                    role="button"
+                                    tabIndex={0}
+                                    aria-label="Open banner image editor"
+                                    onClick={() => setBannerEditorOpen(true)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' || e.key === ' ') {
+                                            e.preventDefault();
+                                            setBannerEditorOpen(true);
+                                        }
+                                    }}
+                                >
                                     {bannerPreview ? (
                                         <img src={bannerPreview} alt="" className="mwadmin-category-image-preview" />
                                     ) : (
-                                        <div className="mwadmin-category-image-placeholder-card">NO IMAGE AVAILABLE</div>
+                                        <div className="mwadmin-category-image-placeholder-card">
+                                            NO IMAGE AVAILABLE
+                                            <span className="mwadmin-category-image-click-hint">Click to upload and edit</span>
+                                        </div>
                                     )}
                                 </div>
-                                <button type="button" className="mwadmin-upload-btn" onClick={() => setBannerEditorOpen(true)}>
-                                    Advanced editor…
-                                </button>
                             </div>
                         </div>
 
                         <div className="mwadmin-form-grid-full">
                             <label>Box Image</label>
                             <div className="mwadmin-category-image-field">
-                                <div className="mwadmin-category-image-preview-wrap mwadmin-category-image-preview-wrap--box">
+                                <div
+                                    className="mwadmin-category-image-preview-wrap mwadmin-category-image-preview-wrap--box mwadmin-category-image-preview-wrap--clickable"
+                                    role="button"
+                                    tabIndex={0}
+                                    aria-label="Open box image editor"
+                                    onClick={() => setBoxEditorOpen(true)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' || e.key === ' ') {
+                                            e.preventDefault();
+                                            setBoxEditorOpen(true);
+                                        }
+                                    }}
+                                >
                                     {boxPreview ? (
                                         <img src={boxPreview} alt="" className="mwadmin-category-image-preview" />
                                     ) : (
-                                        <div className="mwadmin-category-image-placeholder-card">NO IMAGE AVAILABLE</div>
+                                        <div className="mwadmin-category-image-placeholder-card">
+                                            NO IMAGE AVAILABLE
+                                            <span className="mwadmin-category-image-click-hint">Click to upload and edit</span>
+                                        </div>
                                     )}
                                 </div>
-                                <button type="button" className="mwadmin-upload-btn" onClick={() => setBoxEditorOpen(true)}>
-                                    Advanced editor…
-                                </button>
                             </div>
                         </div>
 
