@@ -33,8 +33,19 @@ export default function SponsorEdit({ authUser = {}, sponsorId }) {
                     axios.get(`/api/mwadmin/sponsors/${sponsorId}`),
                 ]);
                 if (c) return;
-                setCategories(catData.data || []);
+                const all = catData.data || [];
                 const r = rowData.data;
+                const cid = String(r.sponsorcategory_id ?? '');
+                const current = all.find((row) => String(row.id) === cid);
+                const activeOnly = all.filter((row) => Number(row.status) === 1);
+                let merged = activeOnly;
+                if (current && Number(current.status) !== 1) {
+                    merged = [
+                        { ...current, name: `${current.name} (inactive)` },
+                        ...activeOnly.filter((row) => String(row.id) !== cid),
+                    ];
+                }
+                setCategories(merged);
                 setForm({
                     sponsorcategory_id: String(r.sponsorcategory_id ?? ''),
                     organization_name: r.organization_name || '',

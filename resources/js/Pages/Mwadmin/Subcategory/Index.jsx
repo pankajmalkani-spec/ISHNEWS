@@ -1,6 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import axios from 'axios';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import MwadminLayout from '../../../Components/Mwadmin/Layout';
 import MwadminStatusBadge from '../../../Components/Mwadmin/MwadminStatusBadge';
@@ -14,9 +14,15 @@ export default function SubcategoryIndex({ authUser = {} }) {
     const [perPage, setPerPage] = useState(10);
     const [meta, setMeta] = useState({ current_page: 1, last_page: 1, total: 0 });
     const [columnFilters, setColumnFilters] = useState({ code: '', name: '', status: '' });
-    const query = useMemo(() => ({ search, page, per_page: perPage }), [search, page, perPage]);
+    const query = useMemo(
+        () =>
+            perPage === 'all'
+                ? { search, page: 1, per_page: 'all' }
+                : { search, page, per_page: perPage },
+        [search, page, perPage]
+    );
 
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         setLoading(true);
         try {
             const { data } = await axios.get('/api/mwadmin/subcategories', { params: query });
@@ -25,24 +31,30 @@ export default function SubcategoryIndex({ authUser = {} }) {
         } finally {
             setLoading(false);
         }
-    };
+    }, [query]);
 
     useEffect(() => {
         loadData();
-    }, [query]);
+    }, [loadData]);
 
-    const deleteRow = async (id) => {
-        if (!window.confirm('Delete this sub-category?')) return;
-        await axios.delete(`/api/mwadmin/subcategories/${id}`);
-        await loadData();
-    };
+    const deleteRow = useCallback(
+        async (id) => {
+            if (!window.confirm('Mark this sub-category as inactive? It will not be removed from the database.')) return;
+            await axios.delete(`/api/mwadmin/subcategories/${id}`);
+            await loadData();
+        },
+        [loadData]
+    );
 
-    const handleAction = async (id, action) => {
-        if (!action) return;
-        if (action === 'view') return window.location.assign(`/mwadmin/subcategory/${id}/view`);
-        if (action === 'edit') return window.location.assign(`/mwadmin/subcategory/${id}/edit`);
-        if (action === 'delete') await deleteRow(id);
-    };
+    const handleAction = useCallback(
+        async (id, action) => {
+            if (!action) return;
+            if (action === 'view') return window.location.assign(`/mwadmin/subcategory/${id}/view`);
+            if (action === 'edit') return window.location.assign(`/mwadmin/subcategory/${id}/edit`);
+            if (action === 'deactivate') await deleteRow(id);
+        },
+        [deleteRow]
+    );
 
     const filteredRows = useMemo(() => {
         return rows.filter((r) => {
@@ -76,7 +88,7 @@ export default function SubcategoryIndex({ authUser = {} }) {
                         <option value="">Actions</option>
                         <option value="view">View</option>
                         <option value="edit">Edit</option>
-                        <option value="delete">Delete</option>
+                        <option value="deactivate">Deactivate</option>
                     </select>
                 ),
             },
@@ -99,7 +111,14 @@ export default function SubcategoryIndex({ authUser = {} }) {
                 headerName: 'Banner Image',
                 minWidth: 140,
                 cellRenderer: (params) => {
-                    const src = params.value || '/images/categoryImages/bannerImages/no_img.gif';
+                    const src = params.value;
+                    if (!src) {
+                        return (
+                            <span style={{ color: '#94a3b8', fontSize: '12px' }} title="No image">
+                                —
+                            </span>
+                        );
+                    }
                     return <img src={src} style={{ maxWidth: '80px', maxHeight: '28px', objectFit: 'cover' }} alt="" />;
                 },
             },
@@ -108,7 +127,14 @@ export default function SubcategoryIndex({ authUser = {} }) {
                 headerName: 'Box Image',
                 minWidth: 120,
                 cellRenderer: (params) => {
-                    const src = params.value || '/images/categoryImages/boxImages/no_img.gif';
+                    const src = params.value;
+                    if (!src) {
+                        return (
+                            <span style={{ color: '#94a3b8', fontSize: '12px' }} title="No image">
+                                —
+                            </span>
+                        );
+                    }
                     return <img src={src} style={{ maxWidth: '80px', maxHeight: '28px', objectFit: 'cover' }} alt="" />;
                 },
             },
@@ -119,7 +145,7 @@ export default function SubcategoryIndex({ authUser = {} }) {
                 cellRenderer: (params) => <MwadminStatusBadge value={params.value} />,
             },
         ],
-        []
+        [handleAction]
     );
 
     return (
@@ -136,8 +162,19 @@ export default function SubcategoryIndex({ authUser = {} }) {
                         <div className="mwadmin-toolbar">
                             <div>
                                 Show
-                                <select className="mwadmin-select" value={perPage} onChange={(e) => { setPage(1); setPerPage(Number(e.target.value)); }}>
-                                    <option value={5}>5</option><option value={10}>10</option><option value={20}>20</option>
+                                <select
+                                    className="mwadmin-select"
+                                    value={perPage === 'all' ? 'all' : String(perPage)}
+                                    onChange={(e) => {
+                                        setPage(1);
+                                        const v = e.target.value;
+                                        setPerPage(v === 'all' ? 'all' : Number(v));
+                                    }}
+                                >
+                                    <option value={5}>5</option>
+                                    <option value={10}>10</option>
+                                    <option value={20}>20</option>
+                                    <option value="all">All</option>
                                 </select>
                             </div>
                             <div className="mwadmin-right-tools">
@@ -169,10 +206,26 @@ export default function SubcategoryIndex({ authUser = {} }) {
                             </MwadminThemedAgGrid>
                         </div>
                         <div className="mwadmin-pagination">
-                            <span>Showing page {meta.current_page} of {meta.last_page} ({meta.total} records)</span>
+                            <span>
+                                {perPage === 'all'
+                                    ? `Showing all ${meta.total} record${meta.total === 1 ? '' : 's'}`
+                                    : `Showing page ${meta.current_page} of ${meta.last_page} (${meta.total} records)`}
+                            </span>
                             <div>
-                                <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Prev</button>
-                                <button disabled={page >= meta.last_page} onClick={() => setPage((p) => p + 1)}>Next</button>
+                                <button
+                                    type="button"
+                                    disabled={perPage === 'all' || page <= 1}
+                                    onClick={() => setPage((p) => p - 1)}
+                                >
+                                    Prev
+                                </button>
+                                <button
+                                    type="button"
+                                    disabled={perPage === 'all' || page >= meta.last_page}
+                                    onClick={() => setPage((p) => p + 1)}
+                                >
+                                    Next
+                                </button>
                             </div>
                         </div>
                     </section>

@@ -68,6 +68,8 @@ class SponsorCategoryApiController extends Controller
             'status' => (int) $validated['status'],
             'addeddate' => now(),
             'addedby' => $userId,
+            'modifieddate' => now(),
+            'modifiedby' => $userId,
         ]);
 
         return response()->json(['message' => 'Sponsor Category created successfully.', 'data' => $row], 201);
@@ -92,6 +94,12 @@ class SponsorCategoryApiController extends Controller
         $row->name = $validated['name'];
         $row->note = $validated['note'] ?? '';
         $row->status = (int) $validated['status'];
+        if (!$row->addeddate) {
+            $row->addeddate = now();
+        }
+        if (!$row->addedby) {
+            $row->addedby = $userId;
+        }
         $row->modifieddate = now();
         $row->modifiedby = $userId;
         $row->save();
@@ -99,9 +107,30 @@ class SponsorCategoryApiController extends Controller
         return response()->json(['message' => 'Sponsor Category updated successfully.', 'data' => $row]);
     }
 
-    public function destroy(int $id): JsonResponse
+    public function destroy(Request $request, int $id): JsonResponse
     {
-        SponsorCategory::query()->findOrFail($id)->delete();
-        return response()->json(['message' => 'Sponsor Category deleted successfully.']);
+        $row = SponsorCategory::query()->findOrFail($id);
+        $userId = (int) data_get($request->session()->get('ishnews_session', []), 'user_id', 0);
+
+        if ((int) $row->status === 0) {
+            return response()->json([
+                'message' => 'Sponsor Category is already inactive.',
+            ]);
+        }
+
+        $row->status = 0;
+        if (!$row->addeddate) {
+            $row->addeddate = now();
+        }
+        if (!$row->addedby) {
+            $row->addedby = $userId;
+        }
+        $row->modifieddate = now();
+        $row->modifiedby = $userId;
+        $row->save();
+
+        return response()->json([
+            'message' => 'Sponsor Category has been marked as inactive.',
+        ]);
     }
 }

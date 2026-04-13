@@ -178,17 +178,30 @@ class CategoryApiController extends Controller
         ]);
     }
 
-    public function destroy(int $id): JsonResponse
+    public function destroy(Request $request, int $id): JsonResponse
     {
         $category = Category::query()->findOrFail($id);
+        $userId = (int) data_get($request->session()->get('ishnews_session', []), 'user_id', 0);
 
-        $this->deleteImageIfExists($category->banner_img, 'banner');
-        $this->deleteImageIfExists($category->box_img, 'box');
+        if ((int) $category->status === 0) {
+            return response()->json([
+                'message' => 'Category is already inactive.',
+            ]);
+        }
 
-        $category->delete();
+        $category->status = 0;
+        if (!$category->addeddate) {
+            $category->addeddate = now();
+        }
+        if (!$category->addedby) {
+            $category->addedby = $userId;
+        }
+        $category->modifieddate = now();
+        $category->modifiedby = $userId;
+        $category->save();
 
         return response()->json([
-            'message' => 'Category deleted successfully.',
+            'message' => 'Category has been marked as inactive.',
         ]);
     }
 

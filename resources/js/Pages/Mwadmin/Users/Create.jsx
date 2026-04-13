@@ -1,9 +1,22 @@
 import { Head, Link } from '@inertiajs/react';
 import axios from 'axios';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import MwadminImageEditorModal from '../../../Components/Mwadmin/MwadminImageEditorModal';
 import MwadminLayout from '../../../Components/Mwadmin/Layout';
+import MwadminStatusBadge from '../../../Components/Mwadmin/MwadminStatusBadge';
+import { useClassicDialog } from '../../../Components/Mwadmin/ClassicDialog';
+import {
+    PROFILE_EDITOR_OUT,
+    apiErrorsToFieldMap,
+    buildUserFieldErrors,
+    clearFieldError,
+    formatApiErrors,
+    MAX_PROFILE_BYTES,
+} from './userFormShared';
+import UserRolesPicker from './UserRolesPicker';
 
 export default function UsersCreate({ authUser = {} }) {
+    const dialog = useClassicDialog();
     const [options, setOptions] = useState({ designations: [], roles: [] });
     const [form, setForm] = useState({
         salutation: '',
@@ -15,37 +28,93 @@ export default function UsersCreate({ authUser = {} }) {
         p2d_intials: '',
         status: '1',
         password: '',
+        confirm_password: '',
         role_ids: [],
-        profile_img: null,
     });
-    const [error, setError] = useState('');
+    const [profileFile, setProfileFile] = useState(null);
+    const [profilePreview, setProfilePreview] = useState('');
+    const [profileEditorOpen, setProfileEditorOpen] = useState(false);
+    const [fieldErrors, setFieldErrors] = useState({});
     const [saving, setSaving] = useState(false);
+
+    const notify = useCallback(
+        (message, title = 'Validation') => dialog.alert(message, title),
+        [dialog]
+    );
 
     useEffect(() => {
         axios.get('/api/mwadmin/users/options').then(({ data }) => setOptions(data));
     }, []);
 
+    useEffect(() => {
+        return () => {
+            if (profilePreview.startsWith('blob:')) URL.revokeObjectURL(profilePreview);
+        };
+    }, [profilePreview]);
+
+    const setProfileFromFile = useCallback(
+        (file) => {
+            if (file.size > MAX_PROFILE_BYTES) {
+                setFieldErrors((prev) => ({
+                    ...prev,
+                    profile_img: `Profile photo must be ${MAX_PROFILE_BYTES / 1024 / 1024}MB or smaller.`,
+                }));
+                return;
+            }
+            clearFieldError(setFieldErrors, 'profile_img');
+            setProfileFile(file);
+            setProfilePreview((prev) => {
+                if (prev.startsWith('blob:')) URL.revokeObjectURL(prev);
+                return URL.createObjectURL(file);
+            });
+        },
+        []
+    );
+
     const onSubmit = async (e) => {
         e.preventDefault();
-        setError('');
+        setFieldErrors({});
+        const errs = buildUserFieldErrors(form, {
+            requirePassword: true,
+            confirmPassword: form.confirm_password,
+            profileFile,
+            requireRoles: true,
+        });
+        if (Object.keys(errs).length > 0) {
+            setFieldErrors(errs);
+            return;
+        }
+
         setSaving(true);
         try {
             const payload = new FormData();
             Object.entries(form).forEach(([k, v]) => {
+                if (k === 'confirm_password') return;
                 if (k === 'role_ids') {
                     v.forEach((roleId) => payload.append('role_ids[]', roleId));
                     return;
                 }
                 if (v !== null && v !== '') payload.append(k, v);
             });
+            payload.append('password_confirmation', form.confirm_password);
+            if (profileFile) payload.append('profile_img', profileFile);
+
             await axios.post('/api/mwadmin/users', payload, { headers: { 'Content-Type': 'multipart/form-data' } });
+            await dialog.alertTimed('User created successfully.', 'Success', 2000);
             window.location.assign('/mwadmin/users');
         } catch (err) {
-            setError(err?.response?.data?.message || 'Unable to create user.');
+            const apiMap = apiErrorsToFieldMap(err);
+            if (Object.keys(apiMap).length > 0) {
+                setFieldErrors(apiMap);
+            } else {
+                await dialog.alert(formatApiErrors(err), 'Validation');
+            }
         } finally {
             setSaving(false);
         }
     };
+
+    const roleOptions = options.roles || [];
 
     return (
         <>
@@ -55,55 +124,206 @@ export default function UsersCreate({ authUser = {} }) {
                     <div className="mwadmin-pagebar">
                         <span>Administrator</span> <span className="sep">›</span> <span>Users</span>{' '}
                         <span className="sep">›</span> <strong>Create User</strong>
-                        <Link href="/mwadmin/users" className="mwadmin-back-btn">Back</Link>
+                        <Link href="/mwadmin/users" className="mwadmin-back-btn">
+                            Back
+                        </Link>
                     </div>
                     <h1 className="mwadmin-title">Create User</h1>
                     <section className="mwadmin-panel mwadmin-form-panel">
-                        {error && <div className="mwadmin-error">{error}</div>}
-                        <form onSubmit={onSubmit} className="mwadmin-form-grid">
-                            <div><label>Salutation</label><input value={form.salutation} onChange={(e) => setForm((f) => ({ ...f, salutation: e.target.value }))} /></div>
-                            <div><label>First Name *</label><input value={form.first_name} onChange={(e) => setForm((f) => ({ ...f, first_name: e.target.value }))} /></div>
-                            <div><label>Last Name *</label><input value={form.last_name} onChange={(e) => setForm((f) => ({ ...f, last_name: e.target.value }))} /></div>
-                            <div><label>User Name *</label><input value={form.username} onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))} /></div>
-                            <div><label>Email *</label><input value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} /></div>
+                        <form onSubmit={onSubmit} className="mwadmin-form-grid" noValidate>
+                            <div>
+                                <label>Salutation</label>
+                                <input
+                                    value={form.salutation}
+                                    onChange={(e) => {
+                                        clearFieldError(setFieldErrors, 'salutation');
+                                        setForm((f) => ({ ...f, salutation: e.target.value }));
+                                    }}
+                                />
+                                {fieldErrors.salutation && <div className="mwadmin-field-error">{fieldErrors.salutation}</div>}
+                            </div>
+                            <div>
+                                <label>First Name *</label>
+                                <input
+                                    value={form.first_name}
+                                    onChange={(e) => {
+                                        clearFieldError(setFieldErrors, 'first_name');
+                                        setForm((f) => ({ ...f, first_name: e.target.value }));
+                                    }}
+                                />
+                                {fieldErrors.first_name && <div className="mwadmin-field-error">{fieldErrors.first_name}</div>}
+                            </div>
+                            <div>
+                                <label>Last Name *</label>
+                                <input
+                                    value={form.last_name}
+                                    onChange={(e) => {
+                                        clearFieldError(setFieldErrors, 'last_name');
+                                        setForm((f) => ({ ...f, last_name: e.target.value }));
+                                    }}
+                                />
+                                {fieldErrors.last_name && <div className="mwadmin-field-error">{fieldErrors.last_name}</div>}
+                            </div>
+                            <div>
+                                <label>User Name *</label>
+                                <input
+                                    value={form.username}
+                                    onChange={(e) => {
+                                        clearFieldError(setFieldErrors, 'username');
+                                        setForm((f) => ({ ...f, username: e.target.value }));
+                                    }}
+                                />
+                                {fieldErrors.username && <div className="mwadmin-field-error">{fieldErrors.username}</div>}
+                            </div>
+                            <div>
+                                <label>Email *</label>
+                                <input
+                                    type="email"
+                                    value={form.email}
+                                    onChange={(e) => {
+                                        clearFieldError(setFieldErrors, 'email');
+                                        setForm((f) => ({ ...f, email: e.target.value }));
+                                    }}
+                                />
+                                {fieldErrors.email && <div className="mwadmin-field-error">{fieldErrors.email}</div>}
+                            </div>
                             <div>
                                 <label>Designation</label>
-                                <select value={form.designation} onChange={(e) => setForm((f) => ({ ...f, designation: e.target.value }))}>
+                                <select
+                                    value={form.designation}
+                                    onChange={(e) => {
+                                        clearFieldError(setFieldErrors, 'designation');
+                                        setForm((f) => ({ ...f, designation: e.target.value }));
+                                    }}
+                                >
                                     <option value="">Select</option>
-                                    {options.designations.map((d) => <option key={d.id} value={d.id}>{d.designation}</option>)}
-                                </select>
-                            </div>
-                            <div><label>P2D Initials</label><input value={form.p2d_intials} onChange={(e) => setForm((f) => ({ ...f, p2d_intials: e.target.value.toUpperCase() }))} /></div>
-                            <div><label>Password *</label><input type="password" value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} /></div>
-                            <div><label>Status</label><select value={form.status} onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))}><option value="1">Active</option><option value="0">In-Active</option></select></div>
-                            <div>
-                                <label>Profile Photo</label>
-                                <input type="file" accept="image/*" onChange={(e) => setForm((f) => ({ ...f, profile_img: e.target.files?.[0] || null }))} />
-                            </div>
-                            <div style={{ gridColumn: '1 / -1' }}>
-                                <label>Roles</label>
-                                <div className="mwadmin-role-list">
-                                    {options.roles.map((r) => (
-                                        <label key={r.arid}>
-                                            <input
-                                                type="checkbox"
-                                                checked={form.role_ids.includes(String(r.arid))}
-                                                onChange={(e) => setForm((f) => ({
-                                                    ...f,
-                                                    role_ids: e.target.checked
-                                                        ? [...f.role_ids, String(r.arid)]
-                                                        : f.role_ids.filter((x) => x !== String(r.arid)),
-                                                }))}
-                                            />
-                                            {r.rolename}
-                                        </label>
+                                    {options.designations.map((d) => (
+                                        <option key={d.id} value={d.id}>
+                                            {d.designation}
+                                        </option>
                                     ))}
-                                </div>
+                                </select>
+                                {fieldErrors.designation && <div className="mwadmin-field-error">{fieldErrors.designation}</div>}
                             </div>
-                            <div className="mwadmin-form-actions"><button type="submit" disabled={saving}>{saving ? 'Saving...' : 'Submit'}</button><Link href="/mwadmin/users">Cancel</Link></div>
+                            <div>
+                                <label>P2D Initials</label>
+                                <input
+                                    value={form.p2d_intials}
+                                    onChange={(e) => {
+                                        clearFieldError(setFieldErrors, 'p2d_intials');
+                                        setForm((f) => ({ ...f, p2d_intials: e.target.value.toUpperCase() }));
+                                    }}
+                                />
+                                {fieldErrors.p2d_intials && <div className="mwadmin-field-error">{fieldErrors.p2d_intials}</div>}
+                            </div>
+                            <div>
+                                <label>Password *</label>
+                                <input
+                                    type="password"
+                                    autoComplete="new-password"
+                                    value={form.password}
+                                    onChange={(e) => {
+                                        clearFieldError(setFieldErrors, 'password');
+                                        clearFieldError(setFieldErrors, 'confirm_password');
+                                        setForm((f) => ({ ...f, password: e.target.value }));
+                                    }}
+                                />
+                                {fieldErrors.password && <div className="mwadmin-field-error">{fieldErrors.password}</div>}
+                            </div>
+                            <div>
+                                <label>Confirm Password *</label>
+                                <input
+                                    type="password"
+                                    autoComplete="new-password"
+                                    value={form.confirm_password}
+                                    onChange={(e) => {
+                                        clearFieldError(setFieldErrors, 'confirm_password');
+                                        setForm((f) => ({ ...f, confirm_password: e.target.value }));
+                                    }}
+                                />
+                                {fieldErrors.confirm_password && (
+                                    <div className="mwadmin-field-error">{fieldErrors.confirm_password}</div>
+                                )}
+                            </div>
+                            <div>
+                                <label>Status</label>
+                                <div className="mwadmin-category-status-row">
+                                    <select
+                                        value={form.status}
+                                        onChange={(e) => {
+                                            clearFieldError(setFieldErrors, 'status');
+                                            setForm((f) => ({ ...f, status: e.target.value }));
+                                        }}
+                                    >
+                                        <option value="1">Active</option>
+                                        <option value="0">In-Active</option>
+                                    </select>
+                                    <MwadminStatusBadge value={form.status === '1' ? 1 : 0} />
+                                </div>
+                                {fieldErrors.status && <div className="mwadmin-field-error">{fieldErrors.status}</div>}
+                            </div>
+
+                            <div className="mwadmin-form-grid-full mwadmin-user-profile-photo-row">
+                                <label>Profile Photo</label>
+                                <div className="mwadmin-category-image-field">
+                                    <div
+                                        className="mwadmin-category-image-preview-wrap mwadmin-category-image-preview-wrap--box mwadmin-category-image-preview-wrap--clickable mwadmin-user-profile-preview"
+                                        role="button"
+                                        tabIndex={0}
+                                        aria-label="Open profile photo editor"
+                                        onClick={() => setProfileEditorOpen(true)}
+                                        onKeyDown={(ev) => {
+                                            if (ev.key === 'Enter' || ev.key === ' ') {
+                                                ev.preventDefault();
+                                                setProfileEditorOpen(true);
+                                            }
+                                        }}
+                                    >
+                                        {profilePreview ? (
+                                            <img src={profilePreview} alt="" className="mwadmin-category-image-preview" />
+                                        ) : (
+                                            <div className="mwadmin-category-image-placeholder-card">
+                                                NO IMAGE
+                                                <span className="mwadmin-category-image-click-hint">Click to upload and edit</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                                {fieldErrors.profile_img && <div className="mwadmin-field-error">{fieldErrors.profile_img}</div>}
+                            </div>
+
+                            <div className="mwadmin-form-grid-full">
+                                <label>
+                                    Role <span className="mwadmin-required">*</span>
+                                </label>
+                                <UserRolesPicker
+                                    roleOptions={roleOptions}
+                                    roleIds={form.role_ids}
+                                    onRoleIdsChange={(ids) => setForm((f) => ({ ...f, role_ids: ids }))}
+                                    fieldError={fieldErrors.role_ids}
+                                    onClearError={() => clearFieldError(setFieldErrors, 'role_ids')}
+                                />
+                            </div>
+
+                            <div className="mwadmin-form-actions">
+                                <button type="submit" disabled={saving}>
+                                    {saving ? 'Saving...' : 'Submit'}
+                                </button>
+                                <Link href="/mwadmin/users">Cancel</Link>
+                            </div>
                         </form>
                     </section>
                 </div>
+
+                <MwadminImageEditorModal
+                    open={profileEditorOpen}
+                    onClose={() => setProfileEditorOpen(false)}
+                    title="Profile Photo"
+                    outputWidth={PROFILE_EDITOR_OUT.w}
+                    outputHeight={PROFILE_EDITOR_OUT.h}
+                    notify={notify}
+                    onApply={(file) => setProfileFromFile(file)}
+                />
             </MwadminLayout>
         </>
     );

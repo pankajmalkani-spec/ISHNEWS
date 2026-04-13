@@ -1,22 +1,42 @@
 import { Head, Link } from '@inertiajs/react';
 import axios from 'axios';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import MwadminLayout from '../../../Components/Mwadmin/Layout';
 import MwadminStatusBadge from '../../../Components/Mwadmin/MwadminStatusBadge';
 import MwadminThemedAgGrid from '../../../Components/Mwadmin/MwadminThemedAgGrid';
+import { useClassicDialog } from '../../../Components/Mwadmin/ClassicDialog';
+
+function formatApiErrors(err) {
+    const d = err?.response?.data;
+    if (d?.errors && typeof d.errors === 'object') {
+        const lines = Object.entries(d.errors).flatMap(([key, val]) => {
+            const msgs = Array.isArray(val) ? val : [String(val)];
+            return msgs.map((m) => `${key}: ${m}`);
+        });
+        return lines.join('\n');
+    }
+    if (typeof d?.message === 'string') return d.message;
+    return err?.message || 'Request failed.';
+}
 
 export default function UsersIndex({ authUser = {} }) {
+    const dialog = useClassicDialog();
     const [rows, setRows] = useState([]);
     const [loading, setLoading] = useState(false);
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
-    const [perPage, setPerPage] = useState('10');
+    const [perPage, setPerPage] = useState(10);
     const [meta, setMeta] = useState({ current_page: 1, last_page: 1, total: 0 });
 
-    const query = useMemo(() => ({ search, page, per_page: perPage }), [search, page, perPage]);
+    const query = useMemo(() => {
+        if (perPage === 'all') {
+            return { search, page: 1, per_page: 'all' };
+        }
+        return { search, page, per_page: perPage };
+    }, [search, page, perPage]);
 
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         setLoading(true);
         try {
             const { data } = await axios.get('/api/mwadmin/users', { params: query });
@@ -25,32 +45,60 @@ export default function UsersIndex({ authUser = {} }) {
         } finally {
             setLoading(false);
         }
-    };
+    }, [query]);
 
     useEffect(() => {
         loadData();
-    }, [query]);
+    }, [loadData]);
 
-    const deleteRow = async (id) => {
-        if (!window.confirm('Delete this user?')) return;
-        await axios.delete(`/api/mwadmin/users/${id}`);
-        await loadData();
-    };
+    const deactivateRow = useCallback(
+        async (id) => {
+            const ok = await dialog.confirm(
+                'Mark this user as inactive? The account will stay in the database and can be reactivated from Edit.',
+                'Please Confirm'
+            );
+            if (!ok) return;
+            try {
+                await axios.delete(`/api/mwadmin/users/${id}`);
+                await loadData();
+            } catch (err) {
+                await dialog.alert(formatApiErrors(err), 'Unable to deactivate');
+            }
+        },
+        [dialog, loadData]
+    );
 
-    const resetPassword = async (id) => {
-        const next = window.prompt('Enter new password');
-        if (!next) return;
-        await axios.post(`/api/mwadmin/users/${id}/reset-password`, { new_password: next });
-        window.alert('Password reset successfully.');
-    };
+    const resetPassword = useCallback(
+        async (id) => {
+            const next = await dialog.prompt('Enter new password (min 4 characters).', 'Reset Password', '');
+            if (next == null) return;
+            const trimmed = String(next).trim();
+            if (trimmed.length < 4) {
+                await dialog.alert('Password must be at least 4 characters.', 'Validation');
+                return;
+            }
+            try {
+                await axios.post(`/api/mwadmin/users/${id}/reset-password`, { new_password: trimmed });
+                await dialog.alertTimed('Password changed successfully.', 'Success', 2000);
+            } catch (err) {
+                await dialog.alert(formatApiErrors(err), 'Unable to reset password');
+            }
+        },
+        [dialog]
+    );
 
-    const handleAction = async (id, action) => {
-        if (!action) return;
-        if (action === 'view') return window.location.assign(`/mwadmin/users/${id}/view`);
-        if (action === 'edit') return window.location.assign(`/mwadmin/users/${id}/edit`);
-        if (action === 'resetpwd') return resetPassword(id);
-        if (action === 'delete') await deleteRow(id);
-    };
+    const handleAction = useCallback(
+        async (id, action) => {
+            if (!action) return;
+            if (action === 'view') return window.location.assign(`/mwadmin/users/${id}/view`);
+            if (action === 'edit') return window.location.assign(`/mwadmin/users/${id}/edit`);
+            if (action === 'resetpwd') return resetPassword(id);
+            if (action === 'deactivate') await deactivateRow(id);
+        },
+        [deactivateRow, resetPassword]
+    );
+
+    const selfUserId = authUser?.user_id ?? 0;
 
     const columns = useMemo(
         () => [
@@ -60,30 +108,34 @@ export default function UsersIndex({ authUser = {} }) {
                 headerName: 'Actions',
                 width: 130,
                 minWidth: 120,
-                maxWidth: 140,
+                maxWidth: 150,
                 sortable: false,
                 filter: false,
-                cellRenderer: (params) => (
-                    <select
-                        className="mwadmin-grid-action"
-                        defaultValue=""
-                        onChange={(e) => {
-                            const selectedAction = e.target.value;
-                            e.target.value = '';
-                            if (selectedAction) handleAction(params.data.userid, selectedAction);
-                        }}
-                    >
-                        <option value="">Actions</option>
-                        <option value="view">View</option>
-                        <option value="edit">Edit</option>
-                        <option value="resetpwd">Reset Password</option>
-                        <option value="delete">Delete</option>
-                    </select>
-                ),
+                cellRenderer: (params) => {
+                    const uid = params.data.userid;
+                    const isSelf = selfUserId > 0 && uid === selfUserId;
+                    return (
+                        <select
+                            className="mwadmin-grid-action"
+                            defaultValue=""
+                            onChange={(e) => {
+                                const selectedAction = e.target.value;
+                                e.target.value = '';
+                                if (selectedAction) handleAction(uid, selectedAction);
+                            }}
+                        >
+                            <option value="">Actions</option>
+                            <option value="view">View</option>
+                            <option value="edit">Edit</option>
+                            <option value="resetpwd">Reset Password</option>
+                            {!isSelf && <option value="deactivate">Deactivate</option>}
+                        </select>
+                    );
+                },
             },
             { field: 'name', headerName: 'Name', minWidth: 170, flex: 1 },
-            { field: 'username', headerName: 'User-Name', minWidth: 130 },
-            { field: 'designation', headerName: 'Designation', minWidth: 140 },
+            { field: 'username', headerName: 'User-Name', minWidth: 130, flex: 0.8 },
+            { field: 'designation', headerName: 'Designation', minWidth: 140, flex: 0.9 },
             { field: 'email', headerName: 'Email ID', minWidth: 180, flex: 1.2 },
             { field: 'p2d_intials', headerName: 'P2D Initials', minWidth: 100 },
             {
@@ -98,11 +150,11 @@ export default function UsersIndex({ authUser = {} }) {
             {
                 field: 'status',
                 headerName: 'Status',
-                minWidth: 100,
+                minWidth: 110,
                 cellRenderer: (p) => <MwadminStatusBadge value={p.value} />,
             },
         ],
-        []
+        [handleAction, selfUserId]
     );
 
     return (
@@ -115,18 +167,39 @@ export default function UsersIndex({ authUser = {} }) {
                         <span className="sep">›</span> <strong>Users Listing</strong>
                     </div>
                     <h1 className="mwadmin-title">Manage Users</h1>
-                    <section className="mwadmin-panel">
+                    <section className="mwadmin-panel mwadmin-users-grid-panel">
                         <div className="mwadmin-toolbar">
                             <div>
                                 Show
-                                <select className="mwadmin-select" value={perPage} onChange={(e) => { setPage(1); setPerPage(e.target.value); }}>
-                                    <option value={5}>5</option><option value={10}>10</option><option value={20}>20</option><option value="all">All</option>
+                                <select
+                                    className="mwadmin-select"
+                                    value={perPage === 'all' ? 'all' : String(perPage)}
+                                    onChange={(e) => {
+                                        setPage(1);
+                                        const v = e.target.value;
+                                        setPerPage(v === 'all' ? 'all' : Number(v));
+                                    }}
+                                >
+                                    <option value={5}>5</option>
+                                    <option value={10}>10</option>
+                                    <option value={20}>20</option>
+                                    <option value="all">All</option>
                                 </select>
                             </div>
                             <div className="mwadmin-right-tools">
-                                <Link className="mwadmin-add-btn" href="/mwadmin/users/create">+ Add New User</Link>
-                                <div className="mwadmin-search">Search:
-                                    <input type="text" value={search} onChange={(e) => { setPage(1); setSearch(e.target.value); }} />
+                                <Link className="mwadmin-add-btn" href="/mwadmin/users/create">
+                                    + Add New User
+                                </Link>
+                                <div className="mwadmin-search">
+                                    Search:
+                                    <input
+                                        type="text"
+                                        value={search}
+                                        onChange={(e) => {
+                                            setPage(1);
+                                            setSearch(e.target.value);
+                                        }}
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -144,10 +217,26 @@ export default function UsersIndex({ authUser = {} }) {
                             </MwadminThemedAgGrid>
                         </div>
                         <div className="mwadmin-pagination">
-                            <span>Showing page {meta.current_page} of {meta.last_page} ({meta.total} records)</span>
+                            <span>
+                                {perPage === 'all'
+                                    ? `Showing all ${meta.total} record${meta.total === 1 ? '' : 's'}`
+                                    : `Showing page ${meta.current_page} of ${meta.last_page} (${meta.total} records)`}
+                            </span>
                             <div>
-                                <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Prev</button>
-                                <button disabled={page >= meta.last_page} onClick={() => setPage((p) => p + 1)}>Next</button>
+                                <button
+                                    type="button"
+                                    disabled={perPage === 'all' || page <= 1}
+                                    onClick={() => setPage((p) => p - 1)}
+                                >
+                                    Prev
+                                </button>
+                                <button
+                                    type="button"
+                                    disabled={perPage === 'all' || page >= meta.last_page}
+                                    onClick={() => setPage((p) => p + 1)}
+                                >
+                                    Next
+                                </button>
                             </div>
                         </div>
                     </section>

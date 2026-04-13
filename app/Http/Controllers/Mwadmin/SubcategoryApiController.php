@@ -44,7 +44,9 @@ class SubcategoryApiController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $perPage = max(1, min((int) $request->query('per_page', 10), 100));
+        $perPageRaw = $request->query('per_page', '10');
+        $showAll = is_string($perPageRaw) && strtolower(trim((string) $perPageRaw)) === 'all';
+        $perPage = $showAll ? null : max(1, min((int) $perPageRaw, 100));
         $search = trim((string) $request->query('search', ''));
         $sortBy = (string) $request->query('sort_by', 'id');
         $sortDir = strtolower((string) $request->query('sort_dir', 'desc')) === 'asc' ? 'asc' : 'desc';
@@ -67,7 +69,24 @@ class SubcategoryApiController extends Controller
         }
 
         $query->orderBy($sortBy === 'category_title' ? 'c.title' : "s.{$sortBy}", $sortDir);
-        $paginator = $query->paginate($perPage)->withQueryString();
+
+        if ($showAll) {
+            $items = $query->get();
+            $total = $items->count();
+            $collection = $items->map(fn ($item) => $this->transformListItem((array) $item))->values();
+
+            return response()->json([
+                'data' => $collection,
+                'meta' => [
+                    'current_page' => 1,
+                    'per_page' => $total,
+                    'total' => $total,
+                    'last_page' => 1,
+                ],
+            ]);
+        }
+
+        $paginator = $query->paginate((int) $perPage)->withQueryString();
         $collection = collect($paginator->items())->map(fn ($item) => $this->transformListItem((array) $item))->values();
 
         return response()->json([
@@ -85,7 +104,7 @@ class SubcategoryApiController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:250', 'regex:/^[a-zA-Z_.\s-]+$/'],
-            'category_id' => ['required', 'integer', 'exists:categorymst,id'],
+            'category_id' => ['required', 'integer', Rule::exists('categorymst', 'id')->where('status', 1)],
             'subcat_code' => ['required', 'string', 'max:25', 'unique:subcategorymst,subcat_code'],
             'color' => ['required', 'string', 'max:20'],
             'sort' => ['required', 'integer', 'unique:subcategorymst,sort'],
@@ -154,6 +173,12 @@ class SubcategoryApiController extends Controller
         $subcategory->color = $validated['color'];
         $subcategory->sort = (int) $validated['sort'];
         $subcategory->status = (int) $validated['status'];
+        if (!$subcategory->addeddate) {
+            $subcategory->addeddate = now();
+        }
+        if (!$subcategory->addedby) {
+            $subcategory->addedby = $userId;
+        }
         $subcategory->modifieddate = now();
         $subcategory->modifiedby = $userId;
         $subcategory->save();
@@ -164,14 +189,31 @@ class SubcategoryApiController extends Controller
         ]);
     }
 
-    public function destroy(int $id): JsonResponse
+    public function destroy(Request $request, int $id): JsonResponse
     {
         $subcategory = Subcategory::query()->findOrFail($id);
-        $this->deleteImageIfExists($subcategory->banner_img, 'banner');
-        $this->deleteImageIfExists($subcategory->box_img, 'box');
-        $subcategory->delete();
+        $userId = (int) data_get($request->session()->get('ishnews_session', []), 'user_id', 0);
 
-        return response()->json(['message' => 'Sub-Category deleted successfully.']);
+        if ((int) $subcategory->status === 0) {
+            return response()->json([
+                'message' => 'Sub-Category is already inactive.',
+            ]);
+        }
+
+        $subcategory->status = 0;
+        if (!$subcategory->addeddate) {
+            $subcategory->addeddate = now();
+        }
+        if (!$subcategory->addedby) {
+            $subcategory->addedby = $userId;
+        }
+        $subcategory->modifieddate = now();
+        $subcategory->modifiedby = $userId;
+        $subcategory->save();
+
+        return response()->json([
+            'message' => 'Sub-Category has been marked as inactive.',
+        ]);
     }
 
     private function storeImage($file, string $type): string
@@ -196,6 +238,18 @@ class SubcategoryApiController extends Controller
         }
     }
 
+    /** Root-relative URL so thumbnails work when APP_URL does not match the browser host/port. */
+    private function subcategoryImagePublicUrl(?string $filename, string $type): ?string
+    {
+        $filename = $filename !== null ? trim((string) $filename) : '';
+        if ($filename === '') {
+            return null;
+        }
+        $folder = $type === 'banner' ? 'bannerImages' : 'boxImages';
+
+        return '/images/subcategoryImages/'.$folder.'/'.$filename;
+    }
+
     private function transformRecord(Subcategory $subcategory): array
     {
         $categoryTitle = DB::table('categorymst')->where('id', $subcategory->category_id)->value('title');
@@ -210,8 +264,8 @@ class SubcategoryApiController extends Controller
             'status' => (int) $subcategory->status,
             'banner_img' => $subcategory->banner_img,
             'box_img' => $subcategory->box_img,
-            'banner_img_url' => $subcategory->banner_img ? url('images/subcategoryImages/bannerImages/'.$subcategory->banner_img) : null,
-            'box_img_url' => $subcategory->box_img ? url('images/subcategoryImages/boxImages/'.$subcategory->box_img) : null,
+            'banner_img_url' => $this->subcategoryImagePublicUrl($subcategory->banner_img, 'banner'),
+            'box_img_url' => $this->subcategoryImagePublicUrl($subcategory->box_img, 'box'),
         ];
     }
 
@@ -228,8 +282,8 @@ class SubcategoryApiController extends Controller
             'status' => (int) $item['status'],
             'banner_img' => $item['banner_img'],
             'box_img' => $item['box_img'],
-            'banner_img_url' => $item['banner_img'] ? url('images/subcategoryImages/bannerImages/'.$item['banner_img']) : null,
-            'box_img_url' => $item['box_img'] ? url('images/subcategoryImages/boxImages/'.$item['box_img']) : null,
+            'banner_img_url' => $this->subcategoryImagePublicUrl($item['banner_img'] ?? null, 'banner'),
+            'box_img_url' => $this->subcategoryImagePublicUrl($item['box_img'] ?? null, 'box'),
         ];
     }
 }

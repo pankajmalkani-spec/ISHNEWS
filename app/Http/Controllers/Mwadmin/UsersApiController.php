@@ -21,9 +21,9 @@ class UsersApiController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $perPageParam = (string) $request->query('per_page', '10');
-        $allRows = strtolower($perPageParam) === 'all';
-        $perPage = $allRows ? 100000 : max(1, min((int) $perPageParam, 100));
+        $perPageRaw = $request->query('per_page', '10');
+        $showAll = is_string($perPageRaw) && strtolower(trim((string) $perPageRaw)) === 'all';
+        $perPage = $showAll ? null : max(1, min((int) $perPageRaw, 100));
         $search = trim((string) $request->query('search', ''));
 
         $query = DB::table('users as u')
@@ -40,7 +40,36 @@ class UsersApiController extends Controller
             });
         }
 
-        $paginator = $query->orderByDesc('u.userid')->paginate($perPage)->withQueryString();
+        $query->orderByDesc('u.userid');
+
+        if ($showAll) {
+            $items = $query->get();
+            $total = $items->count();
+            $rows = $items->map(function ($row) {
+                return [
+                    'userid' => (int) $row->userid,
+                    'name' => trim(($row->salutation ? "{$row->salutation} " : '').($row->first_name ?? '').' '.($row->last_name ?? '')),
+                    'username' => $row->username,
+                    'designation' => $row->designation ?? '',
+                    'email' => $row->email,
+                    'p2d_intials' => $row->p2d_intials,
+                    'profile_photo_url' => $row->profile_photo ? '/images/UserProfile_photo/'.$row->profile_photo : null,
+                    'status' => (int) $row->status,
+                ];
+            })->values();
+
+            return response()->json([
+                'data' => $rows,
+                'meta' => [
+                    'current_page' => 1,
+                    'per_page' => $total,
+                    'total' => $total,
+                    'last_page' => 1,
+                ],
+            ]);
+        }
+
+        $paginator = $query->paginate((int) $perPage)->withQueryString();
         $rows = collect($paginator->items())->map(function ($row) {
             return [
                 'userid' => (int) $row->userid,
@@ -49,7 +78,7 @@ class UsersApiController extends Controller
                 'designation' => $row->designation ?? '',
                 'email' => $row->email,
                 'p2d_intials' => $row->p2d_intials,
-                'profile_photo_url' => $row->profile_photo ? url('images/UserProfile_photo/'.$row->profile_photo) : null,
+                'profile_photo_url' => $row->profile_photo ? '/images/UserProfile_photo/'.$row->profile_photo : null,
                 'status' => (int) $row->status,
             ];
         })->values();
@@ -76,8 +105,8 @@ class UsersApiController extends Controller
             'designation' => ['nullable', 'integer'],
             'p2d_intials' => ['nullable', 'string', 'max:20'],
             'status' => ['required', 'in:0,1'],
-            'password' => ['required', 'string', 'min:4', 'max:50'],
-            'role_ids' => ['nullable', 'array'],
+            'password' => ['required', 'string', 'min:4', 'max:50', 'confirmed'],
+            'role_ids' => ['required', 'array', 'min:1'],
             'role_ids.*' => ['integer'],
             'profile_img' => ['nullable', 'image', 'mimes:jpg,jpeg,png,gif,webp', 'max:5120'],
         ]);
@@ -95,6 +124,7 @@ class UsersApiController extends Controller
             'p2d_intials' => strtoupper((string) ($validated['p2d_intials'] ?? '')),
             'profile_photo' => $profilePhoto,
             'email' => $validated['email'],
+            'contactno' => '',
             'status' => (int) $validated['status'],
             'addeddate' => now(),
             'addedby' => $userId,
@@ -102,7 +132,7 @@ class UsersApiController extends Controller
             'modifiedby' => $userId,
         ]);
 
-        $this->syncRoles($newId, $validated['role_ids'] ?? []);
+        $this->syncRoles($newId, $validated['role_ids']);
         return response()->json(['message' => 'User created successfully.'], 201);
     }
 
@@ -110,7 +140,7 @@ class UsersApiController extends Controller
     {
         $user = DB::table('users')->where('userid', $id)->first();
         abort_if(!$user, 404);
-        $roles = DB::table('usersrole')->where('userid', $id)->pluck('roleid')->map(fn ($v) => (int) $v)->values();
+        $roles = DB::table('usersrole')->where('userid', $id)->pluck('roleid')->map(fn ($v) => (int) $v)->values()->all();
 
         return response()->json([
             'data' => [
@@ -123,8 +153,9 @@ class UsersApiController extends Controller
                 'p2d_intials' => $user->p2d_intials ?? '',
                 'email' => $user->email ?? '',
                 'status' => (int) ($user->status ?? 0),
-                'profile_photo_url' => $user->profile_photo ? url('images/UserProfile_photo/'.$user->profile_photo) : null,
+                'profile_photo_url' => $user->profile_photo ? '/images/UserProfile_photo/'.$user->profile_photo : null,
                 'role_ids' => $roles,
+                'role_options' => $this->roleOptionsForForm($roles),
             ],
         ]);
     }
@@ -143,7 +174,7 @@ class UsersApiController extends Controller
             'designation' => ['nullable', 'integer'],
             'p2d_intials' => ['nullable', 'string', 'max:20'],
             'status' => ['required', 'in:0,1'],
-            'role_ids' => ['nullable', 'array'],
+            'role_ids' => ['required', 'array', 'min:1'],
             'role_ids.*' => ['integer'],
             'profile_img' => ['nullable', 'image', 'mimes:jpg,jpeg,png,gif,webp', 'max:5120'],
         ]);
@@ -161,6 +192,12 @@ class UsersApiController extends Controller
             'modifieddate' => now(),
             'modifiedby' => $userId,
         ];
+        if (empty($user->addeddate)) {
+            $update['addeddate'] = now();
+        }
+        if (empty($user->addedby)) {
+            $update['addedby'] = $userId;
+        }
 
         if ($request->hasFile('profile_img')) {
             if (!empty($user->profile_photo)) {
@@ -171,22 +208,45 @@ class UsersApiController extends Controller
         }
 
         DB::table('users')->where('userid', $id)->update($update);
-        $this->syncRoles($id, $validated['role_ids'] ?? []);
+        $this->syncRoles($id, $validated['role_ids']);
 
         return response()->json(['message' => 'User updated successfully.']);
     }
 
-    public function destroy(int $id): JsonResponse
+    public function destroy(Request $request, int $id): JsonResponse
     {
         $user = DB::table('users')->where('userid', $id)->first();
         abort_if(!$user, 404);
-        if (!empty($user->profile_photo)) {
-            $oldPath = public_path('images/UserProfile_photo/'.$user->profile_photo);
-            if (is_file($oldPath)) @unlink($oldPath);
+
+        $actorId = $this->resolveRealUserId($request);
+        if ($id === $actorId) {
+            return response()->json([
+                'message' => 'You cannot deactivate your own account.',
+            ], 422);
         }
-        DB::table('usersrole')->where('userid', $id)->delete();
-        DB::table('users')->where('userid', $id)->delete();
-        return response()->json(['message' => 'User deleted successfully.']);
+
+        if ((int) ($user->status ?? 0) === 0) {
+            return response()->json([
+                'message' => 'User is already inactive.',
+            ]);
+        }
+
+        $update = [
+            'status' => 0,
+            'modifieddate' => now(),
+            'modifiedby' => $actorId,
+        ];
+        if (empty($user->addeddate)) {
+            $update['addeddate'] = now();
+        }
+        if (empty($user->addedby)) {
+            $update['addedby'] = $actorId;
+        }
+        DB::table('users')->where('userid', $id)->update($update);
+
+        return response()->json([
+            'message' => 'User has been marked as inactive.',
+        ]);
     }
 
     public function resetPassword(Request $request, int $id): JsonResponse
@@ -201,6 +261,33 @@ class UsersApiController extends Controller
             'modifiedby' => $userId,
         ]);
         return response()->json(['message' => 'Password changed successfully.']);
+    }
+
+    /**
+     * Active roles plus any inactive roles still assigned to this user (for edit dropdown).
+     *
+     * @param  array<int>  $assignedRoleIds
+     * @return array<int, array{arid: int, rolename: string}>
+     */
+    private function roleOptionsForForm(array $assignedRoleIds): array
+    {
+        $assignedRoleIds = array_values(array_unique(array_map('intval', $assignedRoleIds)));
+        $active = DB::table('access_roles')->where('status', 1)->orderBy('rolename')->get();
+        $activeIds = $active->pluck('arid')->map(fn ($v) => (int) $v)->all();
+        $rows = [];
+        foreach ($active as $r) {
+            $rows[] = ['arid' => (int) $r->arid, 'rolename' => (string) $r->rolename];
+        }
+        $missing = array_values(array_diff($assignedRoleIds, $activeIds));
+        if ($missing !== []) {
+            $extra = DB::table('access_roles')->whereIn('arid', $missing)->orderBy('rolename')->get();
+            foreach ($extra as $r) {
+                $rows[] = ['arid' => (int) $r->arid, 'rolename' => ((string) ($r->rolename ?? 'Role')).' (inactive)'];
+            }
+        }
+        usort($rows, fn (array $a, array $b): int => strcasecmp($a['rolename'], $b['rolename']));
+
+        return $rows;
     }
 
     private function syncRoles(int $userid, array $roleIds): void

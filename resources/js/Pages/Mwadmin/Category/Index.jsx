@@ -49,7 +49,7 @@ export default function CategoryIndex({ authUser = {} }) {
 
     const deleteRow = useCallback(
         async (id) => {
-            if (!window.confirm('Delete this category?')) return;
+            if (!window.confirm('Mark this category as inactive? It will not be removed from the database.')) return;
             await axios.delete(`/api/mwadmin/categories/${id}`);
             await loadData();
         },
@@ -61,7 +61,7 @@ export default function CategoryIndex({ authUser = {} }) {
             if (!action) return;
             if (action === 'view') return window.location.assign(`/mwadmin/category/${id}/view`);
             if (action === 'edit') return window.location.assign(`/mwadmin/category/${id}/edit`);
-            if (action === 'delete') await deleteRow(id);
+            if (action === 'deactivate') await deleteRow(id);
         },
         [deleteRow]
     );
@@ -88,7 +88,7 @@ export default function CategoryIndex({ authUser = {} }) {
                         <option value="">Actions</option>
                         <option value="view">View</option>
                         <option value="edit">Edit</option>
-                        <option value="delete">Delete</option>
+                        <option value="deactivate">Deactivate</option>
                     </select>
                 ),
             },

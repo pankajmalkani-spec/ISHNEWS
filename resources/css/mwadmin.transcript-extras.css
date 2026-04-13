@@ -409,6 +409,298 @@
     min-height: 0;
 }
 
+/* Sponsor Category listing: stretch grid to panel + viewport (name/note columns use flex) */
+.mwadmin-sponsorcategory-grid-panel {
+    display: flex;
+    flex-direction: column;
+    height: min(72vh, 880px);
+    min-height: 520px;
+}
+
+.mwadmin-sponsorcategory-grid-panel > .mwadmin-toolbar {
+    flex-shrink: 0;
+}
+
+.mwadmin-sponsorcategory-grid-panel > .mwadmin-table-wrap {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.mwadmin-sponsorcategory-grid-panel > .mwadmin-pagination {
+    flex-shrink: 0;
+}
+
+.mwadmin-sponsorcategory-grid-panel .mwadmin-table-wrap > .mwadmin-ag-grid {
+    flex: 1 1 auto;
+    min-height: 280px;
+    height: auto !important;
+}
+
+/* Users listing: stretch grid like sponsor category */
+.mwadmin-users-grid-panel {
+    display: flex;
+    flex-direction: column;
+    height: min(72vh, 880px);
+    min-height: 520px;
+}
+
+.mwadmin-users-grid-panel > .mwadmin-toolbar {
+    flex-shrink: 0;
+}
+
+.mwadmin-users-grid-panel > .mwadmin-table-wrap {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.mwadmin-users-grid-panel > .mwadmin-pagination {
+    flex-shrink: 0;
+}
+
+.mwadmin-users-grid-panel .mwadmin-table-wrap > .mwadmin-ag-grid {
+    flex: 1 1 auto;
+    min-height: 280px;
+    height: auto !important;
+}
+
+/* User profile photo: same editor UX as category box, constrained width */
+.mwadmin-user-profile-photo-row .mwadmin-category-image-field {
+    max-width: 280px;
+}
+
+.mwadmin-field-hint {
+    margin-top: 6px;
+    font-size: 11px;
+    color: #6b7280;
+    line-height: 1.35;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-field-hint {
+    color: #94a3b8;
+}
+
+/* User roles: tag multi-select combobox (dropdown + pills, not native listbox) */
+.mwadmin-user-roles-picker {
+    position: relative;
+    width: 100%;
+}
+
+.mwadmin-roles-combobox {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    min-height: 38px;
+    padding: 4px 8px 4px 6px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #fff;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+.mwadmin-roles-combobox:focus {
+    outline: none;
+    border-color: #059669;
+    box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.2);
+}
+
+.mwadmin-roles-combobox.has-error {
+    border-color: #d9534f;
+}
+
+.mwadmin-roles-combobox.is-open {
+    border-color: #059669;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-roles-combobox {
+    background: #1e293b;
+    border-color: #475569;
+    color: #e2e8f0;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-roles-combobox:focus,
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-roles-combobox.is-open {
+    border-color: #34d399;
+    box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.2);
+}
+
+.mwadmin-roles-combobox-inner {
+    flex: 1 1 auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    min-height: 28px;
+    padding: 2px 0;
+}
+
+.mwadmin-roles-combobox-placeholder {
+    color: #888;
+    font-size: 13px;
+    padding: 4px 2px;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-roles-combobox-placeholder {
+    color: #64748b;
+}
+
+.mwadmin-roles-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    max-width: 100%;
+    padding: 2px 8px 2px 4px;
+    background: #eef2f6;
+    border: 1px solid #d1d9e0;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #334155;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-roles-chip {
+    background: #334155;
+    border-color: #475569;
+    color: #f1f5f9;
+}
+
+.mwadmin-roles-chip-x {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: 0;
+    border-radius: 3px;
+    background: transparent;
+    color: #64748b;
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.mwadmin-roles-chip-x:hover {
+    color: #b91c1c;
+    background: rgba(185, 28, 28, 0.08);
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-roles-chip-x {
+    color: #94a3b8;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-roles-chip-x:hover {
+    color: #fca5a5;
+}
+
+.mwadmin-roles-chip-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 200px;
+}
+
+.mwadmin-roles-combobox-actions {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 4px;
+    padding-top: 2px;
+}
+
+.mwadmin-roles-clear-all {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    border-radius: 3px;
+    background: transparent;
+    color: #64748b;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.mwadmin-roles-clear-all:hover {
+    color: #b91c1c;
+    background: rgba(185, 28, 28, 0.08);
+}
+
+.mwadmin-roles-chevron {
+    font-size: 10px;
+    color: #64748b;
+    user-select: none;
+}
+
+.mwadmin-roles-dropdown {
+    position: absolute;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    margin: 4px 0 0;
+    padding: 4px 0;
+    list-style: none;
+    max-height: 220px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #fff;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-roles-dropdown {
+    background: #1e293b;
+    border-color: #475569;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.mwadmin-roles-dd-item {
+    padding: 8px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    color: #333;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-roles-dd-item {
+    color: #e2e8f0;
+}
+
+.mwadmin-roles-dd-item:hover {
+    background: #f0fdf4;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-roles-dd-item:hover {
+    background: #14532d;
+}
+
+.mwadmin-roles-dd-item.is-selected {
+    background: #d1fae5;
+    font-weight: 600;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-roles-dd-item.is-selected {
+    background: #14532d;
+}
+
+.mwadmin-roles-dd-item.is-empty {
+    cursor: default;
+    color: #888;
+    font-style: italic;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-roles-dd-item.is-empty {
+    color: #64748b;
+}
+
 /* Center status pills vertically in grid cells */
 .mwadmin-ag-grid .ag-cell:has(.mwadmin-status-badge) {
     display: flex;

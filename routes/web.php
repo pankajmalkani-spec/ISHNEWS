@@ -26,6 +26,7 @@ Route::prefix('mwadmin')->group(function (): void {
 
             return [
                 'authUser' => [
+                    'user_id' => (int) ($session['user_id'] ?? 0),
                     'username' => (string) ($session['username'] ?? ''),
                     'first_name' => (string) ($session['first_name'] ?? ''),
                     'last_name' => (string) ($session['last_name'] ?? ''),

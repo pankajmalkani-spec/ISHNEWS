@@ -27,7 +27,10 @@ export default function SponsorCreate({ authUser = {} }) {
         (async () => {
             try {
                 const { data } = await axios.get('/api/mwadmin/sponsorcategories', { params: { per_page: 'all' } });
-                if (!c) setCategories(data.data || []);
+                if (!c) {
+                    const list = data.data || [];
+                    setCategories(list.filter((row) => Number(row.status) === 1));
+                }
             } catch {
                 if (!c) setCategories([]);
             }
