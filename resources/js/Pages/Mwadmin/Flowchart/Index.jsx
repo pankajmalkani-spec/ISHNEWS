@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import MwadminLayout from '../../../Components/Mwadmin/Layout';
 import { useClassicDialog } from '../../../Components/Mwadmin/ClassicDialog';
+import MwadminStatusBadge from '../../../Components/Mwadmin/MwadminStatusBadge';
 import MwadminThemedAgGrid from '../../../Components/Mwadmin/MwadminThemedAgGrid';
 
 export default function FlowchartIndex({ authUser = {} }) {
@@ -100,7 +101,7 @@ export default function FlowchartIndex({ authUser = {} }) {
                 field: 'status',
                 headerName: 'Status',
                 width: 100,
-                cellRenderer: (p) => (Number(p.value) === 1 ? 'Active' : 'In-Active'),
+                cellRenderer: (p) => <MwadminStatusBadge value={p.value} />,
             },
         ],
         []

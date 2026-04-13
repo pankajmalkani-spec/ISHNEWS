@@ -165,6 +165,22 @@
     color: #e2e8f0;
 }
 
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-status--active,
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-status-active {
+    box-shadow:
+        0 0 0 1px rgba(52, 211, 153, 0.45),
+        0 2px 8px rgba(5, 150, 105, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-status--inactive,
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-status-inactive {
+    box-shadow:
+        0 0 0 1px rgba(251, 146, 60, 0.45),
+        0 2px 8px rgba(234, 88, 12, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
 .mwadmin-shell.mwadmin-theme-dark .mwadmin-form-panel {
     color: #e2e8f0;
 }
@@ -620,6 +636,69 @@
     max-width: 80px;
     max-height: 28px;
     object-fit: cover;
+}
+
+/* Status pills (grids / views) — Active = green, In-Active = coral */
+.mwadmin-status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 4.75rem;
+    padding: 4px 11px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border-radius: 999px;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.mwadmin-status--active {
+    color: #fff;
+    background: linear-gradient(180deg, #34d399 0%, #059669 100%);
+    box-shadow:
+        0 1px 2px rgba(5, 150, 105, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.mwadmin-status--inactive {
+    color: #fff;
+    background: linear-gradient(180deg, #fb923c 0%, #ea580c 100%);
+    box-shadow:
+        0 1px 2px rgba(234, 88, 12, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Legacy class names (e.g. newsletter) — same look */
+.mwadmin-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 4.75rem;
+    padding: 4px 11px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border-radius: 999px;
+    line-height: 1.2;
+}
+
+.mwadmin-status-active {
+    color: #fff;
+    background: linear-gradient(180deg, #34d399 0%, #059669 100%);
+    box-shadow:
+        0 1px 2px rgba(5, 150, 105, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.mwadmin-status-inactive {
+    color: #fff;
+    background: linear-gradient(180deg, #fb923c 0%, #ea580c 100%);
+    box-shadow:
+        0 1px 2px rgba(234, 88, 12, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .mwadmin-table-category {

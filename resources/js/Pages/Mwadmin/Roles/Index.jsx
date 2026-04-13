@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import MwadminLayout from '../../../Components/Mwadmin/Layout';
 import { useClassicDialog } from '../../../Components/Mwadmin/ClassicDialog';
+import MwadminStatusBadge from '../../../Components/Mwadmin/MwadminStatusBadge';
 import MwadminThemedAgGrid from '../../../Components/Mwadmin/MwadminThemedAgGrid';
 
 export default function RolesIndex({ authUser = {} }) {
@@ -86,7 +87,13 @@ export default function RolesIndex({ authUser = {} }) {
             { field: 'rolename', headerName: 'Role', minWidth: 220, flex: 1.2 },
             { field: 'description', headerName: 'Description', minWidth: 260, flex: 1.6 },
             { field: 'usercount', headerName: 'Total Users', minWidth: 120, flex: 0.8 },
-            { field: 'status', headerName: 'Status', minWidth: 110, flex: 0.8, cellRenderer: (p) => (Number(p.value) === 1 ? 'Active' : 'In-Active') },
+            {
+                field: 'status',
+                headerName: 'Status',
+                minWidth: 110,
+                flex: 0.8,
+                cellRenderer: (p) => <MwadminStatusBadge value={p.value} />,
+            },
         ],
         []
     );

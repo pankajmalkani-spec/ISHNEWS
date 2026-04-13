@@ -7,7 +7,7 @@ export default function MwadminStatusBadge({ value }) {
         <span
             className={`mwadmin-status-badge ${active ? 'mwadmin-status--active' : 'mwadmin-status--inactive'}`}
         >
-            {active ? 'Active' : 'In Active'}
+            {active ? 'Active' : 'In-Active'}
         </span>
     );
 }

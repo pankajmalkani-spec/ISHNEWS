@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useEffect, useMemo, useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import MwadminLayout from '../../../Components/Mwadmin/Layout';
+import MwadminStatusBadge from '../../../Components/Mwadmin/MwadminStatusBadge';
 import MwadminThemedAgGrid from '../../../Components/Mwadmin/MwadminThemedAgGrid';
 
 export default function SponsorCategoryIndex({ authUser = {} }) {
@@ -88,7 +89,12 @@ export default function SponsorCategoryIndex({ authUser = {} }) {
             },
             { field: 'name', headerName: 'Category Name', minWidth: 220, sortable: true },
             { field: 'note', headerName: 'Note(s)', minWidth: 250, sortable: false },
-            { field: 'status', headerName: 'Status', minWidth: 110, cellRenderer: (params) => (Number(params.value) === 1 ? 'Active' : 'In-Active') },
+            {
+                field: 'status',
+                headerName: 'Status',
+                minWidth: 110,
+                cellRenderer: (params) => <MwadminStatusBadge value={params.value} />,
+            },
         ],
         []
     );

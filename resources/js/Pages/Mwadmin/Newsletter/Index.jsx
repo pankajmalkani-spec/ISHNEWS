@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import MwadminLayout from '../../../Components/Mwadmin/Layout';
 import { useClassicDialog } from '../../../Components/Mwadmin/ClassicDialog';
+import MwadminStatusBadge from '../../../Components/Mwadmin/MwadminStatusBadge';
 import MwadminThemedAgGrid from '../../../Components/Mwadmin/MwadminThemedAgGrid';
 
 export default function NewsletterIndex({ authUser = {} }) {
@@ -156,12 +157,7 @@ export default function NewsletterIndex({ authUser = {} }) {
                 width: 120,
                 minWidth: 100,
                 maxWidth: 130,
-                cellRenderer: (params) =>
-                    Number(params.value) === 1 ? (
-                        <span className="mwadmin-status mwadmin-status-active">Active</span>
-                    ) : (
-                        <span className="mwadmin-status mwadmin-status-inactive">In Active</span>
-                    ),
+                cellRenderer: (params) => <MwadminStatusBadge value={params.value} />,
             },
         ],
         [allOnPageSelected, selectedIds, rows]

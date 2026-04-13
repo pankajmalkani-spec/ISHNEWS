@@ -409,6 +409,12 @@
     min-height: 0;
 }
 
+/* Center status pills vertically in grid cells */
+.mwadmin-ag-grid .ag-cell:has(.mwadmin-status-badge) {
+    display: flex;
+    align-items: center;
+}
+
 .mwadmin-ag-grid.ag-theme-quartz,
 .mwadmin-ag-grid.ag-theme-quartz-dark {
     --ag-font-size: 12px;

@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import MwadminLayout from '../../../Components/Mwadmin/Layout';
+import MwadminStatusBadge from '../../../Components/Mwadmin/MwadminStatusBadge';
 import MwadminThemedAgGrid from '../../../Components/Mwadmin/MwadminThemedAgGrid';
 
 export default function CategoryIndex({ authUser = {} }) {
@@ -127,7 +128,7 @@ export default function CategoryIndex({ authUser = {} }) {
                 field: 'status',
                 headerName: 'Status',
                 minWidth: 110,
-                cellRenderer: (params) => (Number(params.value) === 1 ? 'Active' : 'In-Active'),
+                cellRenderer: (params) => <MwadminStatusBadge value={params.value} />,
             },
         ],
         [handleAction]
