@@ -12,8 +12,21 @@ export default function CategoryIndex({ authUser = {} }) {
     const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(10);
     const [meta, setMeta] = useState({ current_page: 1, last_page: 1, total: 0 });
+    const [columnFilters, setColumnFilters] = useState({ code: '', title: '', status: '' });
 
-    const query = useMemo(() => ({ search, page, per_page: perPage }), [search, page, perPage]);
+    const query = useMemo(() => {
+        const params = { search, page, per_page: perPage };
+        if (columnFilters.code.trim() !== '') {
+            params.filter_code = columnFilters.code.trim();
+        }
+        if (columnFilters.title.trim() !== '') {
+            params.filter_title = columnFilters.title.trim();
+        }
+        if (columnFilters.status !== '') {
+            params.filter_status = columnFilters.status;
+        }
+        return params;
+    }, [search, page, perPage, columnFilters]);
 
     const loadData = useCallback(async () => {
         setLoading(true);
@@ -164,6 +177,47 @@ export default function CategoryIndex({ authUser = {} }) {
                         </div>
 
                         <div className="mwadmin-table-wrap">
+                            <div className="mwadmin-filter-bar">
+                                <input
+                                    type="text"
+                                    placeholder="Filter Category Code"
+                                    value={columnFilters.code}
+                                    onChange={(e) => {
+                                        setPage(1);
+                                        setColumnFilters((s) => ({ ...s, code: e.target.value }));
+                                    }}
+                                />
+                                <input
+                                    type="text"
+                                    placeholder="Filter Category Title"
+                                    value={columnFilters.title}
+                                    onChange={(e) => {
+                                        setPage(1);
+                                        setColumnFilters((s) => ({ ...s, title: e.target.value }));
+                                    }}
+                                />
+                                <select
+                                    value={columnFilters.status}
+                                    onChange={(e) => {
+                                        setPage(1);
+                                        setColumnFilters((s) => ({ ...s, status: e.target.value }));
+                                    }}
+                                >
+                                    <option value="">All Status</option>
+                                    <option value="1">Active</option>
+                                    <option value="0">In-Active</option>
+                                </select>
+                                <button
+                                    type="button"
+                                    className="mwadmin-filter-clear"
+                                    onClick={() => {
+                                        setPage(1);
+                                        setColumnFilters({ code: '', title: '', status: '' });
+                                    }}
+                                >
+                                    Clear
+                                </button>
+                            </div>
                             <MwadminThemedAgGrid>
                                 <AgGridReact
                                     rowData={rows}

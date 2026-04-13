@@ -16,6 +16,9 @@ class CategoryApiController extends Controller
     {
         $perPage = max(1, min((int) $request->query('per_page', 10), 100));
         $search = trim((string) $request->query('search', ''));
+        $filterCode = trim((string) $request->query('filter_code', ''));
+        $filterTitle = trim((string) $request->query('filter_title', ''));
+        $filterStatus = (string) $request->query('filter_status', '');
         $sortBy = (string) $request->query('sort_by', 'id');
         $sortDir = strtolower((string) $request->query('sort_dir', 'desc')) === 'asc' ? 'asc' : 'desc';
 
@@ -34,6 +37,18 @@ class CategoryApiController extends Controller
                 $q->where('c.code', 'like', "%{$search}%")
                     ->orWhere('c.title', 'like', "%{$search}%");
             });
+        }
+
+        if ($filterCode !== '') {
+            $query->where('c.code', 'like', "%{$filterCode}%");
+        }
+
+        if ($filterTitle !== '') {
+            $query->where('c.title', 'like', "%{$filterTitle}%");
+        }
+
+        if ($filterStatus === '1' || $filterStatus === '0') {
+            $query->where('c.status', '=', (int) $filterStatus);
         }
 
         $query->orderBy($sortBy === 'total_records' ? DB::raw('COUNT(ct.id)') : "c.{$sortBy}", $sortDir);
