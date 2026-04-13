@@ -14,7 +14,9 @@ class CategoryApiController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $perPage = max(1, min((int) $request->query('per_page', 10), 100));
+        $perPageRaw = $request->query('per_page', '10');
+        $showAll = is_string($perPageRaw) && strtolower(trim((string) $perPageRaw)) === 'all';
+        $perPage = $showAll ? null : max(1, min((int) $perPageRaw, 100));
         $search = trim((string) $request->query('search', ''));
         $filterCode = trim((string) $request->query('filter_code', ''));
         $filterTitle = trim((string) $request->query('filter_title', ''));
@@ -53,7 +55,23 @@ class CategoryApiController extends Controller
 
         $query->orderBy($sortBy === 'total_records' ? DB::raw('COUNT(ct.id)') : "c.{$sortBy}", $sortDir);
 
-        $paginator = $query->paginate($perPage)->withQueryString();
+        if ($showAll) {
+            $items = $query->get();
+            $total = $items->count();
+            $collection = $items->map(fn ($item) => $this->transformListItem((array) $item))->values();
+
+            return response()->json([
+                'data' => $collection,
+                'meta' => [
+                    'current_page' => 1,
+                    'per_page' => $total,
+                    'total' => $total,
+                    'last_page' => 1,
+                ],
+            ]);
+        }
+
+        $paginator = $query->paginate((int) $perPage)->withQueryString();
         $collection = collect($paginator->items())->map(fn ($item) => $this->transformListItem((array) $item))->values();
 
         return response()->json([

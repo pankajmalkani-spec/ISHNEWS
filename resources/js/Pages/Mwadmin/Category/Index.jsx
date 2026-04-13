@@ -15,7 +15,10 @@ export default function CategoryIndex({ authUser = {} }) {
     const [columnFilters, setColumnFilters] = useState({ code: '', title: '', status: '' });
 
     const query = useMemo(() => {
-        const params = { search, page, per_page: perPage };
+        const params =
+            perPage === 'all'
+                ? { search, page: 1, per_page: 'all' }
+                : { search, page, per_page: perPage };
         if (columnFilters.code.trim() !== '') {
             params.filter_code = columnFilters.code.trim();
         }
@@ -147,15 +150,17 @@ export default function CategoryIndex({ authUser = {} }) {
                                 Show
                                 <select
                                     className="mwadmin-select"
-                                    value={perPage}
+                                    value={perPage === 'all' ? 'all' : String(perPage)}
                                     onChange={(e) => {
                                         setPage(1);
-                                        setPerPage(Number(e.target.value));
+                                        const v = e.target.value;
+                                        setPerPage(v === 'all' ? 'all' : Number(v));
                                     }}
                                 >
                                     <option value={5}>5</option>
                                     <option value={10}>10</option>
                                     <option value={20}>20</option>
+                                    <option value="all">All</option>
                                 </select>
                             </div>
                             <div className="mwadmin-right-tools">
@@ -233,13 +238,23 @@ export default function CategoryIndex({ authUser = {} }) {
 
                         <div className="mwadmin-pagination">
                             <span>
-                                Showing page {meta.current_page} of {meta.last_page} ({meta.total} records)
+                                {perPage === 'all'
+                                    ? `Showing all ${meta.total} record${meta.total === 1 ? '' : 's'}`
+                                    : `Showing page ${meta.current_page} of ${meta.last_page} (${meta.total} records)`}
                             </span>
                             <div>
-                                <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+                                <button
+                                    type="button"
+                                    disabled={perPage === 'all' || page <= 1}
+                                    onClick={() => setPage((p) => p - 1)}
+                                >
                                     Prev
                                 </button>
-                                <button disabled={page >= meta.last_page} onClick={() => setPage((p) => p + 1)}>
+                                <button
+                                    type="button"
+                                    disabled={perPage === 'all' || page >= meta.last_page}
+                                    onClick={() => setPage((p) => p + 1)}
+                                >
                                     Next
                                 </button>
                             </div>
