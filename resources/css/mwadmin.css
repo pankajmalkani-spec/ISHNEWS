@@ -1002,6 +1002,34 @@
     opacity: 0.9;
 }
 
+.mwadmin-zoom-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 10px 0;
+    flex-wrap: wrap;
+    font-size: 13px;
+    color: #444;
+}
+
+.mwadmin-zoom-row input[type='range'] {
+    flex: 1 1 180px;
+    min-width: 140px;
+}
+
+.mwadmin-advanced-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 10px;
+    font-size: 13px;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-zoom-row {
+    color: #cbd5e1;
+}
+
 .mwadmin-rotate-row {
     margin-top: 8px;
     display: flex;
