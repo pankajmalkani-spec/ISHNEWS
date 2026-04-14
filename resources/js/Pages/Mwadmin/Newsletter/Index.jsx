@@ -3,9 +3,11 @@ import axios from 'axios';
 import { useEffect, useMemo, useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import MwadminLayout from '../../../Components/Mwadmin/Layout';
+import MwadminActionsDropdown from '../../../Components/Mwadmin/MwadminActionsDropdown';
 import { useClassicDialog } from '../../../Components/Mwadmin/ClassicDialog';
 import MwadminStatusBadge from '../../../Components/Mwadmin/MwadminStatusBadge';
 import MwadminThemedAgGrid from '../../../Components/Mwadmin/MwadminThemedAgGrid';
+import { canDelete, canExport } from '../../../lib/mwadminPermissions';
 
 export default function NewsletterIndex({ authUser = {} }) {
     const dialog = useClassicDialog();
@@ -17,6 +19,14 @@ export default function NewsletterIndex({ authUser = {} }) {
     const [meta, setMeta] = useState({ current_page: 1, last_page: 1, total: 0 });
     const [columnFilters, setColumnFilters] = useState({ email: '', status: '' });
     const [selectedIds, setSelectedIds] = useState([]);
+
+    const perms = useMemo(
+        () => ({
+            delete: canDelete(authUser, 'newsletter'),
+            export: canExport(authUser, 'newsletter'),
+        }),
+        [authUser]
+    );
 
     const query = useMemo(
         () => ({
@@ -103,30 +113,30 @@ export default function NewsletterIndex({ authUser = {} }) {
         }
     };
 
-    const columns = useMemo(
-        () => [
-            {
-                field: 'checkbox',
-                headerName: '',
-                width: 44,
-                minWidth: 44,
-                maxWidth: 48,
-                sortable: false,
-                headerComponent: () => (
-                    <label className="mwadmin-grid-checkbox">
-                        <input type="checkbox" checked={allOnPageSelected} onChange={toggleAllOnPage} />
-                    </label>
-                ),
-                cellRenderer: (params) => (
-                    <label className="mwadmin-grid-checkbox">
-                        <input
-                            type="checkbox"
-                            checked={selectedIds.includes(params.data.id)}
-                            onChange={() => toggleId(params.data.id)}
-                        />
-                    </label>
-                ),
-            },
+    const columns = useMemo(() => {
+        const checkboxCol = {
+            field: 'checkbox',
+            headerName: '',
+            width: 44,
+            minWidth: 44,
+            maxWidth: 48,
+            sortable: false,
+            headerComponent: () => (
+                <label className="mwadmin-grid-checkbox">
+                    <input type="checkbox" checked={allOnPageSelected} onChange={toggleAllOnPage} />
+                </label>
+            ),
+            cellRenderer: (params) => (
+                <label className="mwadmin-grid-checkbox">
+                    <input
+                        type="checkbox"
+                        checked={selectedIds.includes(params.data.id)}
+                        onChange={() => toggleId(params.data.id)}
+                    />
+                </label>
+            ),
+        };
+        const rest = [
             { field: 'id', headerName: 'ID', width: 70, minWidth: 70, maxWidth: 80, sortable: true },
             {
                 field: 'actions',
@@ -136,18 +146,10 @@ export default function NewsletterIndex({ authUser = {} }) {
                 maxWidth: 140,
                 sortable: false,
                 cellRenderer: (params) => (
-                    <select
-                        className="mwadmin-grid-action"
-                        defaultValue=""
-                        onChange={(e) => {
-                            const selectedAction = e.target.value;
-                            e.target.value = '';
-                            if (selectedAction) handleAction(params.data.id, params.data.email, selectedAction);
-                        }}
-                    >
-                        <option value="">Actions</option>
-                        <option value="delete">Delete</option>
-                    </select>
+                    <MwadminActionsDropdown
+                        flags={{ delete: perms.delete }}
+                        onAction={(a) => handleAction(params.data.id, params.data.email, a)}
+                    />
                 ),
             },
             { field: 'email', headerName: 'Email', flex: 1.4, minWidth: 240, sortable: true },
@@ -159,9 +161,9 @@ export default function NewsletterIndex({ authUser = {} }) {
                 maxWidth: 130,
                 cellRenderer: (params) => <MwadminStatusBadge value={params.value} />,
             },
-        ],
-        [allOnPageSelected, selectedIds, rows]
-    );
+        ];
+        return perms.export ? [checkboxCol, ...rest] : rest;
+    }, [allOnPageSelected, selectedIds, rows, perms]);
 
     return (
         <>
@@ -192,9 +194,11 @@ export default function NewsletterIndex({ authUser = {} }) {
                                 </select>
                             </div>
                             <div className="mwadmin-right-tools">
-                                <button type="button" className="mwadmin-export-btn" onClick={exportExcel}>
-                                    Export to Excel
-                                </button>
+                                {perms.export ? (
+                                    <button type="button" className="mwadmin-export-btn" onClick={exportExcel}>
+                                        Export to Excel
+                                    </button>
+                                ) : null}
                                 <div className="mwadmin-search">
                                     Search:
                                     <input

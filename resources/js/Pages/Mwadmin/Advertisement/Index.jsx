@@ -3,9 +3,11 @@ import axios from 'axios';
 import { useEffect, useMemo, useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import MwadminLayout from '../../../Components/Mwadmin/Layout';
+import MwadminActionsDropdown from '../../../Components/Mwadmin/MwadminActionsDropdown';
 import { useClassicDialog } from '../../../Components/Mwadmin/ClassicDialog';
 import MwadminStatusBadge from '../../../Components/Mwadmin/MwadminStatusBadge';
 import MwadminThemedAgGrid from '../../../Components/Mwadmin/MwadminThemedAgGrid';
+import { canAdd, canDelete, canEdit, canViewDetail } from '../../../lib/mwadminPermissions';
 
 export default function AdvertisementIndex({ authUser = {} }) {
     const dialog = useClassicDialog();
@@ -16,6 +18,16 @@ export default function AdvertisementIndex({ authUser = {} }) {
     const [perPage, setPerPage] = useState('10');
     const [meta, setMeta] = useState({ current_page: 1, last_page: 1, total: 0 });
     const [columnFilters, setColumnFilters] = useState({ company: '', status: '' });
+
+    const perms = useMemo(
+        () => ({
+            view: canViewDetail(authUser, 'advertisement'),
+            edit: canEdit(authUser, 'advertisement'),
+            delete: canDelete(authUser, 'advertisement'),
+            add: canAdd(authUser, 'advertisement'),
+        }),
+        [authUser]
+    );
 
     const query = useMemo(
         () => ({
@@ -73,20 +85,14 @@ export default function AdvertisementIndex({ authUser = {} }) {
                 width: 118,
                 sortable: false,
                 cellRenderer: (params) => (
-                    <select
-                        className="mwadmin-grid-action"
-                        defaultValue=""
-                        onChange={(e) => {
-                            const a = e.target.value;
-                            e.target.value = '';
-                            if (a) handleAction(params.data.id, a);
+                    <MwadminActionsDropdown
+                        flags={{
+                            view: perms.view,
+                            edit: perms.edit,
+                            delete: perms.delete,
                         }}
-                    >
-                        <option value="">Actions</option>
-                        <option value="view">View</option>
-                        <option value="edit">Edit</option>
-                        <option value="delete">Delete</option>
-                    </select>
+                        onAction={(a) => handleAction(params.data.id, a)}
+                    />
                 ),
             },
             { field: 'title', headerName: 'Title', minWidth: 140, flex: 1 },
@@ -115,7 +121,7 @@ export default function AdvertisementIndex({ authUser = {} }) {
                 cellRenderer: (p) => <MwadminStatusBadge value={p.value} />,
             },
         ],
-        []
+        [perms]
     );
 
     return (
@@ -147,9 +153,11 @@ export default function AdvertisementIndex({ authUser = {} }) {
                                 </select>
                             </div>
                             <div className="mwadmin-right-tools">
-                                <Link className="mwadmin-add-btn" href="/mwadmin/advertisement/create">
-                                    + Add Advertisement
-                                </Link>
+                                {perms.add ? (
+                                    <Link className="mwadmin-add-btn" href="/mwadmin/advertisement/create">
+                                        + Add Advertisement
+                                    </Link>
+                                ) : null}
                                 <div className="mwadmin-search">
                                     Search:
                                     <input

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Mwadmin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Mwadmin\Concerns\AuthorizesMwadminPermissions;
 use App\Http\Controllers\Mwadmin\Concerns\ResolvesMwadminUser;
 use App\Models\SponsorCategory;
 use App\Models\SponsorMst;
@@ -14,6 +15,7 @@ use Illuminate\Validation\Rule;
 
 class SponsorMstApiController extends Controller
 {
+    use AuthorizesMwadminPermissions;
     use ResolvesMwadminUser;
 
     private function logoPublicUrl(?string $filename): ?string
@@ -27,6 +29,10 @@ class SponsorMstApiController extends Controller
 
     public function index(Request $request): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'sponsor', 'allow_view')) {
+            return $deny;
+        }
+
         $perPageParam = (string) $request->query('per_page', '10');
         $allRows = strtolower($perPageParam) === 'all';
         $perPage = $allRows ? 100000 : max(1, min((int) $perPageParam, 100));
@@ -98,8 +104,12 @@ class SponsorMstApiController extends Controller
         ]);
     }
 
-    public function show(int $id): JsonResponse
+    public function show(Request $request, int $id): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'sponsor', 'allow_view')) {
+            return $deny;
+        }
+
         $row = SponsorMst::query()->findOrFail($id);
         $catName = SponsorCategory::query()->where('id', $row->sponsorcategory_id)->value('name');
 
@@ -125,6 +135,10 @@ class SponsorMstApiController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'sponsor', 'allow_add')) {
+            return $deny;
+        }
+
         $validated = $request->validate([
             'sponsorcategory_id' => ['required', 'string', Rule::exists('sponsorcategory', 'id')],
             'organization_name' => ['required', 'string', 'max:250'],
@@ -176,6 +190,10 @@ class SponsorMstApiController extends Controller
 
     public function update(Request $request, int $id): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'sponsor', 'allow_edit')) {
+            return $deny;
+        }
+
         $row = SponsorMst::query()->findOrFail($id);
         $validated = $request->validate([
             'sponsorcategory_id' => ['required', 'string', Rule::exists('sponsorcategory', 'id')],
@@ -223,8 +241,12 @@ class SponsorMstApiController extends Controller
         return response()->json(['message' => 'Sponsor updated successfully.', 'data' => $row]);
     }
 
-    public function destroy(int $id): JsonResponse
+    public function destroy(Request $request, int $id): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'sponsor', 'allow_delete')) {
+            return $deny;
+        }
+
         $row = SponsorMst::query()->findOrFail($id);
         $logo = $row->logo;
         $row->delete();

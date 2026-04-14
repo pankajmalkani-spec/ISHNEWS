@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Mwadmin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Mwadmin\Concerns\AuthorizesMwadminPermissions;
 use App\Http\Controllers\Mwadmin\Concerns\ResolvesMwadminUser;
 use App\Models\Newsource;
 use Illuminate\Http\JsonResponse;
@@ -11,10 +12,15 @@ use Illuminate\Validation\Rule;
 
 class NewsourceApiController extends Controller
 {
+    use AuthorizesMwadminPermissions;
     use ResolvesMwadminUser;
 
     public function index(Request $request): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'newsource', 'allow_view')) {
+            return $deny;
+        }
+
         $perPageParam = (string) $request->query('per_page', '10');
         $allRows = strtolower($perPageParam) === 'all';
         $perPage = $allRows ? 100000 : max(1, min((int) $perPageParam, 100));
@@ -58,6 +64,10 @@ class NewsourceApiController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'newsource', 'allow_add')) {
+            return $deny;
+        }
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:80', Rule::unique('newsource', 'name')->where(fn ($q) => $q->where('status', 1))],
             'description' => ['nullable', 'string', 'max:80'],
@@ -78,8 +88,12 @@ class NewsourceApiController extends Controller
         return response()->json(['message' => 'News Source created successfully.', 'data' => $row], 201);
     }
 
-    public function show(int $id): JsonResponse
+    public function show(Request $request, int $id): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'newsource', 'allow_view')) {
+            return $deny;
+        }
+
         $row = Newsource::query()->findOrFail($id);
 
         return response()->json(['data' => $row]);
@@ -87,6 +101,10 @@ class NewsourceApiController extends Controller
 
     public function update(Request $request, int $id): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'newsource', 'allow_edit')) {
+            return $deny;
+        }
+
         $row = Newsource::query()->findOrFail($id);
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:80', Rule::unique('newsource', 'name')->ignore($id)->where(fn ($q) => $q->where('status', 1))],
@@ -105,8 +123,12 @@ class NewsourceApiController extends Controller
         return response()->json(['message' => 'News Source updated successfully.', 'data' => $row]);
     }
 
-    public function destroy(int $id): JsonResponse
+    public function destroy(Request $request, int $id): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'newsource', 'allow_delete')) {
+            return $deny;
+        }
+
         Newsource::query()->findOrFail($id)->delete();
 
         return response()->json(['message' => 'News Source deleted successfully.']);

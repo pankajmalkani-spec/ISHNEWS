@@ -40,7 +40,8 @@ class EnsureMwadminModulePermission
 
         $modules = $session['modules'] ?? [];
         $flags = $modules[$module] ?? null;
-        $allowed = is_array($flags) && ! empty($flags['allow_access']);
+        // Align with mwadminPermissions.canAccessModule: section visible if Access or View is granted.
+        $allowed = is_array($flags) && (! empty($flags['allow_access']) || ! empty($flags['allow_view']));
 
         if ($allowed) {
             return $next($request);

@@ -3,8 +3,10 @@ import axios from 'axios';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import MwadminLayout from '../../../Components/Mwadmin/Layout';
+import MwadminActionsDropdown from '../../../Components/Mwadmin/MwadminActionsDropdown';
 import MwadminStatusBadge from '../../../Components/Mwadmin/MwadminStatusBadge';
 import MwadminThemedAgGrid from '../../../Components/Mwadmin/MwadminThemedAgGrid';
+import { canAdd, canDelete, canEdit, canViewDetail } from '../../../lib/mwadminPermissions';
 
 export default function CategoryIndex({ authUser = {} }) {
     const [rows, setRows] = useState([]);
@@ -14,6 +16,16 @@ export default function CategoryIndex({ authUser = {} }) {
     const [perPage, setPerPage] = useState(10);
     const [meta, setMeta] = useState({ current_page: 1, last_page: 1, total: 0 });
     const [columnFilters, setColumnFilters] = useState({ code: '', title: '', status: '' });
+
+    const perms = useMemo(
+        () => ({
+            view: canViewDetail(authUser, 'category'),
+            edit: canEdit(authUser, 'category'),
+            deactivate: canDelete(authUser, 'category'),
+            add: canAdd(authUser, 'category'),
+        }),
+        [authUser]
+    );
 
     const query = useMemo(() => {
         const params =
@@ -76,20 +88,14 @@ export default function CategoryIndex({ authUser = {} }) {
                 sortable: false,
                 filter: false,
                 cellRenderer: (params) => (
-                    <select
-                        className="mwadmin-grid-action"
-                        defaultValue=""
-                        onChange={(e) => {
-                            const selectedAction = e.target.value;
-                            e.target.value = '';
-                            if (selectedAction) handleAction(params.data.id, selectedAction);
+                    <MwadminActionsDropdown
+                        flags={{
+                            view: perms.view,
+                            edit: perms.edit,
+                            deactivate: perms.deactivate,
                         }}
-                    >
-                        <option value="">Actions</option>
-                        <option value="view">View</option>
-                        <option value="edit">Edit</option>
-                        <option value="deactivate">Deactivate</option>
-                    </select>
+                        onAction={(a) => handleAction(params.data.id, a)}
+                    />
                 ),
             },
             { field: 'code', headerName: 'Category Code', minWidth: 130, sortable: true },
@@ -131,7 +137,7 @@ export default function CategoryIndex({ authUser = {} }) {
                 cellRenderer: (params) => <MwadminStatusBadge value={params.value} />,
             },
         ],
-        [handleAction]
+        [handleAction, perms]
     );
 
     return (
@@ -165,9 +171,11 @@ export default function CategoryIndex({ authUser = {} }) {
                                 </select>
                             </div>
                             <div className="mwadmin-right-tools">
-                                <Link className="mwadmin-add-btn" href="/mwadmin/category/create">
-                                    + Add New Category
-                                </Link>
+                                {perms.add ? (
+                                    <Link className="mwadmin-add-btn" href="/mwadmin/category/create">
+                                        + Add New Category
+                                    </Link>
+                                ) : null}
                                 <div className="mwadmin-search">
                                     Search:
                                     <input

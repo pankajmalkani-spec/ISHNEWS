@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Mwadmin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Mwadmin\Concerns\AuthorizesMwadminPermissions;
 use App\Http\Controllers\Mwadmin\Concerns\ResolvesMwadminUser;
 use App\Models\Advertisement;
 use Illuminate\Http\JsonResponse;
@@ -13,6 +14,7 @@ use Illuminate\Validation\Rule;
 
 class AdvertisementApiController extends Controller
 {
+    use AuthorizesMwadminPermissions;
     use ResolvesMwadminUser;
 
     private function imgPublicUrl(?string $filename): ?string
@@ -24,8 +26,12 @@ class AdvertisementApiController extends Controller
         return '/images/AdvertiseImages/'.ltrim($filename, '/');
     }
 
-    public function options(): JsonResponse
+    public function options(Request $request): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'advertisement', 'allow_view')) {
+            return $deny;
+        }
+
         $subcats = DB::table('subcategorymst')
             ->where('status', 1)
             ->orderBy('subcat_code')
@@ -36,6 +42,10 @@ class AdvertisementApiController extends Controller
 
     public function index(Request $request): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'advertisement', 'allow_view')) {
+            return $deny;
+        }
+
         $perPageParam = (string) $request->query('per_page', '10');
         $allRows = strtolower($perPageParam) === 'all';
         $perPage = $allRows ? 100000 : max(1, min((int) $perPageParam, 100));
@@ -114,8 +124,12 @@ class AdvertisementApiController extends Controller
         ]);
     }
 
-    public function show(int $id): JsonResponse
+    public function show(Request $request, int $id): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'advertisement', 'allow_view')) {
+            return $deny;
+        }
+
         $row = Advertisement::query()->findOrFail($id);
         $sub = DB::table('subcategorymst')->where('id', $row->category_id)->value('subcat_code');
 
@@ -145,6 +159,10 @@ class AdvertisementApiController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'advertisement', 'allow_add')) {
+            return $deny;
+        }
+
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:150'],
             'company_name' => ['required', 'string', 'max:150'],
@@ -205,6 +223,10 @@ class AdvertisementApiController extends Controller
 
     public function update(Request $request, int $id): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'advertisement', 'allow_edit')) {
+            return $deny;
+        }
+
         $row = Advertisement::query()->findOrFail($id);
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:150'],
@@ -262,8 +284,12 @@ class AdvertisementApiController extends Controller
         return response()->json(['message' => 'Advertisement updated successfully.', 'data' => $row]);
     }
 
-    public function destroy(int $id): JsonResponse
+    public function destroy(Request $request, int $id): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'advertisement', 'allow_delete')) {
+            return $deny;
+        }
+
         $row = Advertisement::query()->findOrFail($id);
         $img = $row->img_url;
         $row->delete();

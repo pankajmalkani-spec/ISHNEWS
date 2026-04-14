@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Mwadmin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Mwadmin\Concerns\AuthorizesMwadminPermissions;
 use App\Models\SponsorCategory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -10,8 +11,14 @@ use Illuminate\Validation\Rule;
 
 class SponsorCategoryApiController extends Controller
 {
+    use AuthorizesMwadminPermissions;
+
     public function index(Request $request): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'sponsorcategory', 'allow_view')) {
+            return $deny;
+        }
+
         $perPageParam = (string) $request->query('per_page', '10');
         $allRows = strtolower($perPageParam) === 'all';
         $perPage = $allRows ? 100000 : max(1, min((int) $perPageParam, 100));
@@ -55,6 +62,10 @@ class SponsorCategoryApiController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'sponsorcategory', 'allow_add')) {
+            return $deny;
+        }
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:50', 'unique:sponsorcategory,name'],
             'note' => ['nullable', 'string', 'max:1000'],
@@ -75,14 +86,22 @@ class SponsorCategoryApiController extends Controller
         return response()->json(['message' => 'Sponsor Category created successfully.', 'data' => $row], 201);
     }
 
-    public function show(int $id): JsonResponse
+    public function show(Request $request, int $id): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'sponsorcategory', 'allow_view')) {
+            return $deny;
+        }
+
         $row = SponsorCategory::query()->findOrFail($id);
         return response()->json(['data' => $row]);
     }
 
     public function update(Request $request, int $id): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'sponsorcategory', 'allow_edit')) {
+            return $deny;
+        }
+
         $row = SponsorCategory::query()->findOrFail($id);
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:50', Rule::unique('sponsorcategory', 'name')->ignore($id)],
@@ -109,6 +128,10 @@ class SponsorCategoryApiController extends Controller
 
     public function destroy(Request $request, int $id): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'sponsorcategory', 'allow_delete')) {
+            return $deny;
+        }
+
         $row = SponsorCategory::query()->findOrFail($id);
         $userId = (int) data_get($request->session()->get('ishnews_session', []), 'user_id', 0);
 

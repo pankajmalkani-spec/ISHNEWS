@@ -3,9 +3,11 @@ import axios from 'axios';
 import { useEffect, useMemo, useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import MwadminLayout from '../../../Components/Mwadmin/Layout';
+import MwadminActionsDropdown from '../../../Components/Mwadmin/MwadminActionsDropdown';
 import { useClassicDialog } from '../../../Components/Mwadmin/ClassicDialog';
 import MwadminStatusBadge from '../../../Components/Mwadmin/MwadminStatusBadge';
 import MwadminThemedAgGrid from '../../../Components/Mwadmin/MwadminThemedAgGrid';
+import { canAdd, canDelete, canEdit } from '../../../lib/mwadminPermissions';
 
 export default function DesignationIndex({ authUser = {} }) {
     const dialog = useClassicDialog();
@@ -16,6 +18,15 @@ export default function DesignationIndex({ authUser = {} }) {
     const [perPage, setPerPage] = useState('10');
     const [meta, setMeta] = useState({ current_page: 1, last_page: 1, total: 0 });
     const [columnFilters, setColumnFilters] = useState({ designation: '', status: '' });
+
+    const perms = useMemo(
+        () => ({
+            edit: canEdit(authUser, 'designation'),
+            delete: canDelete(authUser, 'designation'),
+            add: canAdd(authUser, 'designation'),
+        }),
+        [authUser]
+    );
 
     const query = useMemo(
         () => ({
@@ -74,19 +85,10 @@ export default function DesignationIndex({ authUser = {} }) {
                 maxWidth: 140,
                 sortable: false,
                 cellRenderer: (params) => (
-                    <select
-                        className="mwadmin-grid-action"
-                        defaultValue=""
-                        onChange={(e) => {
-                            const a = e.target.value;
-                            e.target.value = '';
-                            if (a) handleAction(params.data.id, a);
-                        }}
-                    >
-                        <option value="">Actions</option>
-                        <option value="edit">Edit</option>
-                        <option value="delete">Delete</option>
-                    </select>
+                    <MwadminActionsDropdown
+                        flags={{ edit: perms.edit, delete: perms.delete }}
+                        onAction={(a) => handleAction(params.data.id, a)}
+                    />
                 ),
             },
             { field: 'designation', headerName: 'Designation', flex: 1, minWidth: 200, sortable: true },
@@ -98,7 +100,7 @@ export default function DesignationIndex({ authUser = {} }) {
                 cellRenderer: (p) => <MwadminStatusBadge value={p.value} />,
             },
         ],
-        []
+        [perms]
     );
 
     return (
@@ -130,9 +132,11 @@ export default function DesignationIndex({ authUser = {} }) {
                                 </select>
                             </div>
                             <div className="mwadmin-right-tools">
-                                <Link className="mwadmin-add-btn" href="/mwadmin/designation/create">
-                                    + Add Designation
-                                </Link>
+                                {perms.add ? (
+                                    <Link className="mwadmin-add-btn" href="/mwadmin/designation/create">
+                                        + Add Designation
+                                    </Link>
+                                ) : null}
                                 <div className="mwadmin-search">
                                     Search:
                                     <input

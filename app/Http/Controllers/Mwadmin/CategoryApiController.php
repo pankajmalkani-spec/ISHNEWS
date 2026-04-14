@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Mwadmin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Mwadmin\Concerns\AuthorizesMwadminPermissions;
 use App\Models\Category;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -12,8 +13,14 @@ use Illuminate\Validation\Rule;
 
 class CategoryApiController extends Controller
 {
+    use AuthorizesMwadminPermissions;
+
     public function index(Request $request): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'category', 'allow_view')) {
+            return $deny;
+        }
+
         $perPageRaw = $request->query('per_page', '10');
         $showAll = is_string($perPageRaw) && strtolower(trim((string) $perPageRaw)) === 'all';
         $perPage = $showAll ? null : max(1, min((int) $perPageRaw, 100));
@@ -87,6 +94,10 @@ class CategoryApiController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'category', 'allow_add')) {
+            return $deny;
+        }
+
         $validated = $request->validate([
             'code' => ['required', 'string', 'max:25', 'unique:categorymst,code'],
             'title' => ['required', 'string', 'max:250', 'regex:/^[a-zA-Z\s]+$/', 'unique:categorymst,title'],
@@ -122,8 +133,12 @@ class CategoryApiController extends Controller
         ], 201);
     }
 
-    public function show(int $id): JsonResponse
+    public function show(Request $request, int $id): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'category', 'allow_view')) {
+            return $deny;
+        }
+
         $category = Category::query()->findOrFail($id);
 
         return response()->json([
@@ -133,6 +148,10 @@ class CategoryApiController extends Controller
 
     public function update(Request $request, int $id): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'category', 'allow_edit')) {
+            return $deny;
+        }
+
         $category = Category::query()->findOrFail($id);
 
         $validated = $request->validate([
@@ -180,6 +199,10 @@ class CategoryApiController extends Controller
 
     public function destroy(Request $request, int $id): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'category', 'allow_delete')) {
+            return $deny;
+        }
+
         $category = Category::query()->findOrFail($id);
         $userId = (int) data_get($request->session()->get('ishnews_session', []), 'user_id', 0);
 

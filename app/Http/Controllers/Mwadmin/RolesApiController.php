@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Mwadmin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Mwadmin\Concerns\AuthorizesMwadminPermissions;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -11,8 +12,14 @@ use Illuminate\Validation\ValidationException;
 
 class RolesApiController extends Controller
 {
-    public function options(): JsonResponse
+    use AuthorizesMwadminPermissions;
+
+    public function options(Request $request): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'roles', 'allow_view')) {
+            return $deny;
+        }
+
         $modules = DB::table('access_modules')
             ->select('moduleid', 'modulename', 'modulelabel', 'modulegroup', 'module_sort', 'sortorder')
             ->where('status', 1)
@@ -25,6 +32,10 @@ class RolesApiController extends Controller
 
     public function index(Request $request): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'roles', 'allow_view')) {
+            return $deny;
+        }
+
         $perPageParam = (string) $request->query('per_page', '10');
         $allRows = strtolower($perPageParam) === 'all';
         $perPage = $allRows ? 100000 : max(1, min((int) $perPageParam, 100));
@@ -81,6 +92,10 @@ class RolesApiController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'roles', 'allow_add')) {
+            return $deny;
+        }
+
         $validated = $request->validate([
             'rolename' => [
                 'required',
@@ -128,8 +143,12 @@ class RolesApiController extends Controller
         return response()->json(['message' => 'Role created successfully.'], 201);
     }
 
-    public function show(int $id): JsonResponse
+    public function show(Request $request, int $id): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'roles', 'allow_view')) {
+            return $deny;
+        }
+
         $role = DB::table('access_roles')
             ->select('arid', 'rolename', 'description', 'status')
             ->where('arid', $id)
@@ -167,6 +186,10 @@ class RolesApiController extends Controller
 
     public function update(Request $request, int $id): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'roles', 'allow_edit')) {
+            return $deny;
+        }
+
         $role = DB::table('access_roles')->where('arid', $id)->where('deleted', 0)->first();
         abort_if(!$role, 404);
 
@@ -217,6 +240,10 @@ class RolesApiController extends Controller
 
     public function destroy(Request $request, int $id): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'roles', 'allow_delete')) {
+            return $deny;
+        }
+
         $role = DB::table('access_roles')->where('arid', $id)->where('deleted', 0)->first();
         abort_if(!$role, 404);
 

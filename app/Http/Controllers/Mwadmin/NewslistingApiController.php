@@ -22,6 +22,10 @@ class NewslistingApiController extends Controller
 
     public function options(Request $request): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'newslisting', 'allow_view')) {
+            return $deny;
+        }
+
         $categoryId = (int) $request->query('category_id', 0);
         $categories = DB::table('categorymst')->select('id', 'title')->where('status', 1)->orderBy('title')->get();
         $newsSources = DB::table('newsource')->select('id', 'name')->where('status', 1)->orderBy('name')->get();
@@ -41,6 +45,10 @@ class NewslistingApiController extends Controller
 
     public function nextMeta(Request $request): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'newslisting', 'allow_view')) {
+            return $deny;
+        }
+
         $validated = $request->validate([
             'category_id' => ['required', 'integer', 'exists:categorymst,id'],
         ]);
@@ -59,6 +67,10 @@ class NewslistingApiController extends Controller
 
     public function index(Request $request): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'newslisting', 'allow_view')) {
+            return $deny;
+        }
+
         $perPageParam = (string) $request->query('per_page', '10');
         $allRows = strtolower($perPageParam) === 'all';
         $perPage = $allRows ? 100000 : max(1, min((int) $perPageParam, 100));

@@ -3,9 +3,11 @@ import axios from 'axios';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import MwadminLayout from '../../../Components/Mwadmin/Layout';
+import MwadminActionsDropdown from '../../../Components/Mwadmin/MwadminActionsDropdown';
 import { useClassicDialog } from '../../../Components/Mwadmin/ClassicDialog';
 import MwadminStatusBadge from '../../../Components/Mwadmin/MwadminStatusBadge';
 import MwadminThemedAgGrid from '../../../Components/Mwadmin/MwadminThemedAgGrid';
+import { canAdd, canDelete, canEdit, canViewDetail } from '../../../lib/mwadminPermissions';
 
 export default function RolesIndex({ authUser = {} }) {
     const dialog = useClassicDialog();
@@ -17,6 +19,16 @@ export default function RolesIndex({ authUser = {} }) {
     const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState('10');
     const [meta, setMeta] = useState({ current_page: 1, last_page: 1, total: 0 });
+
+    const perms = useMemo(
+        () => ({
+            view: canViewDetail(authUser, 'roles'),
+            edit: canEdit(authUser, 'roles'),
+            deactivate: canDelete(authUser, 'roles'),
+            add: canAdd(authUser, 'roles'),
+        }),
+        [authUser]
+    );
 
     const query = useMemo(
         () => ({
@@ -120,20 +132,14 @@ export default function RolesIndex({ authUser = {} }) {
                 filter: false,
                 cellClass: 'mwadmin-ag-cell-vcenter mwadmin-ag-cell-actions',
                 cellRenderer: (params) => (
-                    <select
-                        className="mwadmin-grid-action"
-                        defaultValue=""
-                        onChange={(e) => {
-                            const selected = e.target.value;
-                            e.target.value = '';
-                            if (selected) handleAction(params.data.arid, selected);
+                    <MwadminActionsDropdown
+                        flags={{
+                            view: perms.view,
+                            edit: perms.edit,
+                            deactivate: perms.deactivate,
                         }}
-                    >
-                        <option value="">Actions</option>
-                        <option value="view">View</option>
-                        <option value="edit">Edit</option>
-                        <option value="deactivate">Deactivate</option>
-                    </select>
+                        onAction={(a) => handleAction(params.data.arid, a)}
+                    />
                 ),
             },
             {
@@ -173,7 +179,7 @@ export default function RolesIndex({ authUser = {} }) {
                 cellRenderer: (p) => <MwadminStatusBadge value={p.value} />,
             },
         ],
-        []
+        [perms]
     );
 
     return (
@@ -195,7 +201,11 @@ export default function RolesIndex({ authUser = {} }) {
                                 </select>
                             </div>
                             <div className="mwadmin-right-tools">
-                                <Link className="mwadmin-add-btn" href="/mwadmin/roles/create">+ Add New Role</Link>
+                                {perms.add ? (
+                                    <Link className="mwadmin-add-btn" href="/mwadmin/roles/create">
+                                        + Add New Role
+                                    </Link>
+                                ) : null}
                                 <div className="mwadmin-search">Search:
                                     <input type="text" value={search} onChange={(e) => { setPage(1); setSearch(e.target.value); }} />
                                 </div>

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Mwadmin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Mwadmin\Concerns\AuthorizesMwadminPermissions;
 use App\Models\Subcategory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -12,8 +13,14 @@ use Illuminate\Validation\Rule;
 
 class SubcategoryApiController extends Controller
 {
-    public function options(): JsonResponse
+    use AuthorizesMwadminPermissions;
+
+    public function options(Request $request): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'subcategory', 'allow_view')) {
+            return $deny;
+        }
+
         $categories = DB::table('categorymst')
             ->select('id', 'title')
             ->where('status', 1)
@@ -25,6 +32,10 @@ class SubcategoryApiController extends Controller
 
     public function verifySort(Request $request): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnlessAny($request, 'subcategory', ['allow_add', 'allow_edit'])) {
+            return $deny;
+        }
+
         $validated = $request->validate([
             'sort' => ['required', 'integer'],
             'ignore_id' => ['nullable', 'integer'],
@@ -44,6 +55,10 @@ class SubcategoryApiController extends Controller
 
     public function index(Request $request): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'subcategory', 'allow_view')) {
+            return $deny;
+        }
+
         $perPageRaw = $request->query('per_page', '10');
         $showAll = is_string($perPageRaw) && strtolower(trim((string) $perPageRaw)) === 'all';
         $perPage = $showAll ? null : max(1, min((int) $perPageRaw, 100));
@@ -102,6 +117,10 @@ class SubcategoryApiController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'subcategory', 'allow_add')) {
+            return $deny;
+        }
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:250', 'regex:/^[a-zA-Z_.\s-]+$/'],
             'category_id' => ['required', 'integer', Rule::exists('categorymst', 'id')->where('status', 1)],
@@ -136,14 +155,22 @@ class SubcategoryApiController extends Controller
         ], 201);
     }
 
-    public function show(int $id): JsonResponse
+    public function show(Request $request, int $id): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'subcategory', 'allow_view')) {
+            return $deny;
+        }
+
         $subcategory = Subcategory::query()->findOrFail($id);
         return response()->json(['data' => $this->transformRecord($subcategory)]);
     }
 
     public function update(Request $request, int $id): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'subcategory', 'allow_edit')) {
+            return $deny;
+        }
+
         $subcategory = Subcategory::query()->findOrFail($id);
 
         $validated = $request->validate([
@@ -191,6 +218,10 @@ class SubcategoryApiController extends Controller
 
     public function destroy(Request $request, int $id): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'subcategory', 'allow_delete')) {
+            return $deny;
+        }
+
         $subcategory = Subcategory::query()->findOrFail($id);
         $userId = (int) data_get($request->session()->get('ishnews_session', []), 'user_id', 0);
 

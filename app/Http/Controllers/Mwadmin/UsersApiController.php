@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Mwadmin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Mwadmin\Concerns\AuthorizesMwadminPermissions;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -11,8 +12,14 @@ use Illuminate\Validation\Rule;
 
 class UsersApiController extends Controller
 {
-    public function options(): JsonResponse
+    use AuthorizesMwadminPermissions;
+
+    public function options(Request $request): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'users', 'allow_view')) {
+            return $deny;
+        }
+
         return response()->json([
             'designations' => DB::table('designation')->select('id', 'designation')->where('status', 1)->orderBy('designation')->get(),
             'roles' => DB::table('access_roles')->select('arid', 'rolename')->where('status', 1)->orderBy('rolename')->get(),
@@ -21,6 +28,10 @@ class UsersApiController extends Controller
 
     public function index(Request $request): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'users', 'allow_view')) {
+            return $deny;
+        }
+
         $perPageRaw = $request->query('per_page', '10');
         $showAll = is_string($perPageRaw) && strtolower(trim((string) $perPageRaw)) === 'all';
         $perPage = $showAll ? null : max(1, min((int) $perPageRaw, 100));
@@ -96,6 +107,10 @@ class UsersApiController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'users', 'allow_add')) {
+            return $deny;
+        }
+
         $validated = $request->validate([
             'salutation' => ['nullable', 'string', 'max:20'],
             'first_name' => ['required', 'string', 'max:60', 'regex:/^[a-zA-Z\s]+$/'],
@@ -136,8 +151,12 @@ class UsersApiController extends Controller
         return response()->json(['message' => 'User created successfully.'], 201);
     }
 
-    public function show(int $id): JsonResponse
+    public function show(Request $request, int $id): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'users', 'allow_view')) {
+            return $deny;
+        }
+
         $user = DB::table('users')->where('userid', $id)->first();
         abort_if(!$user, 404);
         $roles = DB::table('usersrole')->where('userid', $id)->pluck('roleid')->map(fn ($v) => (int) $v)->values()->all();
@@ -162,6 +181,10 @@ class UsersApiController extends Controller
 
     public function update(Request $request, int $id): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'users', 'allow_edit')) {
+            return $deny;
+        }
+
         $user = DB::table('users')->where('userid', $id)->first();
         abort_if(!$user, 404);
 
@@ -215,6 +238,10 @@ class UsersApiController extends Controller
 
     public function destroy(Request $request, int $id): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'users', 'allow_delete')) {
+            return $deny;
+        }
+
         $user = DB::table('users')->where('userid', $id)->first();
         abort_if(!$user, 404);
 
@@ -251,6 +278,10 @@ class UsersApiController extends Controller
 
     public function resetPassword(Request $request, int $id): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'users', 'allow_edit')) {
+            return $deny;
+        }
+
         $validated = $request->validate([
             'new_password' => ['required', 'string', 'min:4', 'max:50'],
         ]);

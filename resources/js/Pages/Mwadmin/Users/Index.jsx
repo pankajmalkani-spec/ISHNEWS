@@ -3,9 +3,11 @@ import axios from 'axios';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import MwadminLayout from '../../../Components/Mwadmin/Layout';
+import MwadminActionsDropdown from '../../../Components/Mwadmin/MwadminActionsDropdown';
 import MwadminStatusBadge from '../../../Components/Mwadmin/MwadminStatusBadge';
 import MwadminThemedAgGrid from '../../../Components/Mwadmin/MwadminThemedAgGrid';
 import { useClassicDialog } from '../../../Components/Mwadmin/ClassicDialog';
+import { canAdd, canDelete, canEdit, canViewDetail } from '../../../lib/mwadminPermissions';
 
 function formatApiErrors(err) {
     const d = err?.response?.data;
@@ -28,6 +30,17 @@ export default function UsersIndex({ authUser = {} }) {
     const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(10);
     const [meta, setMeta] = useState({ current_page: 1, last_page: 1, total: 0 });
+
+    const perms = useMemo(
+        () => ({
+            view: canViewDetail(authUser, 'users'),
+            edit: canEdit(authUser, 'users'),
+            resetPwd: canEdit(authUser, 'users'),
+            deactivate: canDelete(authUser, 'users'),
+            add: canAdd(authUser, 'users'),
+        }),
+        [authUser]
+    );
 
     const query = useMemo(() => {
         if (perPage === 'all') {
@@ -115,21 +128,15 @@ export default function UsersIndex({ authUser = {} }) {
                     const uid = params.data.userid;
                     const isSelf = selfUserId > 0 && uid === selfUserId;
                     return (
-                        <select
-                            className="mwadmin-grid-action"
-                            defaultValue=""
-                            onChange={(e) => {
-                                const selectedAction = e.target.value;
-                                e.target.value = '';
-                                if (selectedAction) handleAction(uid, selectedAction);
+                        <MwadminActionsDropdown
+                            flags={{
+                                view: perms.view,
+                                edit: perms.edit,
+                                resetPassword: perms.resetPwd,
+                                deactivate: perms.deactivate && !isSelf,
                             }}
-                        >
-                            <option value="">Actions</option>
-                            <option value="view">View</option>
-                            <option value="edit">Edit</option>
-                            <option value="resetpwd">Reset Password</option>
-                            {!isSelf && <option value="deactivate">Deactivate</option>}
-                        </select>
+                            onAction={(a) => handleAction(uid, a)}
+                        />
                     );
                 },
             },
@@ -154,7 +161,7 @@ export default function UsersIndex({ authUser = {} }) {
                 cellRenderer: (p) => <MwadminStatusBadge value={p.value} />,
             },
         ],
-        [handleAction, selfUserId]
+        [handleAction, selfUserId, perms]
     );
 
     return (
@@ -187,9 +194,11 @@ export default function UsersIndex({ authUser = {} }) {
                                 </select>
                             </div>
                             <div className="mwadmin-right-tools">
-                                <Link className="mwadmin-add-btn" href="/mwadmin/users/create">
-                                    + Add New User
-                                </Link>
+                                {perms.add ? (
+                                    <Link className="mwadmin-add-btn" href="/mwadmin/users/create">
+                                        + Add New User
+                                    </Link>
+                                ) : null}
                                 <div className="mwadmin-search">
                                     Search:
                                     <input

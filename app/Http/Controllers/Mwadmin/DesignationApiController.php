@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Mwadmin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Mwadmin\Concerns\AuthorizesMwadminPermissions;
 use App\Http\Controllers\Mwadmin\Concerns\ResolvesMwadminUser;
 use App\Models\Designation;
 use Illuminate\Http\JsonResponse;
@@ -11,10 +12,15 @@ use Illuminate\Validation\Rule;
 
 class DesignationApiController extends Controller
 {
+    use AuthorizesMwadminPermissions;
     use ResolvesMwadminUser;
 
     public function index(Request $request): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'designation', 'allow_view')) {
+            return $deny;
+        }
+
         $perPageParam = (string) $request->query('per_page', '10');
         $allRows = strtolower($perPageParam) === 'all';
         $perPage = $allRows ? 100000 : max(1, min((int) $perPageParam, 100));
@@ -58,6 +64,10 @@ class DesignationApiController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'designation', 'allow_add')) {
+            return $deny;
+        }
+
         $validated = $request->validate([
             'designation' => ['required', 'string', 'max:80', Rule::unique('designation', 'designation')->where(fn ($q) => $q->where('status', 1))],
             'description' => ['nullable', 'string', 'max:80'],
@@ -78,8 +88,12 @@ class DesignationApiController extends Controller
         return response()->json(['message' => 'Designation created successfully.', 'data' => $row], 201);
     }
 
-    public function show(int $id): JsonResponse
+    public function show(Request $request, int $id): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'designation', 'allow_view')) {
+            return $deny;
+        }
+
         $row = Designation::query()->findOrFail($id);
 
         return response()->json(['data' => $row]);
@@ -87,6 +101,10 @@ class DesignationApiController extends Controller
 
     public function update(Request $request, int $id): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'designation', 'allow_edit')) {
+            return $deny;
+        }
+
         $row = Designation::query()->findOrFail($id);
         $validated = $request->validate([
             'designation' => ['required', 'string', 'max:80', Rule::unique('designation', 'designation')->ignore($id)->where(fn ($q) => $q->where('status', 1))],
@@ -105,8 +123,12 @@ class DesignationApiController extends Controller
         return response()->json(['message' => 'Designation updated successfully.', 'data' => $row]);
     }
 
-    public function destroy(int $id): JsonResponse
+    public function destroy(Request $request, int $id): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'designation', 'allow_delete')) {
+            return $deny;
+        }
+
         Designation::query()->findOrFail($id)->delete();
 
         return response()->json(['message' => 'Designation deleted successfully.']);

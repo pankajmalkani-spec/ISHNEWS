@@ -1,14 +1,7 @@
 import { Link } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
+import { canAccessModule } from '../../lib/mwadminPermissions';
 import { MwadminThemeContext } from './MwadminThemeContext';
-
-function canAccessModule(authUser, moduleKey) {
-    if (authUser?.superaccess === true) {
-        return true;
-    }
-    const m = authUser?.modules?.[moduleKey];
-    return Boolean(m?.allow_access);
-}
 
 export default function MwadminLayout({ authUser = {}, activeMenu = 'dashboard', children }) {
     const [isAdministratorOpen, setIsAdministratorOpen] = useState(true);

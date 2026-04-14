@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Mwadmin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Mwadmin\Concerns\AuthorizesMwadminPermissions;
 use App\Http\Controllers\Mwadmin\Concerns\ResolvesMwadminUser;
 use App\Models\FlowchartMst;
 use App\Models\FlowchartTrans;
@@ -13,10 +14,15 @@ use Illuminate\Validation\Rule;
 
 class FlowchartApiController extends Controller
 {
+    use AuthorizesMwadminPermissions;
     use ResolvesMwadminUser;
 
-    public function options(): JsonResponse
+    public function options(Request $request): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'flowchart', 'allow_view')) {
+            return $deny;
+        }
+
         $users = DB::table('users')
             ->where('status', 1)
             ->orderBy('first_name')
@@ -38,6 +44,10 @@ class FlowchartApiController extends Controller
 
     public function index(Request $request): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'flowchart', 'allow_view')) {
+            return $deny;
+        }
+
         $perPageParam = (string) $request->query('per_page', '10');
         $allRows = strtolower($perPageParam) === 'all';
         $perPage = $allRows ? 100000 : max(1, min((int) $perPageParam, 100));
@@ -89,8 +99,12 @@ class FlowchartApiController extends Controller
         ]);
     }
 
-    public function show(int $id): JsonResponse
+    public function show(Request $request, int $id): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'flowchart', 'allow_view')) {
+            return $deny;
+        }
+
         $m = FlowchartMst::query()->findOrFail($id);
         $def = DB::table('users')->where('userid', $m->defined_by)->first();
         $defName = $def ? trim(($def->first_name ?? '').' '.($def->last_name ?? '')) : '';
@@ -127,6 +141,10 @@ class FlowchartApiController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'flowchart', 'allow_add')) {
+            return $deny;
+        }
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:200', Rule::unique('flowchartmst', 'name')->where(fn ($q) => $q->where('status', 1))],
             'description' => ['nullable', 'string', 'max:200'],
@@ -176,6 +194,10 @@ class FlowchartApiController extends Controller
 
     public function update(Request $request, int $id): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'flowchart', 'allow_edit')) {
+            return $deny;
+        }
+
         $m = FlowchartMst::query()->findOrFail($id);
 
         $validated = $request->validate([
@@ -220,8 +242,12 @@ class FlowchartApiController extends Controller
         });
     }
 
-    public function destroy(int $id): JsonResponse
+    public function destroy(Request $request, int $id): JsonResponse
     {
+        if ($deny = $this->mwadminDenyUnless($request, 'flowchart', 'allow_delete')) {
+            return $deny;
+        }
+
         $used = DB::table('contentcharttrans')->where('charttrans_id', $id)->exists();
         if ($used) {
             return response()->json(['message' => 'Flow Chart cannot be deleted; it is assigned in News Content.'], 422);
