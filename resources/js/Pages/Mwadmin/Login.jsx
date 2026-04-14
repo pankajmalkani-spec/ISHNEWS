@@ -35,7 +35,7 @@ export default function Login({ errors = {} }) {
                 />
                 <main className="relative z-10 mx-auto flex min-h-dvh max-w-md items-center px-6 py-10">
                     <div className="w-full rounded-2xl border border-zinc-800/90 bg-zinc-900/85 p-6 shadow-[0_22px_70px_rgba(2,6,23,0.55)] backdrop-blur-sm">
-                        <h1 className="mb-1 text-2xl font-semibold">Login to your account</h1>
+                        <h1 className="mb-1 text-2xl font-semibold">Login to your Account</h1>
                         <p className="mb-6 text-sm text-zinc-400">ISH News MW Admin</p>
 
                         {(errors.username || errors.password) && (
