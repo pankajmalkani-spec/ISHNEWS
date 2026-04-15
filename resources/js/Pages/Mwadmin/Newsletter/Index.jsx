@@ -115,11 +115,11 @@ export default function NewsletterIndex({ authUser = {} }) {
 
     const columns = useMemo(() => {
         const checkboxCol = {
-            field: 'checkbox',
+            colId: 'newsletterRowSelect',
             headerName: '',
-            width: 44,
-            minWidth: 44,
-            maxWidth: 48,
+            width: 48,
+            minWidth: 48,
+            maxWidth: 52,
             sortable: false,
             headerComponent: () => (
                 <label className="mwadmin-grid-checkbox">

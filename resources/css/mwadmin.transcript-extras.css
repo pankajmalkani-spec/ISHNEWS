@@ -929,6 +929,38 @@
     max-width: none !important;
 }
 
+/* Row checkboxes (newsletter export selection): Quartz ellipsis must not show “…” beside the input */
+.mwadmin-ag-grid .ag-cell:has(.mwadmin-grid-checkbox),
+.mwadmin-ag-grid .ag-header-cell:has(.mwadmin-grid-checkbox) {
+    overflow: visible !important;
+}
+
+.mwadmin-ag-grid .ag-cell:has(.mwadmin-grid-checkbox) .ag-cell-wrapper,
+.mwadmin-ag-grid .ag-cell:has(.mwadmin-grid-checkbox) .ag-cell-value,
+.mwadmin-ag-grid .ag-header-cell:has(.mwadmin-grid-checkbox) .ag-header-cell-comp-wrapper {
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: nowrap !important;
+    max-width: none !important;
+}
+
+.mwadmin-grid-checkbox {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    min-height: 28px;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+.mwadmin-grid-checkbox input[type='checkbox'] {
+    margin: 0;
+    flex-shrink: 0;
+}
+
 /* —— Classic dialog / modals —— */
 .mwadmin-modal-backdrop {
     position: fixed;

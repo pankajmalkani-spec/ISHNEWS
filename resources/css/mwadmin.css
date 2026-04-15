@@ -232,6 +232,58 @@
     color: #fff;
 }
 
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-export-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 7px 16px;
+    min-height: 34px;
+    box-sizing: border-box;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    line-height: 1.2;
+    color: #ecfdf5;
+    background: linear-gradient(180deg, #14532d 0%, #166534 100%);
+    border: 1px solid #22c55e;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-export-btn::before {
+    content: "";
+    flex-shrink: 0;
+    width: 17px;
+    height: 17px;
+    background: currentColor;
+    opacity: 0.95;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M4 4h16v4H4V4zm0 6h7v4H4v-4zm9 0h7v4h-7v-4zM4 16h7v4H4v-4zm9 0h7v4h-7v-4z'/%3E%3C/svg%3E")
+        center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M4 4h16v4H4V4zm0 6h7v4H4v-4zm9 0h7v4h-7v-4zM4 16h7v4H4v-4zm9 0h7v4h-7v-4z'/%3E%3C/svg%3E")
+        center / contain no-repeat;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-export-btn:hover {
+    background: linear-gradient(180deg, #166534 0%, #15803d 100%);
+    border-color: #4ade80;
+    box-shadow: 0 2px 8px rgba(34, 197, 94, 0.25);
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-export-btn:focus-visible {
+    outline: 2px solid #4ade80;
+    outline-offset: 2px;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-export-btn:active {
+    transform: translateY(1px);
+}
+
 .mwadmin-shell.mwadmin-theme-dark .mwadmin-select {
     background: #1e293b;
     border-color: #475569;
@@ -1294,6 +1346,62 @@
 
 .mwadmin-shell:not(.mwadmin-theme-dark) .mwadmin-add-btn:hover {
     filter: brightness(1.06);
+}
+
+/* Toolbar: export (e.g. newsletter Excel) — green sheet affordance, matches cream panel */
+.mwadmin-shell:not(.mwadmin-theme-dark) .mwadmin-export-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 7px 16px;
+    min-height: 34px;
+    box-sizing: border-box;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    line-height: 1.2;
+    color: #14532d;
+    background: linear-gradient(180deg, #f0fdf4 0%, #dcfce7 100%);
+    border: 1px solid #86efac;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(20, 83, 45, 0.08);
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease,
+        box-shadow 0.15s ease,
+        color 0.15s ease;
+}
+
+.mwadmin-shell:not(.mwadmin-theme-dark) .mwadmin-export-btn::before {
+    content: "";
+    flex-shrink: 0;
+    width: 17px;
+    height: 17px;
+    background: currentColor;
+    opacity: 0.92;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M4 4h16v4H4V4zm0 6h7v4H4v-4zm9 0h7v4h-7v-4zM4 16h7v4H4v-4zm9 0h7v4h-7v-4z'/%3E%3C/svg%3E")
+        center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M4 4h16v4H4V4zm0 6h7v4H4v-4zm9 0h7v4h-7v-4zM4 16h7v4H4v-4zm9 0h7v4h-7v-4z'/%3E%3C/svg%3E")
+        center / contain no-repeat;
+}
+
+.mwadmin-shell:not(.mwadmin-theme-dark) .mwadmin-export-btn:hover {
+    color: #052e16;
+    background: linear-gradient(180deg, #dcfce7 0%, #bbf7d0 100%);
+    border-color: #4ade80;
+    box-shadow: 0 2px 6px rgba(20, 83, 45, 0.12);
+}
+
+.mwadmin-shell:not(.mwadmin-theme-dark) .mwadmin-export-btn:focus-visible {
+    outline: 2px solid #22c55e;
+    outline-offset: 2px;
+}
+
+.mwadmin-shell:not(.mwadmin-theme-dark) .mwadmin-export-btn:active {
+    transform: translateY(1px);
+    box-shadow: 0 1px 2px rgba(20, 83, 45, 0.1);
 }
 
 .mwadmin-shell:not(.mwadmin-theme-dark) .mwadmin-select {
