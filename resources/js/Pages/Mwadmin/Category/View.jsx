@@ -2,6 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import MwadminLayout from '../../../Components/Mwadmin/Layout';
+import { MwadminErrorBanner } from '../../../Components/Mwadmin/MwadminMotionFeedback';
 
 export default function CategoryView({ authUser = {}, categoryId }) {
     const [loading, setLoading] = useState(true);
@@ -37,7 +38,7 @@ export default function CategoryView({ authUser = {}, categoryId }) {
                 </div>
                 <h1 className="mwadmin-title">View Category</h1>
                 <section className="mwadmin-panel mwadmin-form-panel">
-                    {error && <div className="mwadmin-error">{error}</div>}
+                    <MwadminErrorBanner message={error} />
                     {loading ? (
                         <div>Loading...</div>
                     ) : item ? (

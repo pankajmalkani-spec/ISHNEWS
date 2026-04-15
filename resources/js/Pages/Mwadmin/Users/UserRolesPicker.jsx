@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { MwadminFieldError } from '../../../Components/Mwadmin/MwadminMotionFeedback';
 
 /**
  * Multi-select styled like a dropdown: pills inside the field, list opens below (no native listbox).
@@ -135,7 +136,7 @@ export default function UserRolesPicker({
                     )}
                 </ul>
             )}
-            {fieldError && <div className="mwadmin-field-error">{fieldError}</div>}
+            <MwadminFieldError message={fieldError} />
         </div>
     );
 }

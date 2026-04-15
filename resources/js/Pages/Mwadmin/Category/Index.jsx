@@ -6,9 +6,11 @@ import MwadminLayout from '../../../Components/Mwadmin/Layout';
 import MwadminActionsDropdown from '../../../Components/Mwadmin/MwadminActionsDropdown';
 import MwadminStatusBadge from '../../../Components/Mwadmin/MwadminStatusBadge';
 import MwadminThemedAgGrid from '../../../Components/Mwadmin/MwadminThemedAgGrid';
+import { useClassicDialog } from '../../../Components/Mwadmin/ClassicDialog';
 import { canAdd, canDelete, canEdit, canViewDetail } from '../../../lib/mwadminPermissions';
 
 export default function CategoryIndex({ authUser = {} }) {
+    const dialog = useClassicDialog();
     const [rows, setRows] = useState([]);
     const [loading, setLoading] = useState(false);
     const [search, setSearch] = useState('');
@@ -61,11 +63,24 @@ export default function CategoryIndex({ authUser = {} }) {
 
     const deleteRow = useCallback(
         async (id) => {
-            if (!window.confirm('Mark this category as inactive? It will not be removed from the database.')) return;
-            await axios.delete(`/api/mwadmin/categories/${id}`);
-            await loadData();
+            if (
+                !(await dialog.confirm(
+                    'Mark this category as inactive? It will not be removed from the database.',
+                    'Deactivate Category'
+                ))
+            ) {
+                return;
+            }
+            try {
+                await axios.delete(`/api/mwadmin/categories/${id}`);
+                dialog.toast('Category has been marked as inactive.', 'success');
+                await loadData();
+            } catch (err) {
+                const msg = err?.response?.data?.message || 'Unable to deactivate category.';
+                dialog.toast(msg, 'error');
+            }
         },
-        [loadData]
+        [dialog, loadData]
     );
 
     const handleAction = useCallback(

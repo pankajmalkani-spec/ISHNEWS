@@ -5,6 +5,7 @@ import MwadminImageEditorModal from '../../../Components/Mwadmin/MwadminImageEdi
 import MwadminLayout from '../../../Components/Mwadmin/Layout';
 import MwadminStatusBadge from '../../../Components/Mwadmin/MwadminStatusBadge';
 import { useClassicDialog } from '../../../Components/Mwadmin/ClassicDialog';
+import { MwadminErrorBanner, MwadminFieldError } from '../../../Components/Mwadmin/MwadminMotionFeedback';
 
 const BANNER_OUT = { w: 1280, h: 360 };
 const BOX_OUT = { w: 640, h: 640 };
@@ -228,7 +229,7 @@ export default function SubcategoryEdit({ authUser = {}, subcategoryId }) {
                     <h1 className="mwadmin-title">Edit Sub-Category</h1>
 
                     <section className="mwadmin-panel mwadmin-form-panel">
-                        {error && <div className="mwadmin-error">{error}</div>}
+                        <MwadminErrorBanner message={error} />
                         {loading ? (
                             <div>Loading...</div>
                         ) : (
@@ -279,7 +280,7 @@ export default function SubcategoryEdit({ authUser = {}, subcategoryId }) {
                                         onChange={(e) => setForm((f) => ({ ...f, sort: e.target.value }))}
                                         onBlur={(e) => verifySort(e.target.value)}
                                     />
-                                    {sortError && <div className="mwadmin-field-error">{sortError}</div>}
+                                    <MwadminFieldError message={sortError} />
                                 </div>
 
                                 <div className="mwadmin-form-grid-full mwadmin-category-images-row">

@@ -68,11 +68,12 @@ export default function UsersIndex({ authUser = {} }) {
         async (id) => {
             const ok = await dialog.confirm(
                 'Mark this user as inactive? The account will stay in the database and can be reactivated from Edit.',
-                'Please Confirm'
+                'Deactivate User'
             );
             if (!ok) return;
             try {
                 await axios.delete(`/api/mwadmin/users/${id}`);
+                dialog.toast('User has been marked as inactive.', 'success');
                 await loadData();
             } catch (err) {
                 await dialog.alert(formatApiErrors(err), 'Unable to deactivate');

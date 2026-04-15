@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import MwadminLayout from '../../../Components/Mwadmin/Layout';
 import MwadminStatusBadge from '../../../Components/Mwadmin/MwadminStatusBadge';
 import { useClassicDialog } from '../../../Components/Mwadmin/ClassicDialog';
+import { MwadminErrorBanner } from '../../../Components/Mwadmin/MwadminMotionFeedback';
 
 const NAME_MAX = 50;
 const NOTE_MAX = 1000;
@@ -113,7 +114,7 @@ export default function SponsorCategoryEdit({ authUser = {}, sponsorcategoryId }
                     </div>
                     <h1 className="mwadmin-title">Edit Sponsor Category</h1>
                     <section className="mwadmin-panel mwadmin-form-panel">
-                        {loadError && <div className="mwadmin-error">{loadError}</div>}
+                        <MwadminErrorBanner message={loadError} />
                         {loading ? (
                             <div>Loading...</div>
                         ) : (

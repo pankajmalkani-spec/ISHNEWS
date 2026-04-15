@@ -5,6 +5,7 @@ import MwadminImageEditorModal from '../../../Components/Mwadmin/MwadminImageEdi
 import MwadminLayout from '../../../Components/Mwadmin/Layout';
 import MwadminStatusBadge from '../../../Components/Mwadmin/MwadminStatusBadge';
 import { useClassicDialog } from '../../../Components/Mwadmin/ClassicDialog';
+import { MwadminFieldError } from '../../../Components/Mwadmin/MwadminMotionFeedback';
 
 const BANNER_OUT = { w: 1280, h: 360 };
 const BOX_OUT = { w: 640, h: 640 };
@@ -235,7 +236,7 @@ export default function SubcategoryCreate({ authUser = {} }) {
                                     onChange={(e) => setForm((f) => ({ ...f, sort: e.target.value }))}
                                     onBlur={(e) => verifySort(e.target.value)}
                                 />
-                                {sortError && <div className="mwadmin-field-error">{sortError}</div>}
+                                <MwadminFieldError message={sortError} />
                             </div>
 
                             <div className="mwadmin-form-grid-full mwadmin-category-images-row">

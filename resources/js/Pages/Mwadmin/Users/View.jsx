@@ -1,4 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
+import { MwadminErrorBanner } from '../../../Components/Mwadmin/MwadminMotionFeedback';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import MwadminLayout from '../../../Components/Mwadmin/Layout';
@@ -38,7 +39,7 @@ export default function UsersView({ authUser = {}, userId }) {
                     </div>
                     <h1 className="mwadmin-title">View User</h1>
                     <section className="mwadmin-panel mwadmin-form-panel">
-                        {error && <div className="mwadmin-error">{error}</div>}
+                        <MwadminErrorBanner message={error} />
                         {loading ? <div>Loading...</div> : item ? (
                             <div className="mwadmin-form-grid">
                                 <div><label>Salutation</label><input value={item.salutation || ''} readOnly /></div>

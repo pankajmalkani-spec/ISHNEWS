@@ -5,6 +5,7 @@ import MwadminImageEditorModal from '../../../Components/Mwadmin/MwadminImageEdi
 import MwadminLayout from '../../../Components/Mwadmin/Layout';
 import MwadminStatusBadge from '../../../Components/Mwadmin/MwadminStatusBadge';
 import { useClassicDialog } from '../../../Components/Mwadmin/ClassicDialog';
+import { MwadminErrorBanner, MwadminFieldError } from '../../../Components/Mwadmin/MwadminMotionFeedback';
 import {
     PROFILE_EDITOR_OUT,
     apiErrorsToFieldMap,
@@ -156,7 +157,7 @@ export default function UsersEdit({ authUser = {}, userId }) {
                     </div>
                     <h1 className="mwadmin-title">Edit User</h1>
                     <section className="mwadmin-panel mwadmin-form-panel">
-                        {error && <div className="mwadmin-error">{error}</div>}
+                        <MwadminErrorBanner message={error} />
                         {loading ? (
                             <div>Loading...</div>
                         ) : (
@@ -170,7 +171,7 @@ export default function UsersEdit({ authUser = {}, userId }) {
                                             setForm((f) => ({ ...f, salutation: e.target.value }));
                                         }}
                                     />
-                                    {fieldErrors.salutation && <div className="mwadmin-field-error">{fieldErrors.salutation}</div>}
+                                    <MwadminFieldError message={fieldErrors.salutation} />
                                 </div>
                                 <div>
                                     <label>First Name *</label>
@@ -181,7 +182,7 @@ export default function UsersEdit({ authUser = {}, userId }) {
                                             setForm((f) => ({ ...f, first_name: e.target.value }));
                                         }}
                                     />
-                                    {fieldErrors.first_name && <div className="mwadmin-field-error">{fieldErrors.first_name}</div>}
+                                    <MwadminFieldError message={fieldErrors.first_name} />
                                 </div>
                                 <div>
                                     <label>Last Name *</label>
@@ -192,7 +193,7 @@ export default function UsersEdit({ authUser = {}, userId }) {
                                             setForm((f) => ({ ...f, last_name: e.target.value }));
                                         }}
                                     />
-                                    {fieldErrors.last_name && <div className="mwadmin-field-error">{fieldErrors.last_name}</div>}
+                                    <MwadminFieldError message={fieldErrors.last_name} />
                                 </div>
                                 <div>
                                     <label>User Name *</label>
@@ -203,7 +204,7 @@ export default function UsersEdit({ authUser = {}, userId }) {
                                             setForm((f) => ({ ...f, username: e.target.value }));
                                         }}
                                     />
-                                    {fieldErrors.username && <div className="mwadmin-field-error">{fieldErrors.username}</div>}
+                                    <MwadminFieldError message={fieldErrors.username} />
                                 </div>
                                 <div>
                                     <label>Email *</label>
@@ -215,7 +216,7 @@ export default function UsersEdit({ authUser = {}, userId }) {
                                             setForm((f) => ({ ...f, email: e.target.value }));
                                         }}
                                     />
-                                    {fieldErrors.email && <div className="mwadmin-field-error">{fieldErrors.email}</div>}
+                                    <MwadminFieldError message={fieldErrors.email} />
                                 </div>
                                 <div>
                                     <label>Designation</label>
@@ -233,9 +234,7 @@ export default function UsersEdit({ authUser = {}, userId }) {
                                             </option>
                                         ))}
                                     </select>
-                                    {fieldErrors.designation && (
-                                        <div className="mwadmin-field-error">{fieldErrors.designation}</div>
-                                    )}
+                                    <MwadminFieldError message={fieldErrors.designation} />
                                 </div>
                                 <div>
                                     <label>P2D Initials</label>
@@ -246,9 +245,7 @@ export default function UsersEdit({ authUser = {}, userId }) {
                                             setForm((f) => ({ ...f, p2d_intials: e.target.value.toUpperCase() }));
                                         }}
                                     />
-                                    {fieldErrors.p2d_intials && (
-                                        <div className="mwadmin-field-error">{fieldErrors.p2d_intials}</div>
-                                    )}
+                                    <MwadminFieldError message={fieldErrors.p2d_intials} />
                                 </div>
                                 <div>
                                     <label>Status</label>
@@ -265,7 +262,7 @@ export default function UsersEdit({ authUser = {}, userId }) {
                                         </select>
                                         <MwadminStatusBadge value={form.status === '1' ? 1 : 0} />
                                     </div>
-                                    {fieldErrors.status && <div className="mwadmin-field-error">{fieldErrors.status}</div>}
+                                    <MwadminFieldError message={fieldErrors.status} />
                                 </div>
 
                                 <div className="mwadmin-form-grid-full mwadmin-user-profile-photo-row">
@@ -294,7 +291,7 @@ export default function UsersEdit({ authUser = {}, userId }) {
                                             )}
                                         </div>
                                     </div>
-                                    {fieldErrors.profile_img && <div className="mwadmin-field-error">{fieldErrors.profile_img}</div>}
+                                    <MwadminFieldError message={fieldErrors.profile_img} />
                                 </div>
 
                                 <div className="mwadmin-form-grid-full">

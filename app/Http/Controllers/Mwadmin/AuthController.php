@@ -70,6 +70,7 @@ class AuthController extends Controller
         return response()->json([
             'ok' => true,
             'user' => $this->authUserFromSession($session),
+            'intended' => route($this->intendedRouteNameAfterLogin($session)),
         ]);
     }
 
