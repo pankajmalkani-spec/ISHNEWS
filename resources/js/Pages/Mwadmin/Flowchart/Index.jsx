@@ -50,6 +50,10 @@ export default function FlowchartIndex({ authUser = {} }) {
                     setRows(data.data || []);
                     setMeta(data.meta || { current_page: 1, last_page: 1, total: 0 });
                 }
+            } catch (err) {
+                if (!canceled) {
+                    dialog.toast(err?.response?.data?.message || 'Unable to load flow charts.', 'error');
+                }
             } finally {
                 if (!canceled) setLoading(false);
             }

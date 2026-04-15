@@ -87,7 +87,7 @@ export function ClassicDialogProvider({ children }) {
 
     const backdropDur = reduceMotion ? 0.01 : 0.2;
     const cardDur = reduceMotion ? 0.01 : 0.32;
-    const toastDur = reduceMotion ? 0.01 : 0.26;
+    const toastDur = reduceMotion ? 0.01 : 0.18;
 
     return (
         <ClassicDialogContext.Provider value={api}>
@@ -97,16 +97,15 @@ export function ClassicDialogProvider({ children }) {
                     {toasts.map((t) => (
                         <motion.div
                             key={t.id}
-                            layout
                             role="status"
                             className={`mwadmin-toast mwadmin-toast--${t.type}`}
-                            initial={reduceMotion ? false : { opacity: 0, x: 28, scale: 0.94 }}
-                            animate={{ opacity: 1, x: 0, scale: 1 }}
-                            exit={reduceMotion ? { opacity: 0 } : { opacity: 0, x: 20, scale: 0.96 }}
+                            initial={reduceMotion ? false : { opacity: 0, y: 12, scale: 0.97 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 8, scale: 0.98 }}
                             transition={
                                 reduceMotion
                                     ? { duration: toastDur }
-                                    : { type: 'spring', stiffness: 420, damping: 32 }
+                                    : { type: 'spring', stiffness: 520, damping: 34 }
                             }
                         >
                             {t.message}

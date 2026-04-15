@@ -5,7 +5,7 @@ import MwadminImageEditorModal from '../../../Components/Mwadmin/MwadminImageEdi
 import MwadminLayout from '../../../Components/Mwadmin/Layout';
 import MwadminStatusBadge from '../../../Components/Mwadmin/MwadminStatusBadge';
 import { useClassicDialog } from '../../../Components/Mwadmin/ClassicDialog';
-import { MwadminErrorBanner, MwadminFieldError } from '../../../Components/Mwadmin/MwadminMotionFeedback';
+import { MwadminFieldError } from '../../../Components/Mwadmin/MwadminMotionFeedback';
 
 const BANNER_OUT = { w: 1280, h: 360 };
 const BOX_OUT = { w: 640, h: 640 };
@@ -29,7 +29,6 @@ export default function SubcategoryEdit({ authUser = {}, subcategoryId }) {
     const dialog = useClassicDialog();
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
     const [form, setForm] = useState({
         subcat_code: '',
         name: '',
@@ -48,7 +47,7 @@ export default function SubcategoryEdit({ authUser = {}, subcategoryId }) {
     const [saving, setSaving] = useState(false);
 
     const notify = useCallback(
-        (message, title = 'Validation') => dialog.alert(message, title),
+        (message) => dialog.toast(message, 'error'),
         [dialog]
     );
 
@@ -87,8 +86,8 @@ export default function SubcategoryEdit({ authUser = {}, subcategoryId }) {
                 });
                 setBannerPreview(item.banner_img_url || '');
                 setBoxPreview(item.box_img_url || '');
-            } catch {
-                if (!canceled) setError('Unable to load sub-category.');
+            } catch (err) {
+                if (!canceled) dialog.toast(err?.response?.data?.message || 'Unable to load sub-category.', 'error');
             } finally {
                 if (!canceled) setLoading(false);
             }
@@ -97,7 +96,7 @@ export default function SubcategoryEdit({ authUser = {}, subcategoryId }) {
         return () => {
             canceled = true;
         };
-    }, [subcategoryId]);
+    }, [subcategoryId, dialog]);
 
     const verifySort = async (value) => {
         setSortError('');
@@ -110,7 +109,7 @@ export default function SubcategoryEdit({ authUser = {}, subcategoryId }) {
 
     const setBannerFromFile = (file) => {
         if (file.size > MAX_IMAGE_BYTES) {
-            notify(`Banner image must be ${MAX_IMAGE_BYTES / 1024 / 1024}MB or smaller.`, 'Validation');
+            notify(`Banner image must be ${MAX_IMAGE_BYTES / 1024 / 1024}MB or smaller.`);
             return;
         }
         setBannerFile(file);
@@ -122,7 +121,7 @@ export default function SubcategoryEdit({ authUser = {}, subcategoryId }) {
 
     const setBoxFromFile = (file) => {
         if (file.size > MAX_IMAGE_BYTES) {
-            notify(`Box image must be ${MAX_IMAGE_BYTES / 1024 / 1024}MB or smaller.`, 'Validation');
+            notify(`Box image must be ${MAX_IMAGE_BYTES / 1024 / 1024}MB or smaller.`);
             return;
         }
         setBoxFile(file);
@@ -132,52 +131,52 @@ export default function SubcategoryEdit({ authUser = {}, subcategoryId }) {
         });
     };
 
-    const validateClient = async () => {
+    const validateClient = () => {
         const code = form.subcat_code.trim();
         const name = form.name.trim();
         if (!code) {
-            await notify('Sub category code is required.', 'Validation');
+            notify('Sub category code is required.');
             return false;
         }
         if (code.length > 25) {
-            await notify('Sub category code must be at most 25 characters.', 'Validation');
+            notify('Sub category code must be at most 25 characters.');
             return false;
         }
         if (!name) {
-            await notify('Sub category name is required.', 'Validation');
+            notify('Sub category name is required.');
             return false;
         }
         if (name.length > 250) {
-            await notify('Sub category name must be at most 250 characters.', 'Validation');
+            notify('Sub category name must be at most 250 characters.');
             return false;
         }
         if (!NAME_RE.test(name)) {
-            await notify('Sub category name may only contain letters, spaces, underscore, hyphen, and period.', 'Validation');
+            notify('Sub category name may only contain letters, spaces, underscore, hyphen, and period.');
             return false;
         }
         if (!form.category_id) {
-            await notify('Please select a category.', 'Validation');
+            notify('Please select a category.');
             return false;
         }
         if (!form.color || !/^#[0-9A-Fa-f]{6}$/.test(form.color)) {
-            await notify('Please choose a valid color.', 'Validation');
+            notify('Please choose a valid color.');
             return false;
         }
         if (form.sort === '' || form.sort === null) {
-            await notify('Sort order is required.', 'Validation');
+            notify('Sort order is required.');
             return false;
         }
         const sortNum = Number(form.sort);
         if (!Number.isInteger(sortNum) || sortNum < 0) {
-            await notify('Sort must be a non-negative whole number.', 'Validation');
+            notify('Sort must be a non-negative whole number.');
             return false;
         }
         if (sortError) {
-            await notify(sortError, 'Validation');
+            notify(sortError);
             return false;
         }
         if (form.status !== '0' && form.status !== '1') {
-            await notify('Please choose Active or In-Active for status.', 'Validation');
+            notify('Please choose Active or In-Active for status.');
             return false;
         }
         return true;
@@ -185,8 +184,7 @@ export default function SubcategoryEdit({ authUser = {}, subcategoryId }) {
 
     const onSubmit = async (e) => {
         e.preventDefault();
-        setError('');
-        if (!(await validateClient())) return;
+        if (!validateClient()) return;
 
         setSaving(true);
         try {
@@ -205,10 +203,10 @@ export default function SubcategoryEdit({ authUser = {}, subcategoryId }) {
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
 
-            await dialog.alertTimed('Sub-Category updated successfully.', 'Success', 2000);
-            window.location.assign('/mwadmin/subcategory');
+            dialog.toast('Sub-Category updated successfully.', 'success');
+            window.setTimeout(() => window.location.assign('/mwadmin/subcategory'), 1200);
         } catch (err) {
-            await dialog.alert(formatApiErrors(err), 'Validation');
+            dialog.toast(formatApiErrors(err), 'error');
         } finally {
             setSaving(false);
         }
@@ -229,7 +227,6 @@ export default function SubcategoryEdit({ authUser = {}, subcategoryId }) {
                     <h1 className="mwadmin-title">Edit Sub-Category</h1>
 
                     <section className="mwadmin-panel mwadmin-form-panel">
-                        <MwadminErrorBanner message={error} />
                         {loading ? (
                             <div>Loading...</div>
                         ) : (

@@ -2,8 +2,10 @@ import { Head, Link } from '@inertiajs/react';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import MwadminLayout from '../../../Components/Mwadmin/Layout';
+import { useClassicDialog } from '../../../Components/Mwadmin/ClassicDialog';
 
 export default function AdvertisementView({ authUser = {}, advertisementId }) {
+    const dialog = useClassicDialog();
     const [row, setRow] = useState(null);
     const [load, setLoad] = useState(true);
 
@@ -13,6 +15,8 @@ export default function AdvertisementView({ authUser = {}, advertisementId }) {
             try {
                 const { data } = await axios.get(`/api/mwadmin/advertisements/${advertisementId}`);
                 if (!c) setRow(data.data);
+            } catch (err) {
+                if (!c) dialog.toast(err?.response?.data?.message || 'Unable to load advertisement.', 'error');
             } finally {
                 if (!c) setLoad(false);
             }
@@ -20,7 +24,7 @@ export default function AdvertisementView({ authUser = {}, advertisementId }) {
         return () => {
             c = true;
         };
-    }, [advertisementId]);
+    }, [advertisementId, dialog]);
 
     if (load || !row) {
         return (

@@ -26,28 +26,25 @@ export default function SponsorCategoryCreate({ authUser = {} }) {
     const [form, setForm] = useState({ name: '', note: '', status: '1' });
     const [saving, setSaving] = useState(false);
 
-    const notify = useCallback(
-        (message, title = 'Validation') => dialog.alert(message, title),
-        [dialog]
-    );
+    const notify = useCallback((message) => dialog.toast(message, 'error'), [dialog]);
 
-    const validateClient = async () => {
+    const validateClient = () => {
         const name = form.name.trim();
         if (!name) {
-            await notify('Sponsor category name is required.', 'Validation');
+            notify('Sponsor category name is required.');
             return false;
         }
         if (name.length > NAME_MAX) {
-            await notify(`Name must be at most ${NAME_MAX} characters.`, 'Validation');
+            notify(`Name must be at most ${NAME_MAX} characters.`);
             return false;
         }
         const note = form.note ?? '';
         if (note.length > NOTE_MAX) {
-            await notify(`Note(s) must be at most ${NOTE_MAX} characters.`, 'Validation');
+            notify(`Note(s) must be at most ${NOTE_MAX} characters.`);
             return false;
         }
         if (form.status !== '0' && form.status !== '1') {
-            await notify('Please choose Active or In-Active for status.', 'Validation');
+            notify('Please choose Active or In-Active for status.');
             return false;
         }
         return true;
@@ -55,7 +52,7 @@ export default function SponsorCategoryCreate({ authUser = {} }) {
 
     const onSubmit = async (e) => {
         e.preventDefault();
-        if (!(await validateClient())) return;
+        if (!validateClient()) return;
 
         setSaving(true);
         try {
@@ -64,10 +61,10 @@ export default function SponsorCategoryCreate({ authUser = {} }) {
                 note: form.note ?? '',
                 status: form.status,
             });
-            await dialog.alertTimed('Sponsor Category created successfully.', 'Success', 2000);
-            window.location.assign('/mwadmin/sponsorcategory');
+            dialog.toast('Sponsor Category created successfully.', 'success');
+            window.setTimeout(() => window.location.assign('/mwadmin/sponsorcategory'), 1200);
         } catch (err) {
-            await dialog.alert(formatApiErrors(err), 'Validation');
+            dialog.toast(formatApiErrors(err), 'error');
         } finally {
             setSaving(false);
         }

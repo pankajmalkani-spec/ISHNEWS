@@ -47,6 +47,8 @@ export default function RolesIndex({ authUser = {} }) {
             const { data } = await axios.get('/api/mwadmin/roles', { params: query });
             setRows(data.data || []);
             setMeta(data.meta || { current_page: 1, last_page: 1, total: 0 });
+        } catch (err) {
+            dialog.toast(err?.response?.data?.message || 'Unable to load roles.', 'error');
         } finally {
             setLoading(false);
         }

@@ -52,10 +52,12 @@ export default function CategoryIndex({ authUser = {} }) {
             const { data } = await axios.get('/api/mwadmin/categories', { params: query });
             setRows(data.data || []);
             setMeta(data.meta || { current_page: 1, last_page: 1, total: 0 });
+        } catch (err) {
+            dialog.toast(err?.response?.data?.message || 'Unable to load categories.', 'error');
         } finally {
             setLoading(false);
         }
-    }, [query]);
+    }, [query, dialog]);
 
     useEffect(() => {
         loadData();

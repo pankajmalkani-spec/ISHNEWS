@@ -1025,15 +1025,15 @@
 }
 
 .mwadmin-pagebar {
-    animation: mwadminModuleFadeIn 180ms ease-out both;
+    animation: mwadminModuleFadeIn 90ms ease-out both;
 }
 
 .mwadmin-title {
-    animation: mwadminModuleFadeIn 220ms ease-out both;
+    animation: mwadminModuleFadeIn 90ms ease-out both;
 }
 
 .mwadmin-panel {
-    animation: mwadminModuleFadeIn 260ms ease-out both;
+    animation: mwadminModuleFadeIn 90ms ease-out both;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1058,12 +1058,14 @@
     margin: 0 0 8px;
     font-size: 18px;
     color: #4b3a2d;
+    text-align: center;
 }
 
 .mwadmin-modal-card p {
     margin: 0 0 12px;
     font-size: 13px;
     line-height: 1.5;
+    text-align: center;
 }
 
 .mwadmin-modal-input {
@@ -1568,6 +1570,7 @@
     white-space: pre-wrap;
     word-break: break-word;
     line-height: 1.45;
+    text-align: center;
 }
 
 .mwadmin-modal-card--timed {
@@ -1988,28 +1991,30 @@
     color: #64748b;
 }
 
-/* Toast notifications (ClassicDialog.toast) */
+/* Toast notifications (ClassicDialog.toast) — centered validation / feedback */
 .mwadmin-toast-stack {
     position: fixed;
-    right: 16px;
-    bottom: 16px;
+    inset: 0;
     z-index: 10050;
     display: flex;
     flex-direction: column;
-    align-items: flex-end;
+    align-items: center;
+    justify-content: center;
     gap: 8px;
     pointer-events: none;
-    max-width: min(420px, calc(100vw - 32px));
+    padding: 16px;
 }
 
 .mwadmin-toast {
     pointer-events: auto;
     margin: 0;
-    padding: 10px 14px;
-    border-radius: 4px;
-    font-size: 13px;
-    line-height: 1.35;
-    box-shadow: 0 4px 18px rgba(15, 23, 42, 0.18);
+    width: min(460px, calc(100vw - 32px));
+    padding: 14px 18px;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.4;
+    text-align: center;
+    box-shadow: 0 18px 40px rgba(45, 31, 18, 0.22);
     border: 1px solid transparent;
     /* Motion (ClassicDialog) handles enter/exit */
 }
@@ -2048,6 +2053,12 @@
     background: rgba(30, 41, 59, 0.95);
     border-color: #475569;
     color: #e2e8f0;
+}
+
+/* Inline field errors + load/API banners — centered copy */
+.mwadmin-field-error,
+.mwadmin-error {
+    text-align: center;
 }
 
 /* Role create/edit — permissions matrix + section */

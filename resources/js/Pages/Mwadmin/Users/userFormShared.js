@@ -18,25 +18,10 @@ export function formatApiErrors(err) {
     return err?.message || 'Request failed.';
 }
 
-/** Map Laravel validation keys to one error string per logical field */
-export function apiErrorsToFieldMap(err) {
-    const d = err?.response?.data;
-    if (!d?.errors || typeof d.errors !== 'object') return {};
-    const map = {};
-    for (const [key, val] of Object.entries(d.errors)) {
-        const logical =
-            key.startsWith('role_ids')
-                ? 'role_ids'
-                : key.startsWith('profile_img')
-                  ? 'profile_img'
-                  : key === 'password_confirmation'
-                    ? 'confirm_password'
-                    : key;
-        const msgs = Array.isArray(val) ? val : [String(val)];
-        const line = msgs.join(' ');
-        map[logical] = map[logical] ? `${map[logical]} ${line}` : line;
-    }
-    return map;
+/** First client validation message for centered error toast (stable order follows buildUserFieldErrors). */
+export function firstClientValidationMessage(errs) {
+    const msg = Object.values(errs)[0];
+    return msg || 'Please check the form.';
 }
 
 export function buildUserFieldErrors(
@@ -83,13 +68,4 @@ export function buildUserFieldErrors(
         e.role_ids = 'Select at least one role.';
     }
     return e;
-}
-
-export function clearFieldError(setFieldErrors, key) {
-    setFieldErrors((prev) => {
-        if (!(key in prev)) return prev;
-        const next = { ...prev };
-        delete next[key];
-        return next;
-    });
 }

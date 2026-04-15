@@ -46,10 +46,12 @@ export default function SponsorCategoryIndex({ authUser = {} }) {
             const { data } = await axios.get('/api/mwadmin/sponsorcategories', { params: query });
             setRows(data.data || []);
             setMeta(data.meta || { current_page: 1, last_page: 1, total: 0 });
+        } catch (err) {
+            dialog.toast(err?.response?.data?.message || 'Unable to load sponsor categories.', 'error');
         } finally {
             setLoading(false);
         }
-    }, [query]);
+    }, [query, dialog]);
 
     useEffect(() => {
         loadData();

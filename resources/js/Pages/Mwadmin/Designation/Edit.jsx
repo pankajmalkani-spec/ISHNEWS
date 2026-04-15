@@ -22,6 +22,8 @@ export default function DesignationEdit({ authUser = {}, designationId }) {
                     description: r.description || '',
                     status: String(r.status ?? 1),
                 });
+            } catch (err) {
+                if (!c) dialog.toast(err?.response?.data?.message || 'Unable to load designation.', 'error');
             } finally {
                 if (!c) setLoad(false);
             }
@@ -42,6 +44,8 @@ export default function DesignationEdit({ authUser = {}, designationId }) {
             await axios.put(`/api/mwadmin/designations/${designationId}`, form);
             dialog.toast('Designation updated successfully.', 'success');
             window.setTimeout(() => window.location.assign('/mwadmin/designation'), 1500);
+        } catch (err) {
+            dialog.toast(err?.response?.data?.message || 'Unable to update designation.', 'error');
         } finally {
             setSaving(false);
         }

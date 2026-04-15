@@ -121,7 +121,7 @@ export default function MwadminLayout({ authUser = {}, activeMenu = 'dashboard',
             moduleVisitStarted.current = false;
             return;
         }
-        const ms = reduceMotion ? 40 : 260;
+        const ms = reduceMotion ? 24 : 140;
         const t = window.setTimeout(() => {
             if (moduleVisitStarted.current) return;
             moduleVisitStarted.current = true;
@@ -351,7 +351,7 @@ export default function MwadminLayout({ authUser = {}, activeMenu = 'dashboard',
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{
-                            duration: reduceMotion ? 0.01 : 0.22,
+                            duration: reduceMotion ? 0.01 : 0.14,
                             ease: [0.22, 1, 0.36, 1],
                         }}
                     >
@@ -362,7 +362,7 @@ export default function MwadminLayout({ authUser = {}, activeMenu = 'dashboard',
                             transition={
                                 reduceMotion
                                     ? { duration: 0.01 }
-                                    : { delay: 0.03, duration: 0.24, ease: [0.22, 1, 0.36, 1] }
+                                    : { delay: 0.01, duration: 0.16, ease: [0.22, 1, 0.36, 1] }
                             }
                         >
                             <span className="mwadmin-signing-out-text">Opening {openingModule.label}…</span>

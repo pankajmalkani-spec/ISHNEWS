@@ -20,6 +20,8 @@ export default function DesignationCreate({ authUser = {} }) {
             await axios.post('/api/mwadmin/designations', form);
             dialog.toast('Designation created successfully.', 'success');
             window.setTimeout(() => window.location.assign('/mwadmin/designation'), 1500);
+        } catch (err) {
+            dialog.toast(err?.response?.data?.message || 'Unable to create designation.', 'error');
         } finally {
             setSaving(false);
         }

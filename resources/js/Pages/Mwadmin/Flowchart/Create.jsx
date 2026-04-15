@@ -77,12 +77,8 @@ export default function FlowchartCreate({ authUser = {} }) {
 
     const onSubmit = async (e) => {
         e.preventDefault();
-        if (!form.name.trim()) {
-            dialog.toast('Name is required.', 'error');
-            return;
-        }
-        if (!form.defined_by) {
-            dialog.toast('Defined By is required.', 'error');
+        if (!form.name.trim() || !form.defined_by) {
+            dialog.toast('Name and Defined By are required.', 'error');
             return;
         }
         if (activities.length < 1) {

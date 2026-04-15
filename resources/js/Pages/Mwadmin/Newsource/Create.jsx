@@ -20,6 +20,8 @@ export default function NewsourceCreate({ authUser = {} }) {
             await axios.post('/api/mwadmin/newsources', form);
             dialog.toast('News Source created successfully.', 'success');
             window.setTimeout(() => window.location.assign('/mwadmin/newsource'), 1500);
+        } catch (err) {
+            dialog.toast(err?.response?.data?.message || 'Unable to create news source.', 'error');
         } finally {
             setSaving(false);
         }

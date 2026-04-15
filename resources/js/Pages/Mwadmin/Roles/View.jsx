@@ -4,8 +4,10 @@ import { useEffect, useState } from 'react';
 import MwadminLayout from '../../../Components/Mwadmin/Layout';
 import { buildDefaultPermissions } from '../../../Components/Mwadmin/RolePermissionsMatrix';
 import RolePermissionsMatrix from '../../../Components/Mwadmin/RolePermissionsMatrix';
+import { useClassicDialog } from '../../../Components/Mwadmin/ClassicDialog';
 
 export default function RolesView({ authUser = {}, roleId }) {
+    const dialog = useClassicDialog();
     const [loading, setLoading] = useState(true);
     const [modules, setModules] = useState([]);
     const [permissions, setPermissions] = useState({});
@@ -33,6 +35,10 @@ export default function RolesView({ authUser = {}, roleId }) {
                     return acc;
                 }, {});
                 setPermissions(buildDefaultPermissions(mods, existingMap));
+            } catch (err) {
+                if (!canceled) {
+                    dialog.toast(err?.response?.data?.message || 'Unable to load role.', 'error');
+                }
             } finally {
                 if (!canceled) setLoading(false);
             }
@@ -41,7 +47,7 @@ export default function RolesView({ authUser = {}, roleId }) {
         return () => {
             canceled = true;
         };
-    }, [roleId]);
+    }, [roleId, dialog]);
 
     return (
         <>

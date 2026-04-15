@@ -60,6 +60,8 @@ export default function SponsorEdit({ authUser = {}, sponsorId }) {
                     logo: null,
                 });
                 setLogoUrl(r.logo_url || '');
+            } catch (err) {
+                if (!c) dialog.toast(err?.response?.data?.message || 'Unable to load sponsor.', 'error');
             } finally {
                 if (!c) setLoad(false);
             }

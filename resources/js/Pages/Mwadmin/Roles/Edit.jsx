@@ -50,6 +50,10 @@ export default function RolesEdit({ authUser = {}, roleId }) {
                     return acc;
                 }, {});
                 setPermissions(buildDefaultPermissions(mods, existingMap));
+            } catch (err) {
+                if (!canceled) {
+                    dialog.toast(err?.response?.data?.message || 'Unable to load role.', 'error');
+                }
             } finally {
                 if (!canceled) setLoading(false);
             }
@@ -58,7 +62,7 @@ export default function RolesEdit({ authUser = {}, roleId }) {
         return () => {
             canceled = true;
         };
-    }, [roleId]);
+    }, [roleId, dialog]);
 
     const permissionPayload = useMemo(() => Object.values(permissions), [permissions]);
 

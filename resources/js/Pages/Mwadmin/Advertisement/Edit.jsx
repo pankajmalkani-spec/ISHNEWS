@@ -57,6 +57,8 @@ export default function AdvertisementEdit({ authUser = {}, advertisementId }) {
                     img: null,
                 });
                 setImageUrl(r.image_url || '');
+            } catch (err) {
+                if (!c) dialog.toast(err?.response?.data?.message || 'Unable to load advertisement.', 'error');
             } finally {
                 if (!c) setLoad(false);
             }

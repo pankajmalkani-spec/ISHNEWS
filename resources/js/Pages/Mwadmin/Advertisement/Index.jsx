@@ -50,6 +50,10 @@ export default function AdvertisementIndex({ authUser = {} }) {
                     setRows(data.data || []);
                     setMeta(data.meta || { current_page: 1, last_page: 1, total: 0 });
                 }
+            } catch (err) {
+                if (!canceled) {
+                    dialog.toast(err?.response?.data?.message || 'Unable to load advertisements.', 'error');
+                }
             } finally {
                 if (!canceled) setLoading(false);
             }
@@ -62,11 +66,15 @@ export default function AdvertisementIndex({ authUser = {} }) {
 
     const deleteRow = async (id) => {
         if (!(await dialog.confirm('Delete this advertisement?', 'Delete Advertisement'))) return;
-        await axios.delete(`/api/mwadmin/advertisements/${id}`);
-        dialog.toast('Advertisement deleted successfully.', 'success');
-        const { data } = await axios.get('/api/mwadmin/advertisements', { params: query });
-        setRows(data.data || []);
-        setMeta(data.meta || { current_page: 1, last_page: 1, total: 0 });
+        try {
+            await axios.delete(`/api/mwadmin/advertisements/${id}`);
+            dialog.toast('Advertisement deleted successfully.', 'success');
+            const { data } = await axios.get('/api/mwadmin/advertisements', { params: query });
+            setRows(data.data || []);
+            setMeta(data.meta || { current_page: 1, last_page: 1, total: 0 });
+        } catch (err) {
+            dialog.toast(err?.response?.data?.message || 'Unable to delete advertisement.', 'error');
+        }
     };
 
     const handleAction = async (id, action) => {

@@ -2,8 +2,10 @@ import { Head, Link } from '@inertiajs/react';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import MwadminLayout from '../../../Components/Mwadmin/Layout';
+import { useClassicDialog } from '../../../Components/Mwadmin/ClassicDialog';
 
 export default function SponsorView({ authUser = {}, sponsorId }) {
+    const dialog = useClassicDialog();
     const [row, setRow] = useState(null);
     const [load, setLoad] = useState(true);
 
@@ -13,6 +15,8 @@ export default function SponsorView({ authUser = {}, sponsorId }) {
             try {
                 const { data } = await axios.get(`/api/mwadmin/sponsors/${sponsorId}`);
                 if (!c) setRow(data.data);
+            } catch (err) {
+                if (!c) dialog.toast(err?.response?.data?.message || 'Unable to load sponsor.', 'error');
             } finally {
                 if (!c) setLoad(false);
             }
@@ -20,7 +24,7 @@ export default function SponsorView({ authUser = {}, sponsorId }) {
         return () => {
             c = true;
         };
-    }, [sponsorId]);
+    }, [sponsorId, dialog]);
 
     if (load || !row) {
         return (

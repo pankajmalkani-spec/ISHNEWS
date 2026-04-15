@@ -55,10 +55,12 @@ export default function UsersIndex({ authUser = {} }) {
             const { data } = await axios.get('/api/mwadmin/users', { params: query });
             setRows(data.data || []);
             setMeta(data.meta || { current_page: 1, last_page: 1, total: 0 });
+        } catch (err) {
+            dialog.toast(formatApiErrors(err), 'error');
         } finally {
             setLoading(false);
         }
-    }, [query]);
+    }, [query, dialog]);
 
     useEffect(() => {
         loadData();
@@ -76,7 +78,7 @@ export default function UsersIndex({ authUser = {} }) {
                 dialog.toast('User has been marked as inactive.', 'success');
                 await loadData();
             } catch (err) {
-                await dialog.alert(formatApiErrors(err), 'Unable to deactivate');
+                dialog.toast(formatApiErrors(err), 'error');
             }
         },
         [dialog, loadData]
@@ -88,14 +90,14 @@ export default function UsersIndex({ authUser = {} }) {
             if (next == null) return;
             const trimmed = String(next).trim();
             if (trimmed.length < 4) {
-                await dialog.alert('Password must be at least 4 characters.', 'Validation');
+                dialog.toast('Password must be at least 4 characters.', 'error');
                 return;
             }
             try {
                 await axios.post(`/api/mwadmin/users/${id}/reset-password`, { new_password: trimmed });
-                await dialog.alertTimed('Password changed successfully.', 'Success', 2000);
+                dialog.toast('Password changed successfully.', 'success');
             } catch (err) {
-                await dialog.alert(formatApiErrors(err), 'Unable to reset password');
+                dialog.toast(formatApiErrors(err), 'error');
             }
         },
         [dialog]

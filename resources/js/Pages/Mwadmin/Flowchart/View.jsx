@@ -2,8 +2,10 @@ import { Head, Link } from '@inertiajs/react';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import MwadminLayout from '../../../Components/Mwadmin/Layout';
+import { useClassicDialog } from '../../../Components/Mwadmin/ClassicDialog';
 
 export default function FlowchartView({ authUser = {}, flowchartId }) {
+    const dialog = useClassicDialog();
     const [row, setRow] = useState(null);
     const [load, setLoad] = useState(true);
 
@@ -13,6 +15,8 @@ export default function FlowchartView({ authUser = {}, flowchartId }) {
             try {
                 const { data } = await axios.get(`/api/mwadmin/flowcharts/${flowchartId}`);
                 if (!c) setRow(data.data);
+            } catch (err) {
+                if (!c) dialog.toast(err?.response?.data?.message || 'Unable to load flow chart.', 'error');
             } finally {
                 if (!c) setLoad(false);
             }
@@ -20,7 +24,7 @@ export default function FlowchartView({ authUser = {}, flowchartId }) {
         return () => {
             c = true;
         };
-    }, [flowchartId]);
+    }, [flowchartId, dialog]);
 
     if (load || !row) {
         return (

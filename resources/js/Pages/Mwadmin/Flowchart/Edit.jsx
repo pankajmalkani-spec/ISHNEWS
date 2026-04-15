@@ -46,6 +46,8 @@ export default function FlowchartEdit({ authUser = {}, flowchartId }) {
                 });
                 const acts = (r.activities || []).map(mapActivity);
                 setActivities(acts.length ? acts : []);
+            } catch (err) {
+                if (!c) dialog.toast(err?.response?.data?.message || 'Unable to load flow chart.', 'error');
             } finally {
                 if (!c) setLoad(false);
             }

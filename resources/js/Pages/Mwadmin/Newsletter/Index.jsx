@@ -49,6 +49,10 @@ export default function NewsletterIndex({ authUser = {} }) {
                     setRows(data.data || []);
                     setMeta(data.meta || { current_page: 1, last_page: 1, total: 0 });
                 }
+            } catch (err) {
+                if (!canceled) {
+                    dialog.toast(err?.response?.data?.message || 'Unable to load newsletters.', 'error');
+                }
             } finally {
                 if (!canceled) setLoading(false);
             }
@@ -80,12 +84,16 @@ export default function NewsletterIndex({ authUser = {} }) {
             'Confirm'
         );
         if (!ok) return;
-        await axios.delete(`/api/mwadmin/newsletters/${id}`);
-        dialog.toast('Email Id deleted successfully.', 'success');
-        const { data } = await axios.get('/api/mwadmin/newsletters', { params: query });
-        setRows(data.data || []);
-        setMeta(data.meta || { current_page: 1, last_page: 1, total: 0 });
-        setSelectedIds((prev) => prev.filter((x) => x !== id));
+        try {
+            await axios.delete(`/api/mwadmin/newsletters/${id}`);
+            dialog.toast('Email Id deleted successfully.', 'success');
+            const { data } = await axios.get('/api/mwadmin/newsletters', { params: query });
+            setRows(data.data || []);
+            setMeta(data.meta || { current_page: 1, last_page: 1, total: 0 });
+            setSelectedIds((prev) => prev.filter((x) => x !== id));
+        } catch (err) {
+            dialog.toast(err?.response?.data?.message || 'Unable to delete newsletter entry.', 'error');
+        }
     };
 
     const handleAction = async (id, email, action) => {

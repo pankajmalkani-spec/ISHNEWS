@@ -49,6 +49,10 @@ export default function NewsourceIndex({ authUser = {} }) {
                     setRows(data.data || []);
                     setMeta(data.meta || { current_page: 1, last_page: 1, total: 0 });
                 }
+            } catch (err) {
+                if (!canceled) {
+                    dialog.toast(err?.response?.data?.message || 'Unable to load news sources.', 'error');
+                }
             } finally {
                 if (!canceled) setLoading(false);
             }
@@ -61,11 +65,15 @@ export default function NewsourceIndex({ authUser = {} }) {
 
     const deleteRow = async (id) => {
         if (!(await dialog.confirm('Delete this news source?', 'Delete News Source'))) return;
-        await axios.delete(`/api/mwadmin/newsources/${id}`);
-        dialog.toast('News Source deleted successfully.', 'success');
-        const { data } = await axios.get('/api/mwadmin/newsources', { params: query });
-        setRows(data.data || []);
-        setMeta(data.meta || { current_page: 1, last_page: 1, total: 0 });
+        try {
+            await axios.delete(`/api/mwadmin/newsources/${id}`);
+            dialog.toast('News Source deleted successfully.', 'success');
+            const { data } = await axios.get('/api/mwadmin/newsources', { params: query });
+            setRows(data.data || []);
+            setMeta(data.meta || { current_page: 1, last_page: 1, total: 0 });
+        } catch (err) {
+            dialog.toast(err?.response?.data?.message || 'Unable to delete news source.', 'error');
+        }
     };
 
     const handleAction = async (id, action) => {

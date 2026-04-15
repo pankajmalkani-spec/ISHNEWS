@@ -5,12 +5,10 @@ import MwadminImageEditorModal from '../../../Components/Mwadmin/MwadminImageEdi
 import MwadminLayout from '../../../Components/Mwadmin/Layout';
 import MwadminStatusBadge from '../../../Components/Mwadmin/MwadminStatusBadge';
 import { useClassicDialog } from '../../../Components/Mwadmin/ClassicDialog';
-import { MwadminErrorBanner, MwadminFieldError } from '../../../Components/Mwadmin/MwadminMotionFeedback';
 import {
     PROFILE_EDITOR_OUT,
-    apiErrorsToFieldMap,
     buildUserFieldErrors,
-    clearFieldError,
+    firstClientValidationMessage,
     formatApiErrors,
     MAX_PROFILE_BYTES,
 } from './userFormShared';
@@ -19,7 +17,6 @@ import UserRolesPicker from './UserRolesPicker';
 export default function UsersEdit({ authUser = {}, userId }) {
     const dialog = useClassicDialog();
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
     const [options, setOptions] = useState({ designations: [], roles: [] });
     const [roleOptions, setRoleOptions] = useState([]);
     const [form, setForm] = useState({
@@ -36,13 +33,9 @@ export default function UsersEdit({ authUser = {}, userId }) {
     const [profileFile, setProfileFile] = useState(null);
     const [profilePreview, setProfilePreview] = useState('');
     const [profileEditorOpen, setProfileEditorOpen] = useState(false);
-    const [fieldErrors, setFieldErrors] = useState({});
     const [saving, setSaving] = useState(false);
 
-    const notify = useCallback(
-        (message, title = 'Validation') => dialog.alert(message, title),
-        [dialog]
-    );
+    const notify = useCallback((message) => dialog.toast(message, 'error'), [dialog]);
 
     useEffect(() => {
         return () => {
@@ -50,21 +43,20 @@ export default function UsersEdit({ authUser = {}, userId }) {
         };
     }, [profilePreview]);
 
-    const setProfileFromFile = useCallback((file) => {
-        if (file.size > MAX_PROFILE_BYTES) {
-            setFieldErrors((prev) => ({
-                ...prev,
-                profile_img: `Profile photo must be ${MAX_PROFILE_BYTES / 1024 / 1024}MB or smaller.`,
-            }));
-            return;
-        }
-        clearFieldError(setFieldErrors, 'profile_img');
-        setProfileFile(file);
-        setProfilePreview((prev) => {
-            if (prev.startsWith('blob:')) URL.revokeObjectURL(prev);
-            return URL.createObjectURL(file);
-        });
-    }, []);
+    const setProfileFromFile = useCallback(
+        (file) => {
+            if (file.size > MAX_PROFILE_BYTES) {
+                notify(`Profile photo must be ${MAX_PROFILE_BYTES / 1024 / 1024}MB or smaller.`);
+                return;
+            }
+            setProfileFile(file);
+            setProfilePreview((prev) => {
+                if (prev.startsWith('blob:')) URL.revokeObjectURL(prev);
+                return URL.createObjectURL(file);
+            });
+        },
+        [notify]
+    );
 
     useEffect(() => {
         let canceled = false;
@@ -95,7 +87,7 @@ export default function UsersEdit({ authUser = {}, userId }) {
                 setProfilePreview(existingUrl);
                 setProfileFile(null);
             } catch {
-                if (!canceled) setError('Unable to load user.');
+                if (!canceled) dialog.toast('Unable to load user.', 'error');
             } finally {
                 if (!canceled) setLoading(false);
             }
@@ -104,14 +96,13 @@ export default function UsersEdit({ authUser = {}, userId }) {
         return () => {
             canceled = true;
         };
-    }, [userId]);
+    }, [userId, dialog]);
 
     const onSubmit = async (e) => {
         e.preventDefault();
-        setFieldErrors({});
         const errs = buildUserFieldErrors(form, { requirePassword: false, profileFile, requireRoles: true });
         if (Object.keys(errs).length > 0) {
-            setFieldErrors(errs);
+            dialog.toast(firstClientValidationMessage(errs), 'error');
             return;
         }
 
@@ -129,15 +120,10 @@ export default function UsersEdit({ authUser = {}, userId }) {
             payload.append('_method', 'PUT');
 
             await axios.post(`/api/mwadmin/users/${userId}`, payload, { headers: { 'Content-Type': 'multipart/form-data' } });
-            await dialog.alertTimed('User updated successfully.', 'Success', 2000);
-            window.location.assign('/mwadmin/users');
+            dialog.toast('User updated successfully.', 'success');
+            window.setTimeout(() => window.location.assign('/mwadmin/users'), 1200);
         } catch (err) {
-            const apiMap = apiErrorsToFieldMap(err);
-            if (Object.keys(apiMap).length > 0) {
-                setFieldErrors(apiMap);
-            } else {
-                await dialog.alert(formatApiErrors(err), 'Validation');
-            }
+            dialog.toast(formatApiErrors(err), 'error');
         } finally {
             setSaving(false);
         }
@@ -157,7 +143,6 @@ export default function UsersEdit({ authUser = {}, userId }) {
                     </div>
                     <h1 className="mwadmin-title">Edit User</h1>
                     <section className="mwadmin-panel mwadmin-form-panel">
-                        <MwadminErrorBanner message={error} />
                         {loading ? (
                             <div>Loading...</div>
                         ) : (
@@ -166,66 +151,43 @@ export default function UsersEdit({ authUser = {}, userId }) {
                                     <label>Salutation</label>
                                     <input
                                         value={form.salutation}
-                                        onChange={(e) => {
-                                            clearFieldError(setFieldErrors, 'salutation');
-                                            setForm((f) => ({ ...f, salutation: e.target.value }));
-                                        }}
+                                        onChange={(e) => setForm((f) => ({ ...f, salutation: e.target.value }))}
                                     />
-                                    <MwadminFieldError message={fieldErrors.salutation} />
                                 </div>
                                 <div>
                                     <label>First Name *</label>
                                     <input
                                         value={form.first_name}
-                                        onChange={(e) => {
-                                            clearFieldError(setFieldErrors, 'first_name');
-                                            setForm((f) => ({ ...f, first_name: e.target.value }));
-                                        }}
+                                        onChange={(e) => setForm((f) => ({ ...f, first_name: e.target.value }))}
                                     />
-                                    <MwadminFieldError message={fieldErrors.first_name} />
                                 </div>
                                 <div>
                                     <label>Last Name *</label>
                                     <input
                                         value={form.last_name}
-                                        onChange={(e) => {
-                                            clearFieldError(setFieldErrors, 'last_name');
-                                            setForm((f) => ({ ...f, last_name: e.target.value }));
-                                        }}
+                                        onChange={(e) => setForm((f) => ({ ...f, last_name: e.target.value }))}
                                     />
-                                    <MwadminFieldError message={fieldErrors.last_name} />
                                 </div>
                                 <div>
                                     <label>User Name *</label>
                                     <input
                                         value={form.username}
-                                        onChange={(e) => {
-                                            clearFieldError(setFieldErrors, 'username');
-                                            setForm((f) => ({ ...f, username: e.target.value }));
-                                        }}
+                                        onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))}
                                     />
-                                    <MwadminFieldError message={fieldErrors.username} />
                                 </div>
                                 <div>
                                     <label>Email *</label>
                                     <input
                                         type="email"
                                         value={form.email}
-                                        onChange={(e) => {
-                                            clearFieldError(setFieldErrors, 'email');
-                                            setForm((f) => ({ ...f, email: e.target.value }));
-                                        }}
+                                        onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
                                     />
-                                    <MwadminFieldError message={fieldErrors.email} />
                                 </div>
                                 <div>
                                     <label>Designation</label>
                                     <select
                                         value={form.designation}
-                                        onChange={(e) => {
-                                            clearFieldError(setFieldErrors, 'designation');
-                                            setForm((f) => ({ ...f, designation: e.target.value }));
-                                        }}
+                                        onChange={(e) => setForm((f) => ({ ...f, designation: e.target.value }))}
                                     >
                                         <option value="">Select</option>
                                         {options.designations.map((d) => (
@@ -234,35 +196,28 @@ export default function UsersEdit({ authUser = {}, userId }) {
                                             </option>
                                         ))}
                                     </select>
-                                    <MwadminFieldError message={fieldErrors.designation} />
                                 </div>
                                 <div>
                                     <label>P2D Initials</label>
                                     <input
                                         value={form.p2d_intials}
-                                        onChange={(e) => {
-                                            clearFieldError(setFieldErrors, 'p2d_intials');
-                                            setForm((f) => ({ ...f, p2d_intials: e.target.value.toUpperCase() }));
-                                        }}
+                                        onChange={(e) =>
+                                            setForm((f) => ({ ...f, p2d_intials: e.target.value.toUpperCase() }))
+                                        }
                                     />
-                                    <MwadminFieldError message={fieldErrors.p2d_intials} />
                                 </div>
                                 <div>
                                     <label>Status</label>
                                     <div className="mwadmin-category-status-row">
                                         <select
                                             value={form.status}
-                                            onChange={(e) => {
-                                                clearFieldError(setFieldErrors, 'status');
-                                                setForm((f) => ({ ...f, status: e.target.value }));
-                                            }}
+                                            onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))}
                                         >
                                             <option value="1">Active</option>
                                             <option value="0">In-Active</option>
                                         </select>
                                         <MwadminStatusBadge value={form.status === '1' ? 1 : 0} />
                                     </div>
-                                    <MwadminFieldError message={fieldErrors.status} />
                                 </div>
 
                                 <div className="mwadmin-form-grid-full mwadmin-user-profile-photo-row">
@@ -291,7 +246,6 @@ export default function UsersEdit({ authUser = {}, userId }) {
                                             )}
                                         </div>
                                     </div>
-                                    <MwadminFieldError message={fieldErrors.profile_img} />
                                 </div>
 
                                 <div className="mwadmin-form-grid-full">
@@ -302,8 +256,6 @@ export default function UsersEdit({ authUser = {}, userId }) {
                                         roleOptions={roleOptions}
                                         roleIds={form.role_ids}
                                         onRoleIdsChange={(ids) => setForm((f) => ({ ...f, role_ids: ids }))}
-                                        fieldError={fieldErrors.role_ids}
-                                        onClearError={() => clearFieldError(setFieldErrors, 'role_ids')}
                                     />
                                 </div>
 

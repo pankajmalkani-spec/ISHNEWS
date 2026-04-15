@@ -22,6 +22,8 @@ export default function NewsourceEdit({ authUser = {}, newsourceId }) {
                     description: r.description || '',
                     status: String(r.status ?? 1),
                 });
+            } catch (err) {
+                if (!c) dialog.toast(err?.response?.data?.message || 'Unable to load news source.', 'error');
             } finally {
                 if (!c) setLoad(false);
             }
@@ -42,6 +44,8 @@ export default function NewsourceEdit({ authUser = {}, newsourceId }) {
             await axios.put(`/api/mwadmin/newsources/${newsourceId}`, form);
             dialog.toast('News Source updated successfully.', 'success');
             window.setTimeout(() => window.location.assign('/mwadmin/newsource'), 1500);
+        } catch (err) {
+            dialog.toast(err?.response?.data?.message || 'Unable to update news source.', 'error');
         } finally {
             setSaving(false);
         }

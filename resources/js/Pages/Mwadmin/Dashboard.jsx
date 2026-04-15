@@ -129,7 +129,7 @@ export default function Dashboard({ authUser = {} }) {
                     setRows([]);
                     setMeta({ current_page: 1, last_page: 1, total: 0 });
                     const msg = e?.response?.data?.message || e?.message || 'Could not load dashboard.';
-                    await dialog.alert(msg, 'Dashboard');
+                    dialog.toast(msg, 'error');
                 }
             } finally {
                 if (!canceled) setLoading(false);
@@ -151,7 +151,7 @@ export default function Dashboard({ authUser = {} }) {
             (f.user && f.user !== '0') ||
             (f.featured === '0' || f.featured === '1');
         if (!hasAny && !(f.status && f.p2dstatus)) {
-            await dialog.alert('Please select at least one filter to search data.', 'Advanced Search');
+            dialog.toast('Please select at least one filter to search data.', 'error');
             return;
         }
         setPage(1);
