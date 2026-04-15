@@ -62,7 +62,7 @@ export function ClassicDialogProvider({ children }) {
                 const id = `${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
                 const safeType = ['success', 'error', 'info'].includes(type) ? type : 'info';
                 setToasts((list) => [...list, { id, message: String(message ?? ''), type: safeType }]);
-                window.setTimeout(() => dismissToast(id), 3800);
+                window.setTimeout(() => dismissToast(id), 3000);
             },
         }),
         [dismissToast]

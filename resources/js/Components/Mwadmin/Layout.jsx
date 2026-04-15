@@ -121,7 +121,7 @@ export default function MwadminLayout({ authUser = {}, activeMenu = 'dashboard',
             moduleVisitStarted.current = false;
             return;
         }
-        const ms = reduceMotion ? 24 : 140;
+        const ms = reduceMotion ? 40 : 260;
         const t = window.setTimeout(() => {
             if (moduleVisitStarted.current) return;
             moduleVisitStarted.current = true;

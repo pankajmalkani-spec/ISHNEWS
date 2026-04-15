@@ -2055,10 +2055,81 @@
     color: #e2e8f0;
 }
 
+/*
+ * Toasts and modal backdrops render inside ClassicDialogProvider as siblings of .mwadmin-shell,
+ * so they never inherit .mwadmin-shell.mwadmin-theme-dark. Layout sets html.mwadmin-ui-dark in dark mode.
+ */
+html.mwadmin-ui-dark .mwadmin-toast--success {
+    background: rgba(6, 78, 59, 0.92);
+    border-color: #34d399;
+    color: #ecfdf5;
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.4);
+}
+
+html.mwadmin-ui-dark .mwadmin-toast--error {
+    background: rgba(69, 10, 10, 0.94);
+    border-color: #f87171;
+    color: #fff5f5;
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.45);
+}
+
+html.mwadmin-ui-dark .mwadmin-toast--info {
+    background: rgba(15, 23, 42, 0.94);
+    border-color: #94a3b8;
+    color: #f8fafc;
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.4);
+}
+
+html.mwadmin-ui-dark .mwadmin-modal-card {
+    background: linear-gradient(180deg, #152133 0%, #111b2b 100%);
+    border-color: #354b64;
+    color: #deebfa;
+}
+
+html.mwadmin-ui-dark .mwadmin-modal-card h3 {
+    color: #edf5ff;
+}
+
+html.mwadmin-ui-dark .mwadmin-modal-card p {
+    color: #ccdaeb;
+}
+
+html.mwadmin-ui-dark .mwadmin-modal-message {
+    color: #e2e8f0;
+}
+
+html.mwadmin-ui-dark .mwadmin-modal-input {
+    background: #0f1725;
+    border-color: #334a63;
+    color: #edf5ff;
+}
+
+html.mwadmin-ui-dark .mwadmin-modal-btn {
+    border-color: #b45309;
+    background: linear-gradient(180deg, #d97706 0%, #b45309 100%);
+    color: #fffbeb;
+}
+
+html.mwadmin-ui-dark .mwadmin-modal-btn.ghost {
+    border-color: #475569;
+    background: #1e293b;
+    color: #e2e8f0;
+}
+
+html.mwadmin-ui-dark .mwadmin-modal-timed-hint {
+    color: #94a3b8;
+}
+
 /* Inline field errors + load/API banners — centered copy */
 .mwadmin-field-error,
 .mwadmin-error {
     text-align: center;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-error {
+    background: rgba(127, 29, 29, 0.35);
+    border-color: #dc2626;
+    color: #fecaca;
 }
 
 /* Role create/edit — permissions matrix + section */

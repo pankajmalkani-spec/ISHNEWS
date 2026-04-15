@@ -6,8 +6,8 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 export function MwadminFieldError({ message, className = 'mwadmin-field-error' }) {
     const reduce = useReducedMotion();
     const show = Boolean(message);
-    const durIn = reduce ? 0.01 : 0.05;
-    const durOut = reduce ? 0.01 : 0.035;
+    const durIn = reduce ? 0.01 : 0.04;
+    const durOut = reduce ? 0.01 : 0.028;
     return (
         <AnimatePresence initial={false}>
             {show && (
@@ -36,7 +36,7 @@ export function MwadminFieldError({ message, className = 'mwadmin-field-error' }
 export function MwadminErrorBanner({ message, className = 'mwadmin-error' }) {
     const reduce = useReducedMotion();
     const show = Boolean(message);
-    const dur = reduce ? 0.01 : 0.11;
+    const dur = reduce ? 0.01 : 0.085;
     return (
         <AnimatePresence initial={false}>
             {show && (
