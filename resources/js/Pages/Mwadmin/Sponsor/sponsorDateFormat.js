@@ -1,6 +1,6 @@
 const pad2 = (n) => String(n).padStart(2, '0');
 
-/** Date object → dd-mm-yyyy (for DayPicker / DmyDateInput). */
+/** Date object → dd-mm-yyyy (for DmyDateInput). */
 export function dateToDmy(date) {
     if (!date || !(date instanceof Date) || Number.isNaN(date.getTime())) {
         return '';

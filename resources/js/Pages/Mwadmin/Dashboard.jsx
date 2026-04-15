@@ -202,30 +202,23 @@ export default function Dashboard({ authUser = {} }) {
                     <h1 className="mwadmin-title">Dashboard</h1>
 
                     <section className="mwadmin-panel">
+                        <div className="mwadmin-advanced-search mwadmin-advanced-search--in-panel">
                         <button
                             type="button"
-                            className="mwadmin-panel-head mwadmin-dashboard-adv-head"
+                            className="mwadmin-advanced-search-toggle"
                             onClick={() => setAdvancedOpen((o) => !o)}
+                            aria-expanded={advancedOpen}
                         >
-                            Advanced Search
-                            <span className="mwadmin-dashboard-adv-chevron" aria-hidden>
-                                {advancedOpen ? '▼' : '▶'}
-                            </span>
+                            <span>Advanced Search</span>
+                            <span aria-hidden>{advancedOpen ? '▾' : '▸'}</span>
                         </button>
                         {advancedOpen ? (
-                            <div className="mwadmin-dashboard-adv-body">
-                                <div
-                                    className="mwadmin-dashboard-filter-grid"
-                                    style={{
-                                        display: 'grid',
-                                        gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-                                        gap: '14px 18px',
-                                        marginBottom: '16px',
-                                    }}
-                                >
-                                    <label className="mwadmin-dashboard-field">
-                                        <span className="mwadmin-dashboard-label">Category</span>
+                            <div className="mwadmin-advanced-search-body">
+                                <div className="mwadmin-advanced-search-grid">
+                                    <div>
+                                        <label htmlFor="adv-dash-cat">Category</label>
                                         <select
+                                            id="adv-dash-cat"
                                             className="mwadmin-select"
                                             value={draftFilters.category_id}
                                             onChange={(e) =>
@@ -243,15 +236,17 @@ export default function Dashboard({ authUser = {} }) {
                                                 </option>
                                             ))}
                                         </select>
-                                    </label>
-                                    <label className="mwadmin-dashboard-field">
-                                        <span className="mwadmin-dashboard-label">Sub Category</span>
+                                    </div>
+                                    <div>
+                                        <label htmlFor="adv-dash-sub">Sub Category</label>
                                         <select
+                                            id="adv-dash-sub"
                                             className="mwadmin-select"
                                             value={draftFilters.subcategory_id}
                                             onChange={(e) =>
                                                 setDraftFilters((d) => ({ ...d, subcategory_id: e.target.value }))
                                             }
+                                            disabled={!draftFilters.category_id}
                                         >
                                             <option value="">Please Select</option>
                                             {subcategories.map((s) => (
@@ -260,33 +255,40 @@ export default function Dashboard({ authUser = {} }) {
                                                 </option>
                                             ))}
                                         </select>
-                                    </label>
-                                    <div className="mwadmin-dashboard-field">
-                                        <span className="mwadmin-dashboard-label">Date From &amp; To (d-m-Y)</span>
+                                    </div>
+                                    <div className="mwadmin-advanced-search-field-wide">
+                                        <span
+                                            className="mwadmin-advanced-search-field-heading"
+                                            id="adv-dash-dates-label"
+                                        >
+                                            Date From &amp; To (d-m-Y)
+                                        </span>
                                         <div
-                                            style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '8px',
-                                                flexWrap: 'wrap',
-                                            }}
+                                            className="mwadmin-advanced-search-date-row"
+                                            role="group"
+                                            aria-labelledby="adv-dash-dates-label"
                                         >
                                             <DmyDateInput
+                                                id="adv-dash-from"
                                                 density="compact"
                                                 value={draftFilters.start_date}
                                                 onChange={(v) => setDraftFilters((d) => ({ ...d, start_date: v }))}
                                             />
-                                            <span style={{ opacity: 0.85 }}>to</span>
+                                            <span className="mwadmin-advanced-search-date-to" aria-hidden>
+                                                to
+                                            </span>
                                             <DmyDateInput
+                                                id="adv-dash-to"
                                                 density="compact"
                                                 value={draftFilters.end_date}
                                                 onChange={(v) => setDraftFilters((d) => ({ ...d, end_date: v }))}
                                             />
                                         </div>
                                     </div>
-                                    <label className="mwadmin-dashboard-field">
-                                        <span className="mwadmin-dashboard-label">Featured content</span>
+                                    <div>
+                                        <label htmlFor="adv-dash-feat">Featured content</label>
                                         <select
+                                            id="adv-dash-feat"
                                             className="mwadmin-select"
                                             value={draftFilters.featured}
                                             onChange={(e) =>
@@ -297,10 +299,11 @@ export default function Dashboard({ authUser = {} }) {
                                             <option value="1">Yes</option>
                                             <option value="0">No</option>
                                         </select>
-                                    </label>
-                                    <label className="mwadmin-dashboard-field">
-                                        <span className="mwadmin-dashboard-label">P2D Status</span>
+                                    </div>
+                                    <div>
+                                        <label htmlFor="adv-dash-p2d">P2D Status</label>
                                         <select
+                                            id="adv-dash-p2d"
                                             className="mwadmin-select"
                                             value={draftFilters.status}
                                             onChange={(e) =>
@@ -313,10 +316,11 @@ export default function Dashboard({ authUser = {} }) {
                                                 </option>
                                             ))}
                                         </select>
-                                    </label>
-                                    <label className="mwadmin-dashboard-field">
-                                        <span className="mwadmin-dashboard-label">P2D Status equal to</span>
+                                    </div>
+                                    <div>
+                                        <label htmlFor="adv-dash-p2deq">P2D Status equal to</label>
                                         <select
+                                            id="adv-dash-p2deq"
                                             className="mwadmin-select"
                                             value={draftFilters.p2dstatus}
                                             onChange={(e) =>
@@ -329,10 +333,11 @@ export default function Dashboard({ authUser = {} }) {
                                                 </option>
                                             ))}
                                         </select>
-                                    </label>
-                                    <label className="mwadmin-dashboard-field">
-                                        <span className="mwadmin-dashboard-label">User</span>
+                                    </div>
+                                    <div>
+                                        <label htmlFor="adv-dash-user">User</label>
                                         <select
+                                            id="adv-dash-user"
                                             className="mwadmin-select"
                                             value={draftFilters.user}
                                             onChange={(e) =>
@@ -346,21 +351,20 @@ export default function Dashboard({ authUser = {} }) {
                                             ))}
                                             <option value="0">ALL</option>
                                         </select>
-                                    </label>
+                                    </div>
                                 </div>
-                                <div className="mwadmin-dashboard-adv-actions">
-                                    <button type="button" className="mwadmin-btn-primary" onClick={() => handleSearch()}>
-                                        Search
-                                    </button>
-                                    <button type="button" className="mwadmin-btn-secondary" onClick={handleReset}>
+                                <div className="mwadmin-advanced-search-actions">
+                                    <button type="button" className="mwadmin-btn-reset" onClick={handleReset}>
                                         Reset
+                                    </button>
+                                    <button type="button" onClick={() => handleSearch()}>
+                                        Search
                                     </button>
                                 </div>
                             </div>
                         ) : null}
-                    </section>
+                        </div>
 
-                    <section className="mwadmin-panel">
                         <div className="mwadmin-toolbar">
                             <div>
                                 Show{' '}
@@ -375,18 +379,22 @@ export default function Dashboard({ authUser = {} }) {
                                     <option value="20">20</option>
                                     <option value="50">50</option>
                                     <option value="80">80</option>
-                                </select>
+                                </select>{' '}
+                                entries
                             </div>
-                            <div className="mwadmin-search">
-                                Search:
-                                <input
-                                    type="text"
-                                    value={search}
-                                    onChange={(e) => {
-                                        setSearch(e.target.value);
-                                        setPage(1);
-                                    }}
-                                />
+                            <div className="mwadmin-right-tools">
+                                <div className="mwadmin-search">
+                                    Search:
+                                    <input
+                                        type="text"
+                                        value={search}
+                                        onChange={(e) => {
+                                            setSearch(e.target.value);
+                                            setPage(1);
+                                        }}
+                                        placeholder="Title or P2D case"
+                                    />
+                                </div>
                             </div>
                         </div>
                         <div className="mwadmin-table-wrap mwadmin-dashboard-table-wrap">
@@ -487,32 +495,27 @@ export default function Dashboard({ authUser = {} }) {
                                 </tbody>
                             </table>
                         </div>
-                        {!loading && meta.total === 0 ? (
-                            <div className="mwadmin-empty">No records found</div>
-                        ) : null}
-                        {meta.last_page > 1 ? (
-                            <div className="mwadmin-dashboard-pager">
+                        <div className="mwadmin-pagination">
+                            <span>
+                                Showing page {meta.current_page} of {meta.last_page} ({meta.total} records)
+                            </span>
+                            <div>
                                 <button
                                     type="button"
-                                    className="mwadmin-btn-secondary"
                                     disabled={page <= 1}
                                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                                 >
                                     Prev
                                 </button>
-                                <span>
-                                    Page {meta.current_page} of {meta.last_page} ({meta.total} records)
-                                </span>
                                 <button
                                     type="button"
-                                    className="mwadmin-btn-secondary"
                                     disabled={page >= meta.last_page}
                                     onClick={() => setPage((p) => p + 1)}
                                 >
                                     Next
                                 </button>
                             </div>
-                        ) : null}
+                        </div>
                     </section>
                 </div>
             </MwadminLayout>

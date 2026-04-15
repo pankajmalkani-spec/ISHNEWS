@@ -5,11 +5,7 @@ export default function MwadminActionsDropdown({ onAction, flags = {} }) {
     const { view, edit, delete: canDel, resetPassword, deactivate } = flags;
     const hasAny = !!(view || edit || canDel || resetPassword || deactivate);
     if (!hasAny) {
-        return (
-            <span className="mwadmin-grid-action-muted" style={{ color: '#86868b' }}>
-                —
-            </span>
-        );
+        return <span className="mwadmin-grid-action-muted">—</span>;
     }
     return (
         <select

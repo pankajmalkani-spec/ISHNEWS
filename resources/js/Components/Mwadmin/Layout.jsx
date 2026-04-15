@@ -9,6 +9,7 @@ export default function MwadminLayout({ authUser = {}, activeMenu = 'dashboard',
     const [isContentOpen, setIsContentOpen] = useState(true);
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const [themeMode, setThemeMode] = useState(() => {
+        if (typeof window === 'undefined') return 'light';
         try {
             const saved = window.localStorage.getItem('mwadmin.theme');
             return saved === 'dark' ? 'dark' : 'light';
@@ -67,6 +68,20 @@ export default function MwadminLayout({ authUser = {}, activeMenu = 'dashboard',
             window.localStorage.setItem('mwadmin.theme', themeMode);
         } catch {
             // ignore storage failures
+        }
+    }, [themeMode]);
+
+    useEffect(() => {
+        if (typeof document === 'undefined') return;
+        const root = document.documentElement;
+        if (themeMode === 'dark') {
+            root.classList.add('mwadmin-ui-dark');
+            root.style.backgroundColor = '#01040b';
+            document.body.style.backgroundColor = '#01040b';
+        } else {
+            root.classList.remove('mwadmin-ui-dark');
+            root.style.backgroundColor = '#f2ebe0';
+            document.body.style.backgroundColor = '#f2ebe0';
         }
     }, [themeMode]);
 

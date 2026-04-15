@@ -1,11 +1,53 @@
 .mwadmin-shell {
     min-height: 100vh;
-    background: #ececf4;
+    position: relative;
+    isolation: isolate;
     color: #222;
     font-family: "Open Sans", Arial, sans-serif;
 }
 
+/* Dotted canvas (MW Admin login + dashboard shell): gradient base + masked dot layer */
+.mwadmin-shell::before,
+.mwadmin-shell::after,
+.mwadmin-auth-canvas::before,
+.mwadmin-auth-canvas::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* Login screen (always dark canvas; shares dark layers with .mwadmin-theme-dark) */
+.mwadmin-auth-canvas {
+    position: relative;
+    isolation: isolate;
+    min-height: 100dvh;
+    overflow: hidden;
+}
+
+/* Light shell: warm beige canvas (aligned with .mwadmin-shell:not(.mwadmin-theme-dark) / sidebar) */
+.mwadmin-shell::before {
+    background: linear-gradient(180deg, #f8f3ec 0%, #f2ebe0 45%, #e9dfd2 100%);
+}
+
+.mwadmin-shell::after,
+.mwadmin-auth-canvas::after {
+    opacity: 0.42;
+    background-image: radial-gradient(rgba(92, 79, 68, 0.16) 1px, transparent 1.15px);
+    background-size: 8px 8px;
+    -webkit-mask-image: radial-gradient(ellipse 105% 62% at 50% 2%, black 28%, transparent 80%);
+    mask-image: radial-gradient(ellipse 105% 62% at 50% 2%, black 28%, transparent 80%);
+}
+
+.mwadmin-layout {
+    position: relative;
+    z-index: 1;
+}
+
 .mwadmin-header {
+    position: relative;
+    z-index: 2;
     height: 52px;
     background: #6f7a8d;
     color: #eef2f8;
@@ -65,14 +107,24 @@
     color: #f8fafc;
 }
 
-/* Dark theme: main column (was staying white while header/sidebar were dark) */
+/* Dark theme: main column (canvas ::before/::after; content stays transparent for pattern) */
 .mwadmin-shell.mwadmin-theme-dark {
-    background: #0f1419;
     color: #e2e8f0;
 }
 
+.mwadmin-shell.mwadmin-theme-dark::before,
+.mwadmin-auth-canvas::before {
+    background: linear-gradient(180deg, #030915 0%, #020814 42%, #01040b 100%);
+}
+
+.mwadmin-shell.mwadmin-theme-dark::after,
+.mwadmin-auth-canvas::after {
+    opacity: 0.45;
+    background-image: radial-gradient(rgba(148, 163, 184, 0.56) 1px, transparent 1.15px);
+}
+
 .mwadmin-shell.mwadmin-theme-dark .mwadmin-content {
-    background: #0f1419;
+    background: transparent;
     color: #e2e8f0;
 }
 
@@ -109,6 +161,53 @@
 .mwadmin-shell.mwadmin-theme-dark .mwadmin-table-wrap {
     background: #151b24;
     color: #e2e8f0;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-table {
+    background: #151b24;
+    color: #e2e8f0;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-table thead th {
+    background: linear-gradient(180deg, #1e293b 0%, #1a222d 100%);
+    border: 1px solid #2d3544;
+    color: #cbd5e1;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-table tbody td {
+    border: 1px solid #2d3544;
+    background: transparent;
+    color: #e2e8f0;
+}
+
+/* Native <table> Actions column — fixed size (matches .mwadmin-ag-grid select.mwadmin-grid-action) */
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-table select.mwadmin-grid-action {
+    width: 112px;
+    min-width: 112px;
+    max-width: 100%;
+    height: 30px;
+    padding: 4px 8px;
+    font-size: 12px;
+    line-height: 1.2;
+    color: #e2e8f0;
+    background: #1e293b;
+    border: 1px solid #475569;
+    border-radius: 6px;
+    box-sizing: border-box;
+    margin: 0;
+    cursor: pointer;
+    vertical-align: middle;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-table .mwadmin-grid-action-muted {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 112px;
+    min-height: 30px;
+    box-sizing: border-box;
+    font-size: 12px;
+    color: #64748b;
 }
 
 .mwadmin-shell.mwadmin-theme-dark .mwadmin-pagination {
@@ -1077,7 +1176,7 @@
 
 /* —— Light theme: warm beige shell (listing reference: cream/tan, brown accents) —— */
 .mwadmin-shell:not(.mwadmin-theme-dark) {
-    background: #f2ebe0;
+    background: transparent;
     color: #3a332c;
 }
 
@@ -1232,6 +1331,53 @@
 .mwadmin-shell:not(.mwadmin-theme-dark) .mwadmin-table-wrap {
     padding: 0 16px 16px;
     background: #fffdf9;
+}
+
+/* Native HTML tables — cream/beige (not pure white) to match light shell + panels */
+.mwadmin-shell:not(.mwadmin-theme-dark) .mwadmin-table {
+    background: #fffdf9;
+    color: #4a4036;
+}
+
+.mwadmin-shell:not(.mwadmin-theme-dark) .mwadmin-table thead th {
+    background: linear-gradient(180deg, #f2e8dc 0%, #e8dfd3 100%);
+    border: 1px solid #d4c9bc;
+    color: #4a4036;
+}
+
+.mwadmin-shell:not(.mwadmin-theme-dark) .mwadmin-table tbody td {
+    border: 1px solid #e8dfd3;
+    background: transparent;
+    color: #4a4036;
+}
+
+.mwadmin-shell:not(.mwadmin-theme-dark) .mwadmin-table select.mwadmin-grid-action {
+    width: 112px;
+    min-width: 112px;
+    max-width: 100%;
+    height: 30px;
+    padding: 4px 8px;
+    font-size: 12px;
+    line-height: 1.2;
+    color: #3a332c;
+    background: #fffdf9;
+    border: 1px solid #c9b8a4;
+    border-radius: 6px;
+    box-sizing: border-box;
+    margin: 0;
+    cursor: pointer;
+    vertical-align: middle;
+}
+
+.mwadmin-shell:not(.mwadmin-theme-dark) .mwadmin-table .mwadmin-grid-action-muted {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 112px;
+    min-height: 30px;
+    box-sizing: border-box;
+    font-size: 12px;
+    color: #86868b;
 }
 
 .mwadmin-shell:not(.mwadmin-theme-dark) .mwadmin-pagination {
@@ -1660,4 +1806,21 @@
     .mwadmin-profile-form-grid {
         grid-template-columns: 1fr;
     }
+}
+
+/*
+ * Portaled UI (date picker popover) sits on document.body — default browser white
+ * shows through any transparency. Match shell canvas so flashes match the app.
+ */
+html {
+    background-color: #f2ebe0;
+}
+
+body {
+    background-color: #f2ebe0;
+}
+
+html.mwadmin-ui-dark,
+html.mwadmin-ui-dark body {
+    background-color: #01040b;
 }

@@ -1,0 +1,67 @@
+/**
+ * DmyDateInput — native <input type="date"> styled to match MW Admin selects.
+ */
+
+.mwadmin-dmy-picker-wrap {
+    display: inline-flex;
+    max-width: 100%;
+    vertical-align: middle;
+}
+
+/* compact = same rhythm as .mwadmin-select (dashboard / news edit grids) */
+.mwadmin-dmy-picker-wrap--compact .mwadmin-dmy-picker-input {
+    height: 32px;
+    padding: 6px 10px;
+    font-size: 13px;
+}
+
+.mwadmin-dmy-picker-input {
+    width: min(152px, 100%);
+    min-width: 0;
+    max-width: 100%;
+    height: 32px;
+    padding: 6px 10px;
+    box-sizing: border-box;
+    font-size: 13px;
+    font-family: inherit;
+    line-height: normal;
+    border-radius: 6px;
+    cursor: pointer;
+    border: 1px solid #c9b8a4;
+    background-color: #fffdf9 !important;
+    color: #3a332c !important;
+    -webkit-appearance: none;
+    appearance: none;
+    color-scheme: light;
+}
+
+/* Native date control: align text + icon with select row height */
+.mwadmin-dmy-picker-input::-webkit-datetime-edit {
+    padding: 0;
+    line-height: 1.2;
+}
+
+.mwadmin-dmy-picker-input::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.75;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-dmy-picker-input {
+    border-color: #475569;
+    background-color: #1e293b !important;
+    color: #e2e8f0 !important;
+    color-scheme: dark;
+}
+
+/* Advanced Search: match cream / dark fills as .mwadmin-select */
+.mwadmin-shell:not(.mwadmin-theme-dark) .mwadmin-advanced-search .mwadmin-dmy-picker-input {
+    background-color: #fffdf9 !important;
+    border-color: #c9b8a4 !important;
+    color: #3a332c !important;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-advanced-search .mwadmin-dmy-picker-input {
+    background-color: #1e293b !important;
+    border-color: #475569 !important;
+    color: #e2e8f0 !important;
+}
