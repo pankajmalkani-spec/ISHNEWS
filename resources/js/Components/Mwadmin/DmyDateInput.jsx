@@ -1,24 +1,42 @@
-import { useCallback, useId } from 'react';
-import { dateToDmy, parseDmyToDate } from '../../Pages/Mwadmin/Sponsor/sponsorDateFormat';
+import { useCallback, useId, useRef } from 'react';
+import { dateToDmy, dmyToIsoDateInputValue, parseDmyToDate } from '../../Pages/Mwadmin/Sponsor/sponsorDateFormat';
 import '../../../css/mwadmin-dmy-datepicker.css';
 
-function dmyToIsoDateValue(dmy) {
-    const d = parseDmyToDate(dmy);
-    if (!d) return '';
-    const pad2 = (n) => String(n).padStart(2, '0');
-    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
-}
-
 /**
- * dd-mm-yyyy field backed by the browser native date input (no third-party picker).
+ * dd-mm-yyyy text field + calendar button that opens the browser date picker.
  *
  * @param {'default' | 'compact'} [density]
  */
-export default function DmyDateInput({ id, value, onChange, placeholder = 'dd-mm-yyyy', density = 'default' }) {
+export default function DmyDateInput({
+    id,
+    value,
+    onChange,
+    placeholder = 'dd-mm-yyyy',
+    density = 'default',
+    normalizeOnBlur = true,
+}) {
     const genId = useId();
     const inputId = id || `dmy-date-${genId}`;
+    const nativeDateRef = useRef(null);
+
+    const isoForNative = dmyToIsoDateInputValue(value);
 
     const handleChange = useCallback(
+        (e) => {
+            onChange(e.target.value);
+        },
+        [onChange]
+    );
+
+    const handleBlur = useCallback(() => {
+        if (!normalizeOnBlur) return;
+        const raw = String(value ?? '').trim();
+        if (raw === '') return;
+        const d = parseDmyToDate(raw);
+        if (d) onChange(dateToDmy(d));
+    }, [normalizeOnBlur, onChange, value]);
+
+    const handleNativeChange = useCallback(
         (e) => {
             const iso = e.target.value;
             if (!iso) {
@@ -41,7 +59,19 @@ export default function DmyDateInput({ id, value, onChange, placeholder = 'dd-mm
         [onChange]
     );
 
-    const isoValue = dmyToIsoDateValue(value);
+    const openDateDialog = useCallback(() => {
+        const el = nativeDateRef.current;
+        if (!el) return;
+        try {
+            if (typeof el.showPicker === 'function') {
+                el.showPicker();
+            } else {
+                el.click();
+            }
+        } catch {
+            el.click();
+        }
+    }, []);
 
     return (
         <div
@@ -51,14 +81,55 @@ export default function DmyDateInput({ id, value, onChange, placeholder = 'dd-mm
                     : 'mwadmin-dmy-picker-wrap'
             }
         >
+            <div className="mwadmin-dmy-picker-field">
+                <input
+                    id={inputId}
+                    type="text"
+                    className="mwadmin-dmy-picker-input"
+                    value={value ?? ''}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    placeholder={placeholder}
+                    title={placeholder}
+                    autoComplete="off"
+                    spellCheck={false}
+                    maxLength={10}
+                />
+                <button
+                    type="button"
+                    className="mwadmin-dmy-picker-calendar-btn"
+                    onClick={openDateDialog}
+                    aria-label="Open calendar"
+                    title="Open calendar"
+                >
+                    <svg
+                        className="mwadmin-dmy-picker-calendar-icon"
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        aria-hidden
+                    >
+                        <path
+                            d="M7 2v2M17 2v2M4 8h16M6 4h12a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2z"
+                            stroke="currentColor"
+                            strokeWidth="1.75"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        />
+                        <path d="M8 12h.01M12 12h.01M16 12h.01M8 16h.01M12 16h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                    </svg>
+                </button>
+            </div>
             <input
-                id={inputId}
+                ref={nativeDateRef}
                 type="date"
-                className="mwadmin-dmy-picker-input"
-                value={isoValue}
-                onChange={handleChange}
-                title={placeholder}
-                autoComplete="off"
+                className="mwadmin-dmy-picker-native"
+                value={isoForNative}
+                onChange={handleNativeChange}
+                tabIndex={-1}
+                aria-hidden="true"
             />
         </div>
     );

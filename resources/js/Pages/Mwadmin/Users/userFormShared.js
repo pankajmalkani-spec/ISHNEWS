@@ -26,7 +26,13 @@ export function firstClientValidationMessage(errs) {
 
 export function buildUserFieldErrors(
     form,
-    { requirePassword = false, confirmPassword = '', profileFile = null, requireRoles = false } = {}
+    {
+        requirePassword = false,
+        confirmPassword = '',
+        profileFile = null,
+        requireRoles = false,
+        requireDesignation = false,
+    } = {}
 ) {
     const e = {};
     const fn = form.first_name.trim();
@@ -46,6 +52,9 @@ export function buildUserFieldErrors(
     if (!em) e.email = 'Email is required.';
     else if (em.length > 120) e.email = 'Email must be at most 120 characters.';
     else if (!EMAIL_RE.test(em)) e.email = 'Enter a valid email address.';
+    const des = String(form.designation ?? '').trim();
+    if (requireDesignation && !des) e.designation = 'Designation is required.';
+    else if (des !== '' && !/^\d+$/.test(des)) e.designation = 'Select a valid designation.';
     if (requirePassword) {
         const pw = form.password;
         if (!pw || pw.length < 4) e.password = 'Password is required and must be at least 4 characters.';

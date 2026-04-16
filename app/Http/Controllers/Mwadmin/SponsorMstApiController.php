@@ -9,7 +9,6 @@ use App\Models\SponsorCategory;
 use App\Models\SponsorMst;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -18,13 +17,99 @@ class SponsorMstApiController extends Controller
     use AuthorizesMwadminPermissions;
     use ResolvesMwadminUser;
 
+    /**
+     * Build a public URL for sponsor logos. Legacy rows may store a bare filename,
+     * a relative path under images/sponsorLogo, or a full http(s) URL.
+     *
+     * Uses {@see asset()} so URLs match APP_URL / subfolder installs (same idea as CI base_url).
+     */
     private function logoPublicUrl(?string $filename): ?string
     {
-        if ($filename === null || $filename === '') {
+        if ($filename === null) {
+            return null;
+        }
+        $s = trim((string) $filename);
+        if ($s === '' || strcasecmp($s, 'null') === 0) {
+            return null;
+        }
+        if (preg_match('#^https?://#i', $s)) {
+            return $s;
+        }
+        if (str_starts_with($s, '//')) {
+            return 'https:'.$s;
+        }
+        $s = str_replace('\\', '/', $s);
+        $s = preg_replace('#^\./+#', '', $s);
+        if (str_starts_with($s, '/')) {
+            if (preg_match('#^/images/sponsorLogo/(.+)$#i', $s, $m)) {
+                $enc = $this->encodePathSegments($m[1]);
+
+                return $enc === '' ? null : asset('images/sponsorLogo/'.$enc);
+            }
+
+            return url($s);
+        }
+        if (preg_match('#(^|/)(images/sponsorLogo/)(.+)$#i', $s, $m)) {
+            $s = $m[3];
+        }
+        $s = ltrim($s, '/');
+        $enc = $this->encodePathSegments($s);
+
+        return $enc === '' ? null : asset('images/sponsorLogo/'.$enc);
+    }
+
+    /** URL-encode each path segment (handles spaces and special chars in legacy filenames). */
+    private function encodePathSegments(string $path): string
+    {
+        $segments = array_values(array_filter(explode('/', $path), static fn ($p) => $p !== '' && $p !== '.'));
+        if ($segments === []) {
+            return '';
+        }
+
+        return implode('/', array_map(static function (string $seg): string {
+            return rawurlencode(rawurldecode($seg));
+        }, $segments));
+    }
+
+    /** JSON date (Y-m-d) or null; hide legacy 1970 placeholders */
+    private function apiDate(?\DateTimeInterface $date): ?string
+    {
+        if ($date === null) {
+            return null;
+        }
+        if ((int) $date->format('Y') === 1970 && (int) $date->format('m') === 1 && (int) $date->format('d') === 1) {
             return null;
         }
 
-        return '/images/sponsorLogo/'.ltrim($filename, '/');
+        return $date->format('Y-m-d');
+    }
+
+    /** Treat multipart empty strings as null so dates can be cleared on update */
+    private function normalizeEmptyDates(Request $request): void
+    {
+        $merge = [];
+        foreach (['start_date', 'end_date'] as $key) {
+            if ($request->has($key) && $request->input($key) === '') {
+                $merge[$key] = null;
+            }
+        }
+        if ($merge !== []) {
+            $request->merge($merge);
+        }
+    }
+
+    /**
+     * DB `sponsormst.start_date` / `end_date` are often NOT NULL. Use legacy sentinel when empty;
+     * {@see apiDate()} hides 1970-01-01 from JSON. Prefer running
+     * `2026_04_11_120000_make_sponsormst_start_end_dates_nullable` for nullable columns.
+     */
+    private function persistSponsorDate(?string $value): string
+    {
+        if ($value !== null && $value !== '') {
+            return $value;
+        }
+
+        return '1970-01-01';
     }
 
     public function index(Request $request): JsonResponse
@@ -88,8 +173,8 @@ class SponsorMstApiController extends Controller
             'email' => $item->email,
             'mobile' => $item->mobile,
             'amount_sponsored' => (int) $item->amount_sponsored,
-            'start_date' => $item->start_date ? $item->start_date->format('Y-m-d') : null,
-            'end_date' => $item->end_date ? $item->end_date->format('Y-m-d') : null,
+            'start_date' => $this->apiDate($item->start_date),
+            'end_date' => $this->apiDate($item->end_date),
             'status' => (int) $item->status,
         ])->values();
 
@@ -126,8 +211,8 @@ class SponsorMstApiController extends Controller
                 'email' => $row->email,
                 'mobile' => $row->mobile,
                 'amount_sponsored' => (int) $row->amount_sponsored,
-                'start_date' => $row->start_date ? $row->start_date->format('Y-m-d') : null,
-                'end_date' => $row->end_date ? $row->end_date->format('Y-m-d') : null,
+                'start_date' => $this->apiDate($row->start_date),
+                'end_date' => $this->apiDate($row->end_date),
                 'status' => (int) $row->status,
             ],
         ]);
@@ -139,11 +224,13 @@ class SponsorMstApiController extends Controller
             return $deny;
         }
 
+        $this->normalizeEmptyDates($request);
+
         $validated = $request->validate([
             'sponsorcategory_id' => ['required', 'string', Rule::exists('sponsorcategory', 'id')],
             'organization_name' => ['required', 'string', 'max:250'],
             'website' => ['required', 'url', 'max:150'],
-            'contact_name' => ['required', 'string', 'max:200', 'regex:/^[a-zA-Z.\s]+$/'],
+            'contact_name' => ['required', 'string', 'max:200', 'regex:/^[a-zA-Z0-9\\s.\'\-&]+$/u'],
             'email' => ['nullable', 'email', 'max:250'],
             'mobile' => ['nullable', 'string', 'max:14'],
             'amount_sponsored' => ['required', 'integer', 'min:0'],
@@ -176,8 +263,8 @@ class SponsorMstApiController extends Controller
             'email' => $validated['email'] ?? '',
             'mobile' => $validated['mobile'] ?? '',
             'amount_sponsored' => $validated['amount_sponsored'],
-            'start_date' => ! empty($validated['start_date']) ? $validated['start_date'] : '1970-01-01',
-            'end_date' => ! empty($validated['end_date']) ? $validated['end_date'] : '1970-01-01',
+            'start_date' => $this->persistSponsorDate($validated['start_date'] ?? null),
+            'end_date' => $this->persistSponsorDate($validated['end_date'] ?? null),
             'status' => (int) $validated['status'],
             'addeddate' => now(),
             'addedby' => $userId,
@@ -195,11 +282,14 @@ class SponsorMstApiController extends Controller
         }
 
         $row = SponsorMst::query()->findOrFail($id);
+
+        $this->normalizeEmptyDates($request);
+
         $validated = $request->validate([
             'sponsorcategory_id' => ['required', 'string', Rule::exists('sponsorcategory', 'id')],
             'organization_name' => ['required', 'string', 'max:250'],
             'website' => ['required', 'url', 'max:150'],
-            'contact_name' => ['required', 'string', 'max:200', 'regex:/^[a-zA-Z.\s]+$/'],
+            'contact_name' => ['required', 'string', 'max:200', 'regex:/^[a-zA-Z0-9\\s.\'\-&]+$/u'],
             'email' => ['nullable', 'email', 'max:250'],
             'mobile' => ['nullable', 'string', 'max:14'],
             'amount_sponsored' => ['required', 'integer', 'min:0'],
@@ -231,8 +321,12 @@ class SponsorMstApiController extends Controller
         $row->email = $validated['email'] ?? '';
         $row->mobile = $validated['mobile'] ?? '';
         $row->amount_sponsored = $validated['amount_sponsored'];
-        $row->start_date = ! empty($validated['start_date']) ? $validated['start_date'] : '1970-01-01';
-        $row->end_date = ! empty($validated['end_date']) ? $validated['end_date'] : '1970-01-01';
+        if (array_key_exists('start_date', $validated)) {
+            $row->start_date = $this->persistSponsorDate($validated['start_date']);
+        }
+        if (array_key_exists('end_date', $validated)) {
+            $row->end_date = $this->persistSponsorDate($validated['end_date']);
+        }
         $row->status = (int) $validated['status'];
         $row->modifieddate = now();
         $row->modifiedby = $userId;
@@ -248,11 +342,13 @@ class SponsorMstApiController extends Controller
         }
 
         $row = SponsorMst::query()->findOrFail($id);
-        $logo = $row->logo;
-        $row->delete();
-        $this->deleteLogoFile($logo);
+        $userId = $this->resolveRealUserId($request);
+        $row->status = 0;
+        $row->modifieddate = now();
+        $row->modifiedby = $userId;
+        $row->save();
 
-        return response()->json(['message' => 'Sponsor deleted successfully.']);
+        return response()->json(['message' => 'Sponsor has been marked as inactive.']);
     }
 
     private function storeLogoFile(\Illuminate\Http\UploadedFile $file): string

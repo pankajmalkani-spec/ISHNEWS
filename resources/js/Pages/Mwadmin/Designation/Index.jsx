@@ -63,23 +63,23 @@ export default function DesignationIndex({ authUser = {} }) {
         };
     }, [query]);
 
-    const deleteRow = async (id) => {
-        if (!(await dialog.confirm('Delete this designation?', 'Delete Designation'))) return;
+    const deactivateRow = async (id) => {
+        if (!(await dialog.confirm('Mark this designation as inactive? The record will stay in the database.', 'Deactivate Designation'))) return;
         try {
             await axios.delete(`/api/mwadmin/designations/${id}`);
-            dialog.toast('Designation deleted successfully.', 'success');
+            dialog.toast('Designation has been marked as inactive.', 'success');
             const { data } = await axios.get('/api/mwadmin/designations', { params: query });
             setRows(data.data || []);
             setMeta(data.meta || { current_page: 1, last_page: 1, total: 0 });
         } catch (err) {
-            dialog.toast(err?.response?.data?.message || 'Unable to delete designation.', 'error');
+            dialog.toast(err?.response?.data?.message || 'Unable to deactivate designation.', 'error');
         }
     };
 
     const handleAction = async (id, action) => {
         if (!action) return;
         if (action === 'edit') return window.location.assign(`/mwadmin/designation/${id}/edit`);
-        if (action === 'delete') await deleteRow(id);
+        if (action === 'deactivate') await deactivateRow(id);
     };
 
     const columns = useMemo(
@@ -94,7 +94,7 @@ export default function DesignationIndex({ authUser = {} }) {
                 sortable: false,
                 cellRenderer: (params) => (
                     <MwadminActionsDropdown
-                        flags={{ edit: perms.edit, delete: perms.delete }}
+                        flags={{ edit: perms.edit, deactivate: perms.delete }}
                         onAction={(a) => handleAction(params.data.id, a)}
                     />
                 ),

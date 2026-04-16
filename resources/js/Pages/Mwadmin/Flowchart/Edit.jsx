@@ -139,9 +139,6 @@ export default function FlowchartEdit({ authUser = {}, flowchartId }) {
         );
     }
 
-    const th = { textAlign: 'left', padding: '6px 8px', borderBottom: '1px solid #ccc' };
-    const td = { padding: '6px 8px', verticalAlign: 'middle' };
-
     return (
         <>
             <Head title="Edit Flow Chart" />
@@ -202,39 +199,36 @@ export default function FlowchartEdit({ authUser = {}, flowchartId }) {
                                 </div>
                             </div>
 
-                            <h2 style={{ marginTop: '1rem', fontSize: '1.05rem', fontWeight: 600 }}>
+                            <h2 className="mwadmin-flowchart-activities-title">
                                 Activities
                             </h2>
-                            <div style={{ textAlign: 'right', marginTop: '0.5rem' }}>
+                            <div className="mwadmin-flowchart-activities-toolbar">
                                 <button type="button" className="mwadmin-add-btn" onClick={addRow}>
                                     + Add an Activity
                                 </button>
                             </div>
-                            <div style={{ overflowX: 'auto' }}>
-                                <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '0.5rem' }}>
+                            <div className="mwadmin-flowchart-table-wrap">
+                                <table className="mwadmin-flowchart-table">
                                     <thead>
                                         <tr>
-                                            <th style={th}>Plan *</th>
-                                            <th style={th}>Activity *</th>
-                                            <th style={th}>Responsibility *</th>
-                                            <th style={th}>Sort</th>
-                                            <th style={{ borderBottom: '1px solid #ccc' }} />
+                                            <th>Plan *</th>
+                                            <th>Activity *</th>
+                                            <th>Responsibility *</th>
+                                            <th>Sort</th>
+                                            <th />
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {activities.length === 0 ? (
                                             <tr>
-                                                <td
-                                                    colSpan={5}
-                                                    style={{ padding: '12px 8px', color: '#666' }}
-                                                >
+                                                <td colSpan={5} className="mwadmin-flowchart-empty">
                                                     Click &quot;Add an Activity&quot; to add rows.
                                                 </td>
                                             </tr>
                                         ) : (
                                             activities.map((row, idx) => (
                                                 <tr key={idx}>
-                                                    <td style={td}>
+                                                    <td className="mwadmin-flowchart-cell-plan">
                                                         <select
                                                             value={row.plan}
                                                             onChange={(e) =>
@@ -249,7 +243,7 @@ export default function FlowchartEdit({ authUser = {}, flowchartId }) {
                                                             ))}
                                                         </select>
                                                     </td>
-                                                    <td style={td}>
+                                                    <td className="mwadmin-flowchart-cell-activity">
                                                         <input
                                                             value={row.activity_name}
                                                             maxLength={200}
@@ -258,7 +252,7 @@ export default function FlowchartEdit({ authUser = {}, flowchartId }) {
                                                             }
                                                         />
                                                     </td>
-                                                    <td style={td}>
+                                                    <td className="mwadmin-flowchart-cell-responsibility">
                                                         <select
                                                             value={row.responsibility_id}
                                                             onChange={(e) =>
@@ -275,7 +269,7 @@ export default function FlowchartEdit({ authUser = {}, flowchartId }) {
                                                             ))}
                                                         </select>
                                                     </td>
-                                                    <td style={td}>
+                                                    <td className="mwadmin-flowchart-cell-sort">
                                                         <input
                                                             type="number"
                                                             min={0}
@@ -285,22 +279,14 @@ export default function FlowchartEdit({ authUser = {}, flowchartId }) {
                                                             }
                                                         />
                                                     </td>
-                                                    <td style={td}>
+                                                    <td className="mwadmin-flowchart-cell-remove">
                                                         <button
                                                             type="button"
-                                                            className="mwadmin-grid-action"
-                                                            style={{
-                                                                color: '#fff',
-                                                                background: '#c62828',
-                                                                border: 'none',
-                                                                borderRadius: 4,
-                                                                padding: '4px 10px',
-                                                                cursor: 'pointer',
-                                                            }}
+                                                            className="mwadmin-flowchart-remove-btn"
                                                             title="Remove row"
                                                             onClick={() => removeRow(idx)}
                                                         >
-                                                            ×
+                                                            Remove
                                                         </button>
                                                     </td>
                                                 </tr>

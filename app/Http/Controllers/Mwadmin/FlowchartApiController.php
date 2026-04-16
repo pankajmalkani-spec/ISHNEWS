@@ -250,14 +250,18 @@ class FlowchartApiController extends Controller
 
         $used = DB::table('contentcharttrans')->where('charttrans_id', $id)->exists();
         if ($used) {
-            return response()->json(['message' => 'Flow Chart cannot be deleted; it is assigned in News Content.'], 422);
+            return response()->json(['message' => 'Flow Chart cannot be deactivated; it is assigned in News Content.'], 422);
         }
 
-        DB::transaction(function () use ($id): void {
-            FlowchartTrans::query()->where('charttrans_id', $id)->delete();
-            FlowchartMst::query()->where('id', $id)->delete();
+        $userId = $this->resolveRealUserId($request);
+        DB::transaction(function () use ($id, $userId): void {
+            FlowchartMst::query()->where('id', $id)->update([
+                'status' => 0,
+                'modifieddate' => now(),
+                'modifiedby' => $userId,
+            ]);
         });
 
-        return response()->json(['message' => 'Flow Chart deleted successfully.']);
+        return response()->json(['message' => 'Flow Chart has been marked as inactive.']);
     }
 }

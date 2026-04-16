@@ -2,7 +2,14 @@ import { Head, Link } from '@inertiajs/react';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import MwadminLayout from '../../../Components/Mwadmin/Layout';
+import MwadminStatusBadge from '../../../Components/Mwadmin/MwadminStatusBadge';
 import { useClassicDialog } from '../../../Components/Mwadmin/ClassicDialog';
+import { formatSponsorDateDisplay, normalizeWebsiteUrl } from './sponsorDateFormat';
+
+function displayText(v) {
+    const s = v == null ? '' : String(v).trim();
+    return s === '' ? '—' : s;
+}
 
 export default function SponsorView({ authUser = {}, sponsorId }) {
     const dialog = useClassicDialog();
@@ -39,6 +46,8 @@ export default function SponsorView({ authUser = {}, sponsorId }) {
         );
     }
 
+    const websiteHref = row.website ? normalizeWebsiteUrl(row.website) : '';
+
     return (
         <>
             <Head title="View Sponsor" />
@@ -52,45 +61,78 @@ export default function SponsorView({ authUser = {}, sponsorId }) {
                         </Link>
                     </div>
                     <h1 className="mwadmin-title">Sponsor Details</h1>
-                    <section className="mwadmin-panel mwadmin-form-panel">
-                        <dl className="mwadmin-view-dl">
-                            <dt>ID</dt>
-                            <dd>{row.id}</dd>
-                            <dt>Category</dt>
-                            <dd>{row.category_name || '—'}</dd>
-                            <dt>Organization</dt>
-                            <dd>{row.organization_name}</dd>
-                            <dt>Logo</dt>
-                            <dd>
-                                {row.logo_url ? (
-                                    <img src={row.logo_url} alt="" style={{ maxWidth: 200, maxHeight: 80 }} />
+                    <section className="mwadmin-panel mwadmin-form-panel mwadmin-sponsor-view-panel">
+                        <div className="mwadmin-form-grid">
+                            <div>
+                                <label>ID</label>
+                                <input readOnly value={String(row.id)} />
+                            </div>
+                            <div>
+                                <label>Category</label>
+                                <input readOnly value={displayText(row.category_name)} />
+                            </div>
+                            <div>
+                                <label>Organization</label>
+                                <input readOnly value={displayText(row.organization_name)} />
+                            </div>
+                            <div>
+                                <label>Contact</label>
+                                <input readOnly value={displayText(row.contact_name)} />
+                            </div>
+                            <div>
+                                <label>Email</label>
+                                <input readOnly value={displayText(row.email)} />
+                            </div>
+                            <div>
+                                <label>Mobile</label>
+                                <input readOnly value={displayText(row.mobile)} />
+                            </div>
+                            <div>
+                                <label>Amount Sponsored</label>
+                                <input readOnly value={String(row.amount_sponsored ?? '')} />
+                            </div>
+                            <div>
+                                <label>Start Date</label>
+                                <input readOnly value={formatSponsorDateDisplay(row.start_date)} />
+                            </div>
+                            <div>
+                                <label>End Date</label>
+                                <input readOnly value={formatSponsorDateDisplay(row.end_date)} />
+                            </div>
+                            <div>
+                                <label>Status</label>
+                                <div className="mwadmin-sponsor-view-status-cell">
+                                    <MwadminStatusBadge value={row.status} />
+                                </div>
+                            </div>
+                            <div className="mwadmin-form-grid-full">
+                                <label>Website</label>
+                                {websiteHref ? (
+                                    <div className="mwadmin-sponsor-view-website-block">
+                                        <input readOnly value={row.website} />
+                                        <a href={websiteHref} target="_blank" rel="noopener noreferrer">
+                                            Open in new tab
+                                        </a>
+                                    </div>
                                 ) : (
-                                    '—'
+                                    <input readOnly value="—" />
                                 )}
-                            </dd>
-                            <dt>Website</dt>
-                            <dd>
-                                <a href={row.website} target="_blank" rel="noreferrer">
-                                    {row.website}
-                                </a>
-                            </dd>
-                            <dt>Contact</dt>
-                            <dd>{row.contact_name}</dd>
-                            <dt>Email</dt>
-                            <dd>{row.email || '—'}</dd>
-                            <dt>Mobile</dt>
-                            <dd>{row.mobile || '—'}</dd>
-                            <dt>Amount Sponsored</dt>
-                            <dd>{row.amount_sponsored}</dd>
-                            <dt>Start Date</dt>
-                            <dd>{row.start_date || '—'}</dd>
-                            <dt>End Date</dt>
-                            <dd>{row.end_date || '—'}</dd>
-                            <dt>Status</dt>
-                            <dd>{Number(row.status) === 1 ? 'Active' : 'In-Active'}</dd>
-                        </dl>
+                            </div>
+                            <div className="mwadmin-form-grid-full">
+                                <label>Logo</label>
+                                <div className="mwadmin-sponsor-view-logo-wrap">
+                                    {row.logo_url ? (
+                                        <img src={row.logo_url} alt="" className="mwadmin-sponsor-view-logo-img" />
+                                    ) : (
+                                        <span className="mwadmin-grid-action-muted">—</span>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
                         <div className="mwadmin-form-actions">
-                            <Link href={`/mwadmin/sponsor/${sponsorId}/edit`}>Edit</Link>
+                            <Link className="mwadmin-btn-primary" href={`/mwadmin/sponsor/${sponsorId}/edit`}>
+                                Edit
+                            </Link>
                         </div>
                     </section>
                 </div>

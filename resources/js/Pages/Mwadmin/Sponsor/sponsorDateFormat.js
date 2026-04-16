@@ -26,10 +26,11 @@ export function parseDmyToDate(dmy) {
     return dt;
 }
 
-/** API / DB date (Y-m-d) → display dd-mm-yyyy */
+/** API / DB date (Y-m-d) → display dd-mm-yyyy; blank for null or 1970 placeholder */
 export function isoDateToDmy(iso) {
     if (iso == null || iso === '') return '';
     const s = String(iso).trim();
+    if (s.startsWith('1970-01-01')) return '';
     const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
     if (!m) return '';
     return `${m[3]}-${m[2]}-${m[1]}`;
@@ -54,8 +55,29 @@ export function dmyToIsoDate(dmy) {
     return `${y}-${pad2(mo)}-${pad2(d)}`;
 }
 
+/** dd-mm-yyyy → `YYYY-MM-DD` for `<input type="date">` `value`, or '' if empty/invalid. */
+export function dmyToIsoDateInputValue(dmy) {
+    const iso = dmyToIsoDate(dmy);
+    if (iso === null || iso === 'INVALID') return '';
+    return iso;
+}
+
 /** For grid / view: show d-m-Y or em dash */
 export function formatSponsorDateDisplay(isoOrNull) {
     const d = isoDateToDmy(isoOrNull);
     return d || '—';
+}
+
+/**
+ * Sponsor logo output size — matches legacy mwadmin (`avatar_sponsor.js`):
+ * Cropper `aspectRatio: 196 / 160`, fixed crop box, drag image to position, UI label "196px X 160px".
+ */
+export const SPONSOR_LOGO_EXPORT = { w: 196, h: 160 };
+
+/** Add https:// when missing so Laravel `url` validation accepts common input (e.g. example.com). */
+export function normalizeWebsiteUrl(raw) {
+    const t = String(raw ?? '').trim();
+    if (!t) return '';
+    if (/^https?:\/\//i.test(t)) return t;
+    return `https://${t}`;
 }

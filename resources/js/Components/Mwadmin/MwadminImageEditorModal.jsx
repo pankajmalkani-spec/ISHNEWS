@@ -1,25 +1,27 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { clampMwadminZoom, exportMwadminImage } from './mwadminImageExport';
+import Cropper from 'react-easy-crop';
+import 'react-easy-crop/react-easy-crop.css';
+import { exportEasyCropToFile, exportEasyCropToObjectUrl } from './mwadminEasyCropExport';
 
 const rotateFine = [-15, -30, -45, 15, 30, 45];
 
-/** Live export previews — only rendered when `preview` is set (no empty “NO IMAGE” stack). */
-function ExportPreviewFrame({ preview, rotate, zoom, offset, frameWidth, outW, outH, caption }) {
+function clampZoom(v) {
+    const n = Number(v);
+    if (Number.isNaN(n)) return 1;
+    return Math.min(4, Math.max(1, n));
+}
+
+function LegacyPreviewPlaceholder({ outW, outH, frameWidth, caption, blurb }) {
     const aspect = outW / outH;
     const h = frameWidth / aspect;
-    const scale = 0.22;
     return (
-        <figure className="mwadmin-category-export-preview">
-            <div className="mwadmin-category-export-preview-frame" style={{ width: frameWidth, height: h }}>
-                <img
-                    src={preview}
-                    alt=""
-                    className="mwadmin-category-export-preview-img"
-                    style={{
-                        transform: `translate(${offset.x * scale}px, ${offset.y * scale}px) rotate(${rotate}deg) scale(${zoom})`,
-                    }}
-                />
+        <figure className="mwadmin-legacy-preview-empty">
+            <div className="mwadmin-legacy-preview-empty-frame" style={{ width: frameWidth, height: h }}>
+                <span className="mwadmin-legacy-preview-empty-dim">
+                    {outW}px X {outH}px
+                </span>
+                <span className="mwadmin-legacy-preview-empty-blurb">{blurb}</span>
             </div>
             <figcaption className="mwadmin-category-export-preview-caption">{caption}</figcaption>
         </figure>
@@ -27,7 +29,12 @@ function ExportPreviewFrame({ preview, rotate, zoom, offset, frameWidth, outW, o
 }
 
 /**
- * Advanced image editor: local file + drag-and-drop, pan / zoom / rotate, export to fixed frame.
+ * Image editor using react-easy-crop (ValentinH/react-easy-crop): industry-standard drag + zoom + rotation,
+ * with canvas export scaled to exact outputWidth × outputHeight.
+ *
+ * Reopen: pass initialImageFile (preferred) and/or initialImageUrl. Pass editorSourceFile from onApply’s
+ * second argument so re-edits use full resolution; Done still exports exact outputWidth × outputHeight.
+ * Main cropper uses objectFit contain for consistent first-time and saved-state behavior.
  */
 export default function MwadminImageEditorModal({
     open,
@@ -37,103 +44,149 @@ export default function MwadminImageEditorModal({
     outputWidth,
     outputHeight,
     notify,
+    placeholderBlurb = 'IMAGE GOES HERE',
+    initialImageFile = null,
+    initialImageUrl = null,
 }) {
+    const fileInputId = useId();
     const fileRef = useRef(null);
-    const dragRef = useRef(null);
-    const [workFile, setWorkFile] = useState(null);
-    const [displayUrl, setDisplayUrl] = useState('');
-    const [rotate, setRotate] = useState(0);
-    const [zoom, setZoom] = useState(1);
-    const [offset, setOffset] = useState({ x: 0, y: 0 });
-    const [opts, setOpts] = useState({ format: 'jpg', quality: 88 });
-    const [dragging, setDragging] = useState(false);
-    const [dragOver, setDragOver] = useState(false);
+    const pixelsRef = useRef(null);
+    const modalOwnedBlobRef = useRef(null);
+    /** Full-resolution File last loaded into the cropper (pick, drop, or reopen). Used so parents can re-edit from pixels, not from the small export. */
+    const editingSourceFileRef = useRef(null);
+    const initialFileRef = useRef(null);
+    const initialUrlRef = useRef('');
+    const ingestFileRef = useRef(null);
+    initialFileRef.current = initialImageFile ?? null;
+    initialUrlRef.current =
+        typeof initialImageUrl === 'string' && initialImageUrl.trim() ? initialImageUrl.trim() : '';
 
-    const resetTransforms = useCallback(() => {
-        setRotate(0);
-        setZoom(1);
-        setOffset({ x: 0, y: 0 });
+    const [displayUrl, setDisplayUrl] = useState('');
+    const [crop, setCrop] = useState({ x: 0, y: 0 });
+    const [zoom, setZoom] = useState(1);
+    const [rotation, setRotation] = useState(0);
+    const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+    const [opts, setOpts] = useState({ format: 'jpg', quality: 92 });
+    const [dragOver, setDragOver] = useState(false);
+    const [previewUrl, setPreviewUrl] = useState('');
+
+    const aspect = outputWidth / outputHeight;
+
+    const revokeModalBlob = useCallback(() => {
+        if (modalOwnedBlobRef.current) {
+            URL.revokeObjectURL(modalOwnedBlobRef.current);
+            modalOwnedBlobRef.current = null;
+        }
     }, []);
 
-    const revokeDisplay = useCallback((url) => {
-        if (url && url.startsWith('blob:')) URL.revokeObjectURL(url);
+    const resetCropState = useCallback(() => {
+        setCrop({ x: 0, y: 0 });
+        setZoom(1);
+        setRotation(0);
+        setCroppedAreaPixels(null);
+        pixelsRef.current = null;
     }, []);
 
     const ingestFile = useCallback(
-        (file) => {
+        (file, options = {}) => {
+            const { fromReopen = false } = options;
             if (!file || !file.type.startsWith('image/')) {
-                notify?.('Please choose or drop an image file (JPG, PNG, GIF, etc.).', 'Invalid file');
+                notify?.('Please choose or drop an image file (JPG, PNG, GIF, etc.).', 'error');
                 return;
             }
-            setWorkFile(file);
-            setDisplayUrl((prev) => {
-                if (prev && prev.startsWith('blob:')) URL.revokeObjectURL(prev);
-                return URL.createObjectURL(file);
-            });
-            resetTransforms();
+            editingSourceFileRef.current = file;
+            revokeModalBlob();
+            const u = URL.createObjectURL(file);
+            modalOwnedBlobRef.current = u;
+            setDisplayUrl(u);
+            resetCropState();
         },
-        [notify, resetTransforms]
+        [notify, resetCropState, revokeModalBlob]
     );
 
+    ingestFileRef.current = ingestFile;
+
     useEffect(() => {
-        if (!open) return;
-        setWorkFile(null);
-        setDisplayUrl((prev) => {
-            if (prev && prev.startsWith('blob:')) URL.revokeObjectURL(prev);
+        if (!open) {
+            setPreviewUrl((u) => {
+                if (u) URL.revokeObjectURL(u);
+                return '';
+            });
+            revokeModalBlob();
+            editingSourceFileRef.current = null;
+            setDisplayUrl('');
+            resetCropState();
+            return;
+        }
+
+        setPreviewUrl((u) => {
+            if (u) URL.revokeObjectURL(u);
             return '';
         });
-        resetTransforms();
-    }, [open, outputWidth, outputHeight, resetTransforms]);
 
-    useEffect(() => {
-        return () => {
-            revokeDisplay(displayUrl);
-        };
-    }, [displayUrl, revokeDisplay]);
+        const file = initialFileRef.current;
+        const url = initialUrlRef.current;
 
-    const getPoint = (e) =>
-        e.touches && e.touches[0]
-            ? { x: e.touches[0].clientX, y: e.touches[0].clientY }
-            : { x: e.clientX, y: e.clientY };
+        if (file && file.type?.startsWith('image/')) {
+            ingestFileRef.current?.(file, { fromReopen: true });
+            return;
+        }
 
-    const startDrag = (e) => {
-        if (!displayUrl) return;
-        if (e.cancelable) e.preventDefault();
-        const point = getPoint(e);
-        dragRef.current = { startX: point.x, startY: point.y, baseX: offset.x, baseY: offset.y };
-        setDragging(true);
-    };
+        if (url) {
+            revokeModalBlob();
+            editingSourceFileRef.current = null;
+            setDisplayUrl(url);
+            resetCropState();
+            return;
+        }
 
-    const moveDrag = (e) => {
-        const d = dragRef.current;
-        if (!d) return;
-        if (e.cancelable) e.preventDefault();
-        const point = getPoint(e);
-        setOffset({
-            x: d.baseX + (point.x - d.startX),
-            y: d.baseY + (point.y - d.startY),
-        });
-    };
+        revokeModalBlob();
+        editingSourceFileRef.current = null;
+        setDisplayUrl('');
+        resetCropState();
+    // Only re-run when open toggles; initialImage* is read from refs on each open.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [open]);
 
-    const endDrag = () => {
-        dragRef.current = null;
-        setDragging(false);
-    };
-
-    useEffect(() => {
-        const onMove = (e) => moveDrag(e);
-        const onUp = () => endDrag();
-        window.addEventListener('mousemove', onMove);
-        window.addEventListener('mouseup', onUp);
-        window.addEventListener('touchmove', onMove, { passive: false });
-        window.addEventListener('touchend', onUp);
-        return () => {
-            window.removeEventListener('mousemove', onMove);
-            window.removeEventListener('mouseup', onUp);
-            window.removeEventListener('touchmove', onMove);
-            window.removeEventListener('touchend', onUp);
-        };
+    const onCropComplete = useCallback((_, pixels) => {
+        pixelsRef.current = pixels;
+        setCroppedAreaPixels(pixels);
     }, []);
+
+    useEffect(() => {
+        if (!displayUrl || !croppedAreaPixels) {
+            setPreviewUrl((u) => {
+                if (u) URL.revokeObjectURL(u);
+                return '';
+            });
+            return;
+        }
+        let canceled = false;
+        const t = window.setTimeout(async () => {
+            const px = pixelsRef.current;
+            if (!px) return;
+            const maxPrev = 400;
+            const pw = outputWidth > maxPrev ? maxPrev : outputWidth;
+            const ph = Math.max(1, Math.round(pw / aspect));
+            const url = await exportEasyCropToObjectUrl(displayUrl, px, rotation, pw, ph, {
+                format: opts.format === 'png' ? 'png' : 'jpg',
+                quality: Math.min(opts.quality, 85),
+                baseName: 'preview',
+            });
+            if (canceled) {
+                if (url) URL.revokeObjectURL(url);
+                return;
+            }
+            setPreviewUrl((prev) => {
+                if (prev) URL.revokeObjectURL(prev);
+                return url || '';
+            });
+        }, 240);
+        return () => {
+            canceled = true;
+            window.clearTimeout(t);
+        };
+    }, [displayUrl, croppedAreaPixels, rotation, outputWidth, outputHeight, opts.format, opts.quality, aspect]);
 
     const onPickFile = (e) => {
         const file = e.target.files?.[0] || null;
@@ -161,25 +214,36 @@ export default function MwadminImageEditorModal({
     };
 
     const handleDone = async () => {
-        if (!workFile) {
-            notify?.('Choose or drop an image first.', 'Banner Image');
+        if (!displayUrl) {
+            notify?.('Choose or drop an image first.', 'error');
+            return;
+        }
+        const pixels = pixelsRef.current || croppedAreaPixels;
+        if (!pixels) {
+            notify?.('Wait for the image to load, then adjust the crop.', 'error');
             return;
         }
         const baseName = title.toLowerCase().includes('box') ? 'box' : 'banner';
-        const out = await exportMwadminImage(workFile, rotate, zoom, offset, outputWidth, outputHeight, {
+        const out = await exportEasyCropToFile(displayUrl, pixels, rotation, outputWidth, outputHeight, {
             format: opts.format,
             quality: opts.quality,
             baseName,
         });
         if (!out) {
-            notify?.('Could not process the image. Try another file.', 'Error');
+            notify?.('Could not export the image. Try another file.', 'error');
             return;
         }
-        onApply(out);
+        const editorSourceFile = editingSourceFileRef.current;
+        onApply(out, {
+            editorSourceFile: editorSourceFile instanceof File ? editorSourceFile : null,
+        });
         onClose();
     };
 
     if (!open) return null;
+
+    const previewFrames = [168, 120, 76];
+    const previewLabels = ['Large', 'Medium', 'Small'];
 
     const node = (
         <div
@@ -190,7 +254,7 @@ export default function MwadminImageEditorModal({
             }}
         >
             <div
-                className="mwadmin-modal-card mwadmin-category-image-modal"
+                className="mwadmin-modal-card mwadmin-category-image-modal mwadmin-image-editor-legacy"
                 role="dialog"
                 aria-modal="true"
                 onMouseDown={(e) => e.stopPropagation()}
@@ -201,156 +265,177 @@ export default function MwadminImageEditorModal({
                         ×
                     </button>
                 </div>
-                <p className="mwadmin-category-image-modal-hint">
-                    Output {outputWidth}×{outputHeight}px — drag image to position, use zoom and rotate. Drag and drop a file
-                    anywhere in the editor area.
-                </p>
+
+                <div className="mwadmin-legacy-upload-block">
+                    <div className="mwadmin-legacy-upload-row">
+                        <label className="mwadmin-legacy-upload-label" htmlFor={fileInputId}>
+                            Local upload
+                        </label>
+                        <input
+                            id={fileInputId}
+                            ref={fileRef}
+                            type="file"
+                            accept="image/*"
+                            className="mwadmin-hidden-input"
+                            onChange={onPickFile}
+                        />
+                        <button type="button" className="mwadmin-upload-btn" onClick={() => fileRef.current?.click()}>
+                            Choose File
+                        </button>
+                    </div>
+                    <p className="mwadmin-legacy-size-hint">
+                        <strong>
+                            Output size — {outputWidth} × {outputHeight}px
+                        </strong>
+                        <span className="mwadmin-image-editor-output-note"> (Done exports exactly this; previews match this aspect)</span>
+                    </p>
+                </div>
 
                 <div
-                    className={`mwadmin-category-image-dropzone ${dragOver ? 'is-dragover' : ''}`}
+                    className={`mwadmin-legacy-editor-columns ${dragOver ? 'is-dragover' : ''}`}
                     onDrop={onDrop}
                     onDragOver={onDragOver}
                     onDragLeave={onDragLeave}
                 >
-                    <span className="mwadmin-category-image-dropzone-label">Drop image here or use upload</span>
-                </div>
-
-                <div className="mwadmin-category-image-local-row">
-                    <span>Local upload</span>
-                    <input ref={fileRef} type="file" accept="image/*" className="mwadmin-hidden-input" onChange={onPickFile} />
-                    <button type="button" className="mwadmin-upload-btn" onClick={() => fileRef.current?.click()}>
-                        Choose File
-                    </button>
-                </div>
-
-                <div className="mwadmin-category-image-editor-body">
-                    <div className="mwadmin-category-image-crop-stage">
-                        <div
-                            className={`mwadmin-crop-main mwadmin-category-image-crop-main ${dragging ? 'dragging' : ''}`}
-                            onMouseDown={startDrag}
-                            onTouchStart={startDrag}
-                            onWheel={(e) => {
-                                e.preventDefault();
-                                setZoom((z) => clampMwadminZoom(z + (e.deltaY > 0 ? -0.08 : 0.08)));
-                            }}
-                            tabIndex={0}
-                        >
+                    <div className="mwadmin-legacy-stage-column">
+                        <div className={`mwadmin-easy-crop-stage ${dragOver ? 'is-dragover' : ''}`}>
                             {displayUrl ? (
-                                <img
-                                    src={displayUrl}
-                                    alt=""
+                                <Cropper
+                                    image={displayUrl}
+                                    crop={crop}
+                                    zoom={zoom}
+                                    rotation={rotation}
+                                    aspect={aspect}
+                                    objectFit="contain"
+                                    minZoom={1}
+                                    maxZoom={4}
+                                    cropShape="rect"
+                                    showGrid
+                                    restrictPosition
+                                    zoomWithScroll
+                                    onCropChange={setCrop}
+                                    onZoomChange={(z) => setZoom(clampZoom(z))}
+                                    onCropComplete={onCropComplete}
                                     style={{
-                                        transform: `translate(${offset.x}px, ${offset.y}px) rotate(${rotate}deg) scale(${zoom})`,
+                                        containerStyle: {
+                                            background:
+                                                'repeating-conic-gradient(#d4d4d4 0% 25%, #f0f0f0 0% 50%) 50% / 16px 16px',
+                                        },
+                                        cropAreaStyle: {},
                                     }}
-                                    className="mwadmin-crop-image mwadmin-crop-main-image"
                                 />
                             ) : (
-                                <div className="mwadmin-category-image-placeholder">
+                                <div className="mwadmin-category-image-placeholder mwadmin-legacy-stage-placeholder mwadmin-easy-crop-empty">
                                     <span>
                                         {outputWidth} × {outputHeight}
                                     </span>
-                                    <small>No image — drop a file or choose one</small>
+                                    <small>Drop an image here or use Choose File</small>
                                 </div>
                             )}
                         </div>
-
-                        {displayUrl ? (
-                            <div className="mwadmin-category-image-previews-bar">
-                                <div className="mwadmin-category-image-previews-bar-title">How the export will look at different sizes</div>
-                                <div className="mwadmin-category-image-previews-row">
-                                    <ExportPreviewFrame
-                                        preview={displayUrl}
-                                        rotate={rotate}
-                                        zoom={zoom}
-                                        offset={offset}
-                                        frameWidth={168}
-                                        outW={outputWidth}
-                                        outH={outputHeight}
-                                        caption="Large"
-                                    />
-                                    <ExportPreviewFrame
-                                        preview={displayUrl}
-                                        rotate={rotate}
-                                        zoom={zoom}
-                                        offset={offset}
-                                        frameWidth={120}
-                                        outW={outputWidth}
-                                        outH={outputHeight}
-                                        caption="Medium"
-                                    />
-                                    <ExportPreviewFrame
-                                        preview={displayUrl}
-                                        rotate={rotate}
-                                        zoom={zoom}
-                                        offset={offset}
-                                        frameWidth={76}
-                                        outW={outputWidth}
-                                        outH={outputHeight}
-                                        caption="Small"
-                                    />
-                                </div>
-                            </div>
-                        ) : null}
                     </div>
+
+                    <aside className="mwadmin-legacy-previews-column" aria-label="Export previews">
+                        {previewFrames.map((fw, i) =>
+                            previewUrl ? (
+                                <figure key={fw} className="mwadmin-category-export-preview mwadmin-legacy-export-preview">
+                                    <div
+                                        className="mwadmin-category-export-preview-frame mwadmin-export-preview-frame--aspect"
+                                        style={{
+                                            width: fw,
+                                            height: Math.max(1, Math.round(fw / aspect)),
+                                        }}
+                                    >
+                                        <img src={previewUrl} alt="" className="mwadmin-category-export-preview-img" />
+                                    </div>
+                                    <figcaption className="mwadmin-category-export-preview-caption">{previewLabels[i]}</figcaption>
+                                </figure>
+                            ) : (
+                                <LegacyPreviewPlaceholder
+                                    key={fw}
+                                    outW={outputWidth}
+                                    outH={outputHeight}
+                                    frameWidth={fw}
+                                    caption={previewLabels[i]}
+                                    blurb={placeholderBlurb}
+                                />
+                            )
+                        )}
+                    </aside>
                 </div>
 
-                <div className="mwadmin-zoom-row">
-                    <label>Zoom</label>
-                    <input
-                        type="range"
-                        min="0.35"
-                        max="4"
-                        step="0.05"
-                        value={zoom}
-                        onChange={(e) => setZoom(clampMwadminZoom(e.target.value))}
-                    />
-                    <span>{zoom.toFixed(2)}×</span>
-                </div>
-                <div className="mwadmin-advanced-row">
-                    <select value={opts.format} onChange={(e) => setOpts((o) => ({ ...o, format: e.target.value }))}>
-                        <option value="jpg">JPG</option>
-                        <option value="png">PNG</option>
-                    </select>
-                    <label className="mwadmin-category-quality-label">
-                        Quality
+                <details className="mwadmin-image-editor-advanced">
+                    <summary>Zoom &amp; export options</summary>
+                    <div className="mwadmin-zoom-row">
+                        <label>Zoom</label>
                         <input
-                            type="number"
-                            min="40"
-                            max="100"
-                            value={opts.quality}
-                            onChange={(e) => setOpts((o) => ({ ...o, quality: Number(e.target.value) }))}
+                            type="range"
+                            min="1"
+                            max="4"
+                            step="0.02"
+                            value={zoom}
+                            onChange={(e) => setZoom(clampZoom(e.target.value))}
                         />
-                    </label>
-                </div>
-                <div className="mwadmin-rotate-row">
-                    <button type="button" onClick={() => setRotate((d) => d - 90)}>
-                        Rotate Left
-                    </button>
-                    {rotateFine.slice(0, 3).map((deg) => (
-                        <button key={`rl${deg}`} type="button" onClick={() => setRotate((d) => d + deg)}>
-                            {deg}°
+                        <span>{zoom.toFixed(2)}×</span>
+                    </div>
+                    <div className="mwadmin-advanced-row">
+                        <select value={opts.format} onChange={(e) => setOpts((o) => ({ ...o, format: e.target.value }))}>
+                            <option value="jpg">JPG</option>
+                            <option value="png">PNG</option>
+                        </select>
+                        <label className="mwadmin-category-quality-label">
+                            Quality
+                            <input
+                                type="number"
+                                min="40"
+                                max="100"
+                                value={opts.quality}
+                                onChange={(e) => setOpts((o) => ({ ...o, quality: Number(e.target.value) }))}
+                            />
+                        </label>
+                        <button
+                            type="button"
+                            className="mwadmin-modal-btn ghost"
+                            onClick={() => {
+                                resetCropState();
+                            }}
+                        >
+                            Reset crop
                         </button>
-                    ))}
-                    <button type="button" onClick={() => setRotate((d) => d + 90)}>
-                        Rotate Right
-                    </button>
-                    {rotateFine.slice(3).map((deg) => (
-                        <button key={`rr${deg}`} type="button" onClick={() => setRotate((d) => d + deg)}>
-                            +{deg}°
-                        </button>
-                    ))}
-                    <button type="button" onClick={resetTransforms}>
-                        Reset
-                    </button>
-                </div>
+                    </div>
+                </details>
 
-                <div className="mwadmin-modal-actions">
-                    <button type="button" className="mwadmin-modal-btn ghost" onClick={onClose}>
-                        Cancel
-                    </button>
-                    <button type="button" className="mwadmin-modal-btn" onClick={handleDone}>
-                        Done
-                    </button>
+                <div className="mwadmin-legacy-footer">
+                    <div className="mwadmin-legacy-rotate-wrap">
+                        <div className="mwadmin-legacy-btn-group" role="group" aria-label="Rotate left">
+                            <button type="button" className="mwadmin-legacy-rotate-primary" onClick={() => setRotation((d) => d - 90)}>
+                                Rotate Left
+                            </button>
+                            {rotateFine.slice(0, 3).map((deg) => (
+                                <button key={`rl${deg}`} type="button" onClick={() => setRotation((d) => d + deg)}>
+                                    {deg}deg
+                                </button>
+                            ))}
+                        </div>
+                        <div className="mwadmin-legacy-btn-group" role="group" aria-label="Rotate right">
+                            <button type="button" className="mwadmin-legacy-rotate-primary" onClick={() => setRotation((d) => d + 90)}>
+                                Rotate Right
+                            </button>
+                            {rotateFine.slice(3).map((deg) => (
+                                <button key={`rr${deg}`} type="button" onClick={() => setRotation((d) => d + deg)}>
+                                    {deg}deg
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="mwadmin-legacy-footer-actions">
+                        <button type="button" className="mwadmin-modal-btn ghost" onClick={onClose}>
+                            Cancel
+                        </button>
+                        <button type="button" className="mwadmin-legacy-done-btn" onClick={handleDone}>
+                            Done
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

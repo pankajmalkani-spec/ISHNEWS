@@ -500,19 +500,28 @@
     height: auto !important;
 }
 
-/* Roles listing: stretch grid + readable Role/Description (wrap, no ellipsis) */
-.mwadmin-roles-grid-panel {
+/* Roles & Sponsor listings: stretch grid + readable wrapped text columns */
+.mwadmin-roles-grid-panel,
+.mwadmin-sponsor-grid-panel,
+.mwadmin-advertisement-grid-panel,
+.mwadmin-flowchart-grid-panel {
     display: flex;
     flex-direction: column;
     height: min(72vh, 880px);
     min-height: 520px;
 }
 
-.mwadmin-roles-grid-panel > .mwadmin-toolbar {
+.mwadmin-roles-grid-panel > .mwadmin-toolbar,
+.mwadmin-sponsor-grid-panel > .mwadmin-toolbar,
+.mwadmin-advertisement-grid-panel > .mwadmin-toolbar,
+.mwadmin-flowchart-grid-panel > .mwadmin-toolbar {
     flex-shrink: 0;
 }
 
-.mwadmin-roles-grid-panel > .mwadmin-table-wrap {
+.mwadmin-roles-grid-panel > .mwadmin-table-wrap,
+.mwadmin-sponsor-grid-panel > .mwadmin-table-wrap,
+.mwadmin-advertisement-grid-panel > .mwadmin-table-wrap,
+.mwadmin-flowchart-grid-panel > .mwadmin-table-wrap {
     flex: 1 1 auto;
     display: flex;
     flex-direction: column;
@@ -520,16 +529,25 @@
     overflow: hidden;
 }
 
-.mwadmin-roles-grid-panel > .mwadmin-pagination {
+.mwadmin-roles-grid-panel > .mwadmin-pagination,
+.mwadmin-sponsor-grid-panel > .mwadmin-pagination,
+.mwadmin-advertisement-grid-panel > .mwadmin-pagination,
+.mwadmin-flowchart-grid-panel > .mwadmin-pagination {
     flex-shrink: 0;
 }
 
-.mwadmin-roles-grid-panel .mwadmin-table-wrap > .mwadmin-filter-bar {
+.mwadmin-roles-grid-panel .mwadmin-table-wrap > .mwadmin-filter-bar,
+.mwadmin-sponsor-grid-panel .mwadmin-table-wrap > .mwadmin-filter-bar,
+.mwadmin-advertisement-grid-panel .mwadmin-table-wrap > .mwadmin-filter-bar,
+.mwadmin-flowchart-grid-panel .mwadmin-table-wrap > .mwadmin-filter-bar {
     flex-shrink: 0;
 }
 
-/* Fill the panel like Sub-Category listing: fixed viewport height so space remains below the last row */
-.mwadmin-roles-grid-panel .mwadmin-table-wrap > .mwadmin-ag-grid {
+/* Fill the panel: grid stretches so Amount and pinned Actions stay in view with horizontal scroll */
+.mwadmin-roles-grid-panel .mwadmin-table-wrap > .mwadmin-ag-grid,
+.mwadmin-sponsor-grid-panel .mwadmin-table-wrap > .mwadmin-ag-grid,
+.mwadmin-advertisement-grid-panel .mwadmin-table-wrap > .mwadmin-ag-grid,
+.mwadmin-flowchart-grid-panel .mwadmin-table-wrap > .mwadmin-ag-grid {
     flex: 1 1 0;
     min-height: 280px;
     min-width: 0;
@@ -539,28 +557,58 @@
 }
 
 /* AG Grid: flex height chain so the body can scroll when row count is large (“Show All”, wrap + autoHeight) */
-.mwadmin-roles-listing-grid.mwadmin-ag-grid .ag-root-wrapper {
+.mwadmin-roles-listing-grid.mwadmin-ag-grid .ag-root-wrapper,
+.mwadmin-sponsor-listing-grid.mwadmin-ag-grid .ag-root-wrapper,
+.mwadmin-advertisement-listing-grid.mwadmin-ag-grid .ag-root-wrapper,
+.mwadmin-flowchart-listing-grid.mwadmin-ag-grid .ag-root-wrapper {
     height: 100% !important;
     min-height: 0 !important;
 }
 
-.mwadmin-roles-listing-grid.mwadmin-ag-grid .ag-root-wrapper-body.ag-layout-normal {
+.mwadmin-roles-listing-grid.mwadmin-ag-grid .ag-root-wrapper-body.ag-layout-normal,
+.mwadmin-sponsor-listing-grid.mwadmin-ag-grid .ag-root-wrapper-body.ag-layout-normal,
+.mwadmin-advertisement-listing-grid.mwadmin-ag-grid .ag-root-wrapper-body.ag-layout-normal,
+.mwadmin-flowchart-listing-grid.mwadmin-ag-grid .ag-root-wrapper-body.ag-layout-normal {
     flex: 1 1 auto !important;
     min-height: 0 !important;
     height: 0 !important;
 }
 
-.mwadmin-roles-listing-grid.mwadmin-ag-grid .ag-body {
+.mwadmin-roles-listing-grid.mwadmin-ag-grid .ag-body,
+.mwadmin-sponsor-listing-grid.mwadmin-ag-grid .ag-body,
+.mwadmin-advertisement-listing-grid.mwadmin-ag-grid .ag-body,
+.mwadmin-flowchart-listing-grid.mwadmin-ag-grid .ag-body {
     min-height: 0 !important;
 }
 
-/* Vertical scroll gutter (Quartz often hides scrollbar on center viewport — keep scroll area usable) */
-.mwadmin-roles-listing-grid.mwadmin-ag-grid .ag-body-vertical-scroll-viewport {
+.mwadmin-roles-listing-grid.mwadmin-ag-grid .ag-body-vertical-scroll-viewport,
+.mwadmin-sponsor-listing-grid.mwadmin-ag-grid .ag-body-vertical-scroll-viewport,
+.mwadmin-advertisement-listing-grid.mwadmin-ag-grid .ag-body-vertical-scroll-viewport,
+.mwadmin-flowchart-listing-grid.mwadmin-ag-grid .ag-body-vertical-scroll-viewport {
     overflow-y: scroll !important;
     min-height: 0 !important;
 }
 
-.mwadmin-roles-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-wrap {
+/* Hide Quartz pinned-left “shadow” divider (header border + last pinned cell emphasis) */
+.mwadmin-roles-listing-grid.mwadmin-ag-grid .ag-pinned-left-header,
+.mwadmin-sponsor-listing-grid.mwadmin-ag-grid .ag-pinned-left-header,
+.mwadmin-advertisement-listing-grid.mwadmin-ag-grid .ag-pinned-left-header,
+.mwadmin-flowchart-listing-grid.mwadmin-ag-grid .ag-pinned-left-header {
+    border-right: none !important;
+    box-shadow: none !important;
+}
+
+.mwadmin-roles-listing-grid.mwadmin-ag-grid .ag-ltr .ag-cell.ag-cell-last-left-pinned,
+.mwadmin-sponsor-listing-grid.mwadmin-ag-grid .ag-ltr .ag-cell.ag-cell-last-left-pinned,
+.mwadmin-advertisement-listing-grid.mwadmin-ag-grid .ag-ltr .ag-cell.ag-cell-last-left-pinned,
+.mwadmin-flowchart-listing-grid.mwadmin-ag-grid .ag-ltr .ag-cell.ag-cell-last-left-pinned {
+    border-right-color: transparent !important;
+}
+
+.mwadmin-roles-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-wrap,
+.mwadmin-sponsor-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-wrap,
+.mwadmin-advertisement-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-wrap,
+.mwadmin-flowchart-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-wrap {
     align-items: flex-start !important;
     white-space: normal !important;
     word-break: break-word;
@@ -569,44 +617,100 @@
     padding-bottom: 8px;
 }
 
-.mwadmin-roles-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-wrap .ag-cell-value {
+.mwadmin-roles-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-wrap .ag-cell-value,
+.mwadmin-sponsor-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-wrap .ag-cell-value,
+.mwadmin-advertisement-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-wrap .ag-cell-value,
+.mwadmin-flowchart-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-wrap .ag-cell-value {
     overflow: visible !important;
     text-overflow: clip !important;
     white-space: normal !important;
 }
 
-/* Let the grid body scroll when many rows; autoHeight rows still expand inside the viewport */
-.mwadmin-roles-listing-grid.mwadmin-ag-grid .ag-body-viewport {
-    overflow-x: auto;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-}
-
-/* Single-line columns (ID, Actions, counts): vertically center vs wrapped Role/Description */
-.mwadmin-roles-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-vcenter {
+.mwadmin-roles-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-vcenter,
+.mwadmin-sponsor-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-vcenter,
+.mwadmin-advertisement-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-vcenter,
+.mwadmin-flowchart-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-vcenter {
     display: flex !important;
     align-items: center !important;
 }
 
-.mwadmin-roles-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-vcenter.ag-right-aligned-cell {
+.mwadmin-roles-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-vcenter.ag-right-aligned-cell,
+.mwadmin-sponsor-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-vcenter.ag-right-aligned-cell,
+.mwadmin-advertisement-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-vcenter.ag-right-aligned-cell,
+.mwadmin-flowchart-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-vcenter.ag-right-aligned-cell {
+    justify-content: flex-end;
+}
+
+/* Right-aligned + vcenter: wrapper/value are width:100%, so flex-end on the cell alone does nothing — align inner flex row to the end */
+.mwadmin-roles-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-vcenter.ag-right-aligned-cell .ag-cell-wrapper,
+.mwadmin-roles-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-vcenter.ag-right-aligned-cell .ag-cell-value,
+.mwadmin-sponsor-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-vcenter.ag-right-aligned-cell .ag-cell-wrapper,
+.mwadmin-sponsor-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-vcenter.ag-right-aligned-cell .ag-cell-value,
+.mwadmin-advertisement-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-vcenter.ag-right-aligned-cell .ag-cell-wrapper,
+.mwadmin-advertisement-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-vcenter.ag-right-aligned-cell .ag-cell-value,
+.mwadmin-flowchart-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-vcenter.ag-right-aligned-cell .ag-cell-wrapper,
+.mwadmin-flowchart-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-vcenter.ag-right-aligned-cell .ag-cell-value {
     justify-content: flex-end;
 }
 
 .mwadmin-roles-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-vcenter .ag-cell-wrapper,
-.mwadmin-roles-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-vcenter .ag-cell-value {
+.mwadmin-roles-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-vcenter .ag-cell-value,
+.mwadmin-sponsor-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-vcenter .ag-cell-wrapper,
+.mwadmin-sponsor-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-vcenter .ag-cell-value,
+.mwadmin-advertisement-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-vcenter .ag-cell-wrapper,
+.mwadmin-advertisement-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-vcenter .ag-cell-value,
+.mwadmin-flowchart-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-vcenter .ag-cell-wrapper,
+.mwadmin-flowchart-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-vcenter .ag-cell-value {
     display: flex;
     align-items: center;
     width: 100%;
     min-height: 0;
 }
 
-.mwadmin-roles-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-actions {
+.mwadmin-roles-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-actions,
+.mwadmin-sponsor-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-actions,
+.mwadmin-advertisement-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-actions,
+.mwadmin-flowchart-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-actions {
     overflow: visible !important;
+}
+
+/* Flowchart rows can be tall due wrapped Name/Description. Keep Actions aligned with top of text. */
+.mwadmin-flowchart-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-actions-top .ag-cell-wrapper,
+.mwadmin-flowchart-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-actions-top .ag-cell-value {
+    align-items: flex-start !important;
+}
+
+.mwadmin-flowchart-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-actions-top select.mwadmin-grid-action {
+    margin-top: 2px;
+}
+
+/* Phone / codes: one line, no mid-number wrap */
+.mwadmin-roles-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-nowrap,
+.mwadmin-sponsor-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-nowrap,
+.mwadmin-advertisement-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-nowrap,
+.mwadmin-flowchart-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-nowrap {
+    white-space: nowrap !important;
+    word-break: keep-all !important;
+}
+
+.mwadmin-roles-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-nowrap .ag-cell-value,
+.mwadmin-sponsor-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-nowrap .ag-cell-value,
+.mwadmin-advertisement-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-nowrap .ag-cell-value,
+.mwadmin-flowchart-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-ag-cell-nowrap .ag-cell-value {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
 }
 
 /* Compact Actions dropdown — override global 30px rule (must beat .mwadmin-shell … select.mwadmin-grid-action) */
 .mwadmin-shell:not(.mwadmin-theme-dark) .mwadmin-roles-listing-grid.mwadmin-ag-grid select.mwadmin-grid-action,
-.mwadmin-shell.mwadmin-theme-dark .mwadmin-roles-listing-grid.mwadmin-ag-grid select.mwadmin-grid-action {
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-roles-listing-grid.mwadmin-ag-grid select.mwadmin-grid-action,
+.mwadmin-shell:not(.mwadmin-theme-dark) .mwadmin-sponsor-listing-grid.mwadmin-ag-grid select.mwadmin-grid-action,
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-sponsor-listing-grid.mwadmin-ag-grid select.mwadmin-grid-action,
+.mwadmin-shell:not(.mwadmin-theme-dark) .mwadmin-advertisement-listing-grid.mwadmin-ag-grid select.mwadmin-grid-action,
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-advertisement-listing-grid.mwadmin-ag-grid select.mwadmin-grid-action,
+.mwadmin-shell:not(.mwadmin-theme-dark) .mwadmin-flowchart-listing-grid.mwadmin-ag-grid select.mwadmin-grid-action,
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-flowchart-listing-grid.mwadmin-ag-grid select.mwadmin-grid-action {
     height: 26px;
     min-height: 26px;
     max-height: 26px;
@@ -616,10 +720,209 @@
     vertical-align: middle;
 }
 
-/* Breathing room between grid and pagination */
-.mwadmin-roles-grid-panel > .mwadmin-pagination {
+.mwadmin-roles-grid-panel > .mwadmin-pagination,
+.mwadmin-sponsor-grid-panel > .mwadmin-pagination,
+.mwadmin-advertisement-grid-panel > .mwadmin-pagination,
+.mwadmin-flowchart-grid-panel > .mwadmin-pagination {
     margin-top: 10px;
     padding-top: 14px;
+}
+
+.mwadmin-flowchart-activities-title {
+    margin-top: 1rem;
+    font-size: 0.96rem;
+    font-weight: 600;
+}
+
+.mwadmin-flowchart-activities-toolbar {
+    text-align: right;
+    margin-top: 0.5rem;
+}
+
+.mwadmin-flowchart-table-wrap {
+    overflow-x: auto;
+    margin-top: 0.5rem;
+    border: 1px solid #d9d9d9;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.mwadmin-flowchart-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 860px;
+}
+
+.mwadmin-flowchart-table th {
+    text-align: left;
+    padding: 9px 10px;
+    border-bottom: 1px solid #d9d9d9;
+    background: #f8fafc;
+    font-size: 11px;
+    font-weight: 700;
+    color: #334155;
+}
+
+.mwadmin-flowchart-table td {
+    padding: 9px 10px;
+    vertical-align: middle;
+    border-bottom: 1px solid #eceff3;
+}
+
+.mwadmin-flowchart-table tbody tr:nth-child(even) {
+    background: #fcfcfd;
+}
+
+.mwadmin-flowchart-table tbody tr:hover {
+    background: #f5f9ff;
+}
+
+.mwadmin-flowchart-empty {
+    padding: 14px 10px !important;
+    color: #64748b;
+    font-size: 11px;
+}
+
+.mwadmin-flowchart-cell-plan {
+    width: 180px;
+}
+
+.mwadmin-flowchart-cell-sort {
+    width: 110px;
+}
+
+.mwadmin-flowchart-cell-remove {
+    width: 120px;
+    text-align: right;
+}
+
+.mwadmin-flowchart-cell-responsibility {
+    width: 240px;
+}
+
+.mwadmin-flowchart-table td select,
+.mwadmin-flowchart-table td input {
+    width: 100%;
+    min-height: 34px;
+    box-sizing: border-box;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 6px 10px;
+    background: #fff;
+    color: #0f172a;
+    font-size: 12px;
+    line-height: 1.2;
+}
+
+.mwadmin-flowchart-table td input[type='number'] {
+    text-align: center;
+}
+
+.mwadmin-flowchart-remove-btn {
+    color: #fff;
+    background: #c62828;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-size: 11px;
+    line-height: 1.2;
+    cursor: pointer;
+}
+
+.mwadmin-flowchart-remove-btn:hover {
+    background: #b71c1c;
+}
+
+.mwadmin-flowchart-view-actions {
+    margin-top: 1rem;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-flowchart-table th {
+    background: #0f172a;
+    border-bottom-color: #334155;
+    color: #cbd5e1;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-flowchart-table-wrap {
+    border-color: #334155;
+    background: #0b1220;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-flowchart-table td {
+    border-bottom-color: #1e293b;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-flowchart-table tbody tr:nth-child(even) {
+    background: rgba(148, 163, 184, 0.04);
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-flowchart-table tbody tr:hover {
+    background: rgba(56, 189, 248, 0.12);
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-flowchart-empty {
+    color: #94a3b8;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-flowchart-table td select,
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-flowchart-table td input {
+    border-color: #475569;
+    background: #0f172a;
+    color: #e2e8f0;
+}
+
+/* Sponsor view: align with other mwadmin readonly forms */
+.mwadmin-sponsor-view-panel .mwadmin-sponsor-view-status-cell {
+    display: flex;
+    align-items: center;
+    min-height: 32px;
+}
+
+.mwadmin-sponsor-view-website-block {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.mwadmin-sponsor-view-website-block a {
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.mwadmin-shell:not(.mwadmin-theme-dark) .mwadmin-sponsor-view-website-block a {
+    color: #a67c52;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-sponsor-view-website-block a {
+    color: #94a3b8;
+}
+
+.mwadmin-sponsor-view-logo-wrap {
+    min-height: 72px;
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    border: 1px solid #d8d8d8;
+    border-radius: 4px;
+    background: #fafafa;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-sponsor-view-logo-wrap {
+    border-color: #334155;
+    background: #0f172a;
+}
+
+.mwadmin-sponsor-view-logo-img {
+    max-width: 280px;
+    max-height: 96px;
+    object-fit: contain;
+    vertical-align: middle;
+}
+
+a.mwadmin-btn-primary {
+    display: inline-block;
+    text-decoration: none;
+    color: #fff !important;
 }
 
 /* User profile photo: same editor UX as category box, constrained width */
@@ -1719,11 +2022,38 @@
 
 /* Box image: square, same column width as banner so edges align per column */
 .mwadmin-category-image-preview-wrap--box {
+    position: relative;
+    box-sizing: border-box;
+    flex-shrink: 0;
     width: 100%;
     aspect-ratio: 1 / 1;
     min-height: 0;
     align-items: center;
     justify-content: center;
+}
+
+/* Sponsor logo on create/edit: legacy frame 196×160 (CI avatar_sponsor.js), not square */
+.mwadmin-category-image-preview-wrap--box.mwadmin-sponsor-logo-preview {
+    aspect-ratio: 196 / 160;
+    max-width: min(280px, 100%);
+}
+
+/* Non-square / non-category-banner frames (e.g. advertisement 900×300): pin img like --box */
+.mwadmin-fixed-aspect-preview {
+    position: relative;
+    box-sizing: border-box;
+}
+
+.mwadmin-fixed-aspect-preview .mwadmin-category-image-preview {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    display: block;
 }
 
 .mwadmin-shell.mwadmin-theme-dark .mwadmin-category-image-preview-wrap {
@@ -1738,6 +2068,23 @@
     height: auto;
     min-width: 0;
     min-height: 0;
+    object-fit: contain;
+    display: block;
+}
+
+/*
+ * Square box previews (sponsor/user create, category images): flex + percentage
+ * max-height on the img often collapses to a thin strip. Lay out the bitmap against
+ * the box, not the flex item’s cyclic height.
+ */
+.mwadmin-category-image-preview-wrap--box .mwadmin-category-image-preview {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 100%;
     object-fit: contain;
     display: block;
 }
@@ -1772,8 +2119,285 @@
     color: #64748b;
 }
 
+/* —— Image editor modal (legacy Metronic-style: stage left, previews right, blue rotates, Done) —— */
+.mwadmin-legacy-upload-block {
+    margin-bottom: 12px;
+}
+
+.mwadmin-legacy-upload-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 14px;
+    margin-bottom: 4px;
+}
+
+.mwadmin-legacy-upload-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-legacy-upload-label {
+    color: #e2e8f0;
+}
+
+.mwadmin-legacy-size-hint {
+    margin: 0;
+    font-size: 13px;
+    color: #444;
+}
+
+.mwadmin-image-editor-output-note {
+    font-weight: 400;
+    color: #64748b;
+    font-size: 12px;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-legacy-size-hint {
+    color: #cbd5e1;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-image-editor-output-note {
+    color: #94a3b8;
+}
+
+.mwadmin-legacy-editor-columns {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 10px;
+    min-height: 0;
+}
+
+.mwadmin-legacy-editor-columns.is-dragover .mwadmin-legacy-crop-surface,
+.mwadmin-legacy-editor-columns.is-dragover .mwadmin-easy-crop-stage {
+    outline: 2px dashed #059669;
+    outline-offset: 2px;
+}
+
+.mwadmin-legacy-stage-column {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.mwadmin-legacy-crop-surface {
+    min-height: 260px;
+    background: #fff;
+    border: 1px solid #e1e1e1;
+    border-radius: 4px;
+}
+
+/* react-easy-crop: fixed-height container so Cropper can fill it */
+.mwadmin-easy-crop-stage {
+    position: relative;
+    width: 100%;
+    min-height: 280px;
+    height: min(46vh, 400px);
+    border: 1px solid #e1e1e1;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #fff;
+}
+
+.mwadmin-easy-crop-empty {
+    min-height: 280px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-legacy-crop-surface {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-easy-crop-stage {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-image-editor-legacy .reactEasyCrop_CropArea {
+    border-color: rgba(96, 165, 250, 0.95);
+    box-shadow: 0 0 0 9999em rgba(15, 23, 42, 0.62);
+    color: rgba(15, 23, 42, 0.62);
+}
+
+.mwadmin-legacy-stage-placeholder small {
+    text-align: center;
+    max-width: 220px;
+}
+
+.mwadmin-legacy-previews-column {
+    flex: 0 0 auto;
+    width: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+}
+
+@media (max-width: 720px) {
+    .mwadmin-legacy-editor-columns {
+        flex-direction: column;
+    }
+
+    .mwadmin-legacy-previews-column {
+        width: 100%;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+}
+
+.mwadmin-legacy-preview-empty {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.mwadmin-legacy-preview-empty-frame {
+    border-radius: 4px;
+    background: linear-gradient(180deg, #ececec 0%, #d8d8d8 100%);
+    border: 1px solid #c4c4c4;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px;
+    text-align: center;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-legacy-preview-empty-frame {
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+    border-color: #475569;
+}
+
+.mwadmin-legacy-preview-empty-dim {
+    font-size: 11px;
+    font-weight: 700;
+    color: #555;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-legacy-preview-empty-dim {
+    color: #94a3b8;
+}
+
+.mwadmin-legacy-preview-empty-blurb {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: #777;
+    text-transform: uppercase;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-legacy-preview-empty-blurb {
+    color: #64748b;
+}
+
+.mwadmin-image-editor-advanced {
+    margin: 8px 0 12px;
+    font-size: 12px;
+    color: #555;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-image-editor-advanced {
+    color: #94a3b8;
+}
+
+.mwadmin-image-editor-advanced summary {
+    cursor: pointer;
+    font-weight: 600;
+    padding: 4px 0;
+}
+
+.mwadmin-image-editor-advanced[open] summary {
+    margin-bottom: 8px;
+}
+
+.mwadmin-legacy-footer {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 14px;
+    margin-top: 8px;
+    padding-top: 12px;
+    border-top: 1px solid #e8e8e8;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-legacy-footer {
+    border-top-color: #334155;
+}
+
+.mwadmin-legacy-rotate-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.mwadmin-legacy-btn-group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.mwadmin-legacy-btn-group button {
+    border: 1px solid #337ab7;
+    background: #337ab7;
+    color: #fff;
+    border-radius: 2px;
+    padding: 6px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.mwadmin-legacy-btn-group button:hover {
+    filter: brightness(1.06);
+}
+
+.mwadmin-legacy-rotate-primary {
+    min-width: 92px;
+}
+
+.mwadmin-legacy-footer-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    flex: 0 0 auto;
+}
+
+.mwadmin-legacy-done-btn {
+    border: 0;
+    border-radius: 3px;
+    background: #337ab7;
+    color: #fff !important;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 10px 28px;
+    cursor: pointer;
+    min-width: 160px;
+}
+
+.mwadmin-legacy-done-btn:hover {
+    filter: brightness(1.06);
+}
+
 .mwadmin-category-image-modal {
-    width: min(920px, calc(100vw - 32px));
+    width: min(960px, calc(100vw - 32px));
     max-height: min(94vh, 880px);
     overflow: auto;
     text-align: left;
@@ -1925,6 +2549,20 @@
     justify-content: center;
 }
 
+/* Live export previews: fixed box matching output aspect so images are not stretched */
+.mwadmin-export-preview-frame--aspect {
+    flex-shrink: 0;
+    box-sizing: border-box;
+}
+
+.mwadmin-export-preview-frame--aspect .mwadmin-category-export-preview-img {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    object-fit: contain;
+}
+
 .mwadmin-shell.mwadmin-theme-dark .mwadmin-category-export-preview-frame {
     background: #0f172a;
     border-color: #475569;
@@ -1932,15 +2570,16 @@
 }
 
 .mwadmin-category-export-preview-img {
+    max-width: 100%;
+    max-height: 100%;
     width: auto;
     height: auto;
-    min-width: 100%;
-    min-height: 100%;
-    max-width: none;
-    max-height: none;
+    min-width: 0;
+    min-height: 0;
     pointer-events: none;
-    object-fit: cover;
+    object-fit: contain;
     transform-origin: center center;
+    display: block;
 }
 
 .mwadmin-category-export-preview-caption {

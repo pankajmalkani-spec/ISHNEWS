@@ -41,6 +41,8 @@ class HandleInertiaRequests extends Middleware
                 'error' => fn () => $request->session()->get('error'),
                 'success' => fn () => $request->session()->get('success'),
             ],
+            /** For MW Admin SPA fallbacks when building paths client-side (prefer API absolute URLs). */
+            'mwadminPublicRoot' => rtrim($request->root(), '/'),
         ];
     }
 }

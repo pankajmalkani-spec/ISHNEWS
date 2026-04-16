@@ -27,7 +27,8 @@
         "date-fns": "^4.1.0",
         "motion": "^12.38.0",
         "react": "^19.2.4",
-        "react-dom": "^19.2.4"
+        "react-dom": "^19.2.4",
+        "react-easy-crop": "^5.5.7"
     },
     "optionalDependencies": {
         "@rolldown/binding-darwin-arm64": "^1.0.0-rc.15"

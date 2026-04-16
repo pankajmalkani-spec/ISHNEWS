@@ -86,23 +86,23 @@ export default function FlowchartView({ authUser = {}, flowchartId }) {
                             </div>
                         </div>
 
-                        <h2 style={{ marginTop: '1rem', fontSize: '1.05rem', fontWeight: 600 }}>
+                        <h2 className="mwadmin-flowchart-activities-title">
                             Activities
                         </h2>
-                        <div style={{ overflowX: 'auto' }}>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '0.5rem' }}>
+                        <div className="mwadmin-flowchart-table-wrap">
+                            <table className="mwadmin-flowchart-table">
                                 <thead>
                                     <tr>
-                                        <th style={{ textAlign: 'left', padding: '6px 8px', borderBottom: '1px solid #ccc' }}>
+                                        <th>
                                             Plan
                                         </th>
-                                        <th style={{ textAlign: 'left', padding: '6px 8px', borderBottom: '1px solid #ccc' }}>
+                                        <th>
                                             Activity
                                         </th>
-                                        <th style={{ textAlign: 'left', padding: '6px 8px', borderBottom: '1px solid #ccc' }}>
+                                        <th>
                                             Responsibility
                                         </th>
-                                        <th style={{ textAlign: 'left', padding: '6px 8px', borderBottom: '1px solid #ccc' }}>
+                                        <th>
                                             Sort
                                         </th>
                                     </tr>
@@ -110,17 +110,17 @@ export default function FlowchartView({ authUser = {}, flowchartId }) {
                                 <tbody>
                                     {activities.map((a) => (
                                         <tr key={a.id}>
-                                            <td style={{ padding: '6px 8px' }}>{a.plan}</td>
-                                            <td style={{ padding: '6px 8px' }}>{a.activity_name}</td>
-                                            <td style={{ padding: '6px 8px' }}>{a.responsibility_name || '—'}</td>
-                                            <td style={{ padding: '6px 8px' }}>{a.sort}</td>
+                                            <td>{a.plan}</td>
+                                            <td>{a.activity_name}</td>
+                                            <td>{a.responsibility_name || '—'}</td>
+                                            <td>{a.sort}</td>
                                         </tr>
                                     ))}
                                 </tbody>
                             </table>
                         </div>
 
-                        <div className="mwadmin-form-actions" style={{ marginTop: '1rem' }}>
+                        <div className="mwadmin-form-actions mwadmin-flowchart-view-actions">
                             <Link href={`/mwadmin/flowchart/${flowchartId}/edit`}>Edit</Link>
                         </div>
                     </section>

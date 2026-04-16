@@ -63,23 +63,23 @@ export default function NewsourceIndex({ authUser = {} }) {
         };
     }, [query]);
 
-    const deleteRow = async (id) => {
-        if (!(await dialog.confirm('Delete this news source?', 'Delete News Source'))) return;
+    const deactivateRow = async (id) => {
+        if (!(await dialog.confirm('Mark this news source as inactive? The record will stay in the database.', 'Deactivate News Source'))) return;
         try {
             await axios.delete(`/api/mwadmin/newsources/${id}`);
-            dialog.toast('News Source deleted successfully.', 'success');
+            dialog.toast('News Source has been marked as inactive.', 'success');
             const { data } = await axios.get('/api/mwadmin/newsources', { params: query });
             setRows(data.data || []);
             setMeta(data.meta || { current_page: 1, last_page: 1, total: 0 });
         } catch (err) {
-            dialog.toast(err?.response?.data?.message || 'Unable to delete news source.', 'error');
+            dialog.toast(err?.response?.data?.message || 'Unable to deactivate news source.', 'error');
         }
     };
 
     const handleAction = async (id, action) => {
         if (!action) return;
         if (action === 'edit') return window.location.assign(`/mwadmin/newsource/${id}/edit`);
-        if (action === 'delete') await deleteRow(id);
+        if (action === 'deactivate') await deactivateRow(id);
     };
 
     const columns = useMemo(
@@ -94,7 +94,7 @@ export default function NewsourceIndex({ authUser = {} }) {
                 sortable: false,
                 cellRenderer: (params) => (
                     <MwadminActionsDropdown
-                        flags={{ edit: perms.edit, delete: perms.delete }}
+                        flags={{ edit: perms.edit, deactivate: perms.delete }}
                         onAction={(a) => handleAction(params.data.id, a)}
                     />
                 ),

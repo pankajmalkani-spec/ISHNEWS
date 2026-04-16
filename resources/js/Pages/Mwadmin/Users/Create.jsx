@@ -31,6 +31,7 @@ export default function UsersCreate({ authUser = {} }) {
         role_ids: [],
     });
     const [profileFile, setProfileFile] = useState(null);
+    const [profileSourceFile, setProfileSourceFile] = useState(null);
     const [profilePreview, setProfilePreview] = useState('');
     const [profileEditorOpen, setProfileEditorOpen] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -48,8 +49,13 @@ export default function UsersCreate({ authUser = {} }) {
     }, [profilePreview]);
 
     const setProfileFromFile = useCallback(
-        (file) => {
+        (file, meta = {}) => {
+            const src = meta?.editorSourceFile;
             if (file.size > MAX_PROFILE_BYTES) {
+                notify(`Profile photo must be ${MAX_PROFILE_BYTES / 1024 / 1024}MB or smaller.`);
+                return;
+            }
+            if (src instanceof File && src.size > MAX_PROFILE_BYTES) {
                 notify(`Profile photo must be ${MAX_PROFILE_BYTES / 1024 / 1024}MB or smaller.`);
                 return;
             }
@@ -58,6 +64,7 @@ export default function UsersCreate({ authUser = {} }) {
                 if (prev.startsWith('blob:')) URL.revokeObjectURL(prev);
                 return URL.createObjectURL(file);
             });
+            if (src instanceof File) setProfileSourceFile(src);
         },
         [notify]
     );
@@ -69,6 +76,7 @@ export default function UsersCreate({ authUser = {} }) {
             confirmPassword: form.confirm_password,
             profileFile,
             requireRoles: true,
+            requireDesignation: true,
         });
         if (Object.keys(errs).length > 0) {
             dialog.toast(firstClientValidationMessage(errs), 'error');
@@ -153,12 +161,15 @@ export default function UsersCreate({ authUser = {} }) {
                                 />
                             </div>
                             <div>
-                                <label>Designation</label>
+                                <label>
+                                    Designation <span className="mwadmin-required">*</span>
+                                </label>
                                 <select
+                                    required
                                     value={form.designation}
                                     onChange={(e) => setForm((f) => ({ ...f, designation: e.target.value }))}
                                 >
-                                    <option value="">Select</option>
+                                    <option value="">— Select —</option>
                                     {options.designations.map((d) => (
                                         <option key={d.id} value={d.id}>
                                             {d.designation}
@@ -263,7 +274,9 @@ export default function UsersCreate({ authUser = {} }) {
                     outputWidth={PROFILE_EDITOR_OUT.w}
                     outputHeight={PROFILE_EDITOR_OUT.h}
                     notify={notify}
-                    onApply={(file) => setProfileFromFile(file)}
+                    initialImageFile={profileSourceFile || profileFile}
+                    initialImageUrl={profileSourceFile || profileFile ? null : profilePreview || null}
+                    onApply={(file, meta) => setProfileFromFile(file, meta)}
                 />
             </MwadminLayout>
         </>

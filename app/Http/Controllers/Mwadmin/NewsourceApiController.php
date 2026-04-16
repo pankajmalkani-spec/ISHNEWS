@@ -129,8 +129,13 @@ class NewsourceApiController extends Controller
             return $deny;
         }
 
-        Newsource::query()->findOrFail($id)->delete();
+        $row = Newsource::query()->findOrFail($id);
+        $userId = $this->resolveRealUserId($request);
+        $row->status = 0;
+        $row->modifieddate = now();
+        $row->modifiedby = $userId;
+        $row->save();
 
-        return response()->json(['message' => 'News Source deleted successfully.']);
+        return response()->json(['message' => 'News Source has been marked as inactive.']);
     }
 }

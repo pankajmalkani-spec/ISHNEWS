@@ -1,11 +1,19 @@
 import { Head, Link } from '@inertiajs/react';
 import axios from 'axios';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import MwadminImageEditorModal from '../../../Components/Mwadmin/MwadminImageEditorModal';
+import DmyDateInput from '../../../Components/Mwadmin/DmyDateInput';
 import MwadminLayout from '../../../Components/Mwadmin/Layout';
 import { useClassicDialog } from '../../../Components/Mwadmin/ClassicDialog';
+import { MWADMIN_AD_IMAGE } from '../../../lib/mwadminImageEditorTargets';
+import { validateMwadminAdvertisementForm } from '../../../lib/mwadminAdvertisementFormValidate';
+import { dmyToIsoDate, isoDateToDmy } from '../Sponsor/sponsorDateFormat';
+
+const MAX_AD_IMAGE_BYTES = 5 * 1024 * 1024;
 
 export default function AdvertisementEdit({ authUser = {}, advertisementId }) {
     const dialog = useClassicDialog();
+    const notify = useCallback((message) => dialog.toast(message, 'error'), [dialog]);
     const [subcategories, setSubcategories] = useState([]);
     const [form, setForm] = useState({
         title: '',
@@ -25,8 +33,40 @@ export default function AdvertisementEdit({ authUser = {}, advertisementId }) {
         img: null,
     });
     const [imageUrl, setImageUrl] = useState('');
+    const [imgSourceFile, setImgSourceFile] = useState(null);
+    const [imgBlobPreview, setImgBlobPreview] = useState('');
+    const [imgEditorOpen, setImgEditorOpen] = useState(false);
     const [saving, setSaving] = useState(false);
     const [load, setLoad] = useState(true);
+
+    useEffect(() => {
+        return () => {
+            if (imgBlobPreview.startsWith('blob:')) URL.revokeObjectURL(imgBlobPreview);
+        };
+    }, [imgBlobPreview]);
+
+    const setImageFromFile = useCallback(
+        (file, meta = {}) => {
+            const src = meta?.editorSourceFile;
+            if (file.size > MAX_AD_IMAGE_BYTES) {
+                notify(`Image must be ${MAX_AD_IMAGE_BYTES / 1024 / 1024}MB or smaller.`);
+                return;
+            }
+            if (src instanceof File && src.size > MAX_AD_IMAGE_BYTES) {
+                notify(`Image must be ${MAX_AD_IMAGE_BYTES / 1024 / 1024}MB or smaller.`);
+                return;
+            }
+            setForm((f) => ({ ...f, img: file }));
+            setImgBlobPreview((prev) => {
+                if (prev.startsWith('blob:')) URL.revokeObjectURL(prev);
+                return URL.createObjectURL(file);
+            });
+            if (src instanceof File) setImgSourceFile(src);
+        },
+        [notify]
+    );
+
+    const imgDisplaySrc = imgBlobPreview || imageUrl;
 
     useEffect(() => {
         let c = false;
@@ -39,6 +79,7 @@ export default function AdvertisementEdit({ authUser = {}, advertisementId }) {
                 if (c) return;
                 setSubcategories(opt.subcategories || []);
                 const r = rowData.data;
+                const adType = String(r.ad_type ?? 0);
                 setForm({
                     title: r.title || '',
                     company_name: r.company_name || '',
@@ -48,15 +89,16 @@ export default function AdvertisementEdit({ authUser = {}, advertisementId }) {
                     mobile: r.mobile ? String(r.mobile) : '',
                     brand: r.brand || '',
                     model: r.model || '',
-                    ad_type: String(r.ad_type ?? 0),
-                    category_id: r.category_id ? String(r.category_id) : '',
+                    ad_type: adType,
+                    category_id: adType === '0' ? '' : r.category_id ? String(r.category_id) : '',
                     annual_rates: String(r.annual_rates ?? '0'),
-                    start_date: r.start_date || '',
-                    end_date: r.end_date || '',
+                    start_date: isoDateToDmy(r.start_date),
+                    end_date: isoDateToDmy(r.end_date),
                     status: String(r.status ?? 1),
                     img: null,
                 });
                 setImageUrl(r.image_url || '');
+                setImgSourceFile(null);
             } catch (err) {
                 if (!c) dialog.toast(err?.response?.data?.message || 'Unable to load advertisement.', 'error');
             } finally {
@@ -70,8 +112,20 @@ export default function AdvertisementEdit({ authUser = {}, advertisementId }) {
 
     const onSubmit = async (e) => {
         e.preventDefault();
+        const err = validateMwadminAdvertisementForm(form);
+        if (err) {
+            dialog.toast(err, 'error');
+            return;
+        }
         setSaving(true);
         try {
+            const startDateIso = dmyToIsoDate(form.start_date);
+            const endDateIso = dmyToIsoDate(form.end_date);
+            if (startDateIso === 'INVALID' || endDateIso === 'INVALID') {
+                dialog.toast('Start and end dates must be valid (dd-mm-yyyy) or left blank.', 'error');
+                setSaving(false);
+                return;
+            }
             const fd = new FormData();
             fd.append('title', form.title);
             fd.append('company_name', form.company_name);
@@ -84,8 +138,8 @@ export default function AdvertisementEdit({ authUser = {}, advertisementId }) {
             fd.append('ad_type', form.ad_type);
             fd.append('category_id', form.category_id === '' ? '0' : form.category_id);
             fd.append('annual_rates', form.annual_rates);
-            if (form.start_date) fd.append('start_date', form.start_date);
-            if (form.end_date) fd.append('end_date', form.end_date);
+            if (startDateIso) fd.append('start_date', startDateIso);
+            if (endDateIso) fd.append('end_date', endDateIso);
             fd.append('status', form.status);
             if (form.img) fd.append('img', form.img);
 
@@ -197,22 +251,30 @@ export default function AdvertisementEdit({ authUser = {}, advertisementId }) {
                                 />
                             </div>
                             <div>
-                                <label>Ad Type</label>
+                                <label>Ad Type *</label>
                                 <select
                                     value={form.ad_type}
-                                    onChange={(e) => setForm((f) => ({ ...f, ad_type: e.target.value }))}
+                                    onChange={(e) => {
+                                        const v = e.target.value;
+                                        setForm((f) => ({
+                                            ...f,
+                                            ad_type: v,
+                                            category_id: v === '0' ? '' : f.category_id,
+                                        }));
+                                    }}
                                 >
-                                    <option value="0">Type 0</option>
-                                    <option value="1">Type 1</option>
+                                    <option value="0">Global</option>
+                                    <option value="1">Specific Category</option>
                                 </select>
                             </div>
                             <div>
-                                <label>Subcategory</label>
+                                <label>Category{form.ad_type === '1' ? ' *' : ''}</label>
                                 <select
                                     value={form.category_id}
+                                    disabled={form.ad_type !== '1'}
                                     onChange={(e) => setForm((f) => ({ ...f, category_id: e.target.value }))}
                                 >
-                                    <option value="">— None —</option>
+                                    <option value="">{form.ad_type === '1' ? '— Select category —' : '— Not used for Global —'}</option>
                                     {subcategories.map((s) => (
                                         <option key={s.id} value={String(s.id)}>
                                             {s.subcat_code}
@@ -230,20 +292,12 @@ export default function AdvertisementEdit({ authUser = {}, advertisementId }) {
                                 />
                             </div>
                             <div>
-                                <label>Start Date</label>
-                                <input
-                                    type="date"
-                                    value={form.start_date}
-                                    onChange={(e) => setForm((f) => ({ ...f, start_date: e.target.value }))}
-                                />
+                                <label>Start Date (dd-mm-yyyy)</label>
+                                <DmyDateInput value={form.start_date} onChange={(dmy) => setForm((f) => ({ ...f, start_date: dmy }))} />
                             </div>
                             <div>
-                                <label>End Date</label>
-                                <input
-                                    type="date"
-                                    value={form.end_date}
-                                    onChange={(e) => setForm((f) => ({ ...f, end_date: e.target.value }))}
-                                />
+                                <label>End Date (dd-mm-yyyy)</label>
+                                <DmyDateInput value={form.end_date} onChange={(dmy) => setForm((f) => ({ ...f, end_date: dmy }))} />
                             </div>
                             <div>
                                 <label>Status</label>
@@ -255,19 +309,41 @@ export default function AdvertisementEdit({ authUser = {}, advertisementId }) {
                                     <option value="0">In-Active</option>
                                 </select>
                             </div>
-                            <div style={{ gridColumn: '1 / -1' }}>
-                                <label>Image</label>
-                                {imageUrl ? (
-                                    <p>
-                                        <img src={imageUrl} alt="" style={{ maxHeight: 48, verticalAlign: 'middle' }} />{' '}
-                                        <span className="mwadmin-muted">Current</span>
+                            <div className="mwadmin-form-grid-full mwadmin-user-profile-photo-row">
+                                <div>
+                                    <label>Image</label>
+                                    <p className="mwadmin-field-hint">
+                                        {MWADMIN_AD_IMAGE.w}px × {MWADMIN_AD_IMAGE.h}px — click to crop
                                     </p>
-                                ) : null}
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={(e) => setForm((f) => ({ ...f, img: e.target.files?.[0] || null }))}
-                                />
+                                </div>
+                                <div className="mwadmin-category-image-field">
+                                    <div
+                                        className="mwadmin-category-image-preview-wrap mwadmin-category-image-preview-wrap--clickable mwadmin-fixed-aspect-preview"
+                                        style={{
+                                            aspectRatio: `${MWADMIN_AD_IMAGE.w} / ${MWADMIN_AD_IMAGE.h}`,
+                                            maxWidth: 560,
+                                        }}
+                                        role="button"
+                                        tabIndex={0}
+                                        aria-label="Open image editor"
+                                        onClick={() => setImgEditorOpen(true)}
+                                        onKeyDown={(ev) => {
+                                            if (ev.key === 'Enter' || ev.key === ' ') {
+                                                ev.preventDefault();
+                                                setImgEditorOpen(true);
+                                            }
+                                        }}
+                                    >
+                                        {imgDisplaySrc ? (
+                                            <img src={imgDisplaySrc} alt="" className="mwadmin-category-image-preview" />
+                                        ) : (
+                                            <div className="mwadmin-category-image-placeholder-card">
+                                                NO IMAGE
+                                                <span className="mwadmin-category-image-click-hint">Click to upload and edit</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
                             <div className="mwadmin-form-actions">
                                 <button type="submit" disabled={saving}>
@@ -278,6 +354,18 @@ export default function AdvertisementEdit({ authUser = {}, advertisementId }) {
                         </form>
                     </section>
                 </div>
+                <MwadminImageEditorModal
+                    open={imgEditorOpen}
+                    onClose={() => setImgEditorOpen(false)}
+                    title="Advertisement image"
+                    outputWidth={MWADMIN_AD_IMAGE.w}
+                    outputHeight={MWADMIN_AD_IMAGE.h}
+                    notify={notify}
+                    placeholderBlurb="AD IMAGE"
+                    initialImageFile={imgSourceFile || form.img}
+                    initialImageUrl={imgSourceFile || form.img ? null : imgDisplaySrc || null}
+                    onApply={(file, meta) => setImageFromFile(file, meta)}
+                />
             </MwadminLayout>
         </>
     );

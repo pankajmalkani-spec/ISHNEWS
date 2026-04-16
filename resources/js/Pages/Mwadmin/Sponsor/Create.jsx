@@ -1,8 +1,14 @@
 import { Head, Link } from '@inertiajs/react';
 import axios from 'axios';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import DmyDateInput from '../../../Components/Mwadmin/DmyDateInput';
+import MwadminImageEditorModal from '../../../Components/Mwadmin/MwadminImageEditorModal';
 import MwadminLayout from '../../../Components/Mwadmin/Layout';
 import { useClassicDialog } from '../../../Components/Mwadmin/ClassicDialog';
+import { laravelErrorFirstLine } from '../../../lib/laravelApiError';
+import { dmyToIsoDate, normalizeWebsiteUrl, SPONSOR_LOGO_EXPORT } from './sponsorDateFormat';
+
+const MAX_LOGO_BYTES = 5 * 1024 * 1024;
 
 export default function SponsorCreate({ authUser = {} }) {
     const dialog = useClassicDialog();
@@ -18,9 +24,15 @@ export default function SponsorCreate({ authUser = {} }) {
         start_date: '',
         end_date: '',
         status: '1',
-        logo: null,
     });
+    const [logoFile, setLogoFile] = useState(null);
+    /** Full-resolution file for re-opening the editor (saved export is small fixed dimensions). */
+    const [logoSourceFile, setLogoSourceFile] = useState(null);
+    const [logoPreview, setLogoPreview] = useState('');
+    const [logoEditorOpen, setLogoEditorOpen] = useState(false);
     const [saving, setSaving] = useState(false);
+
+    const notify = useCallback((message) => dialog.toast(message, 'error'), [dialog]);
 
     useEffect(() => {
         let c = false;
@@ -40,6 +52,33 @@ export default function SponsorCreate({ authUser = {} }) {
         };
     }, []);
 
+    useEffect(() => {
+        return () => {
+            if (logoPreview.startsWith('blob:')) URL.revokeObjectURL(logoPreview);
+        };
+    }, [logoPreview]);
+
+    const setLogoFromFile = useCallback(
+        (file, meta = {}) => {
+            const src = meta?.editorSourceFile;
+            if (file.size > MAX_LOGO_BYTES) {
+                notify(`Logo must be ${MAX_LOGO_BYTES / 1024 / 1024}MB or smaller.`);
+                return;
+            }
+            if (src instanceof File && src.size > MAX_LOGO_BYTES) {
+                notify(`Logo must be ${MAX_LOGO_BYTES / 1024 / 1024}MB or smaller.`);
+                return;
+            }
+            setLogoFile(file);
+            setLogoPreview((prev) => {
+                if (prev.startsWith('blob:')) URL.revokeObjectURL(prev);
+                return URL.createObjectURL(file);
+            });
+            if (src instanceof File) setLogoSourceFile(src);
+        },
+        [notify]
+    );
+
     const onSubmit = async (e) => {
         e.preventDefault();
         if (!form.sponsorcategory_id) {
@@ -50,24 +89,42 @@ export default function SponsorCreate({ authUser = {} }) {
             dialog.toast('Organization name is required.', 'error');
             return;
         }
+        if (!form.contact_name.trim()) {
+            dialog.toast('Contact name is required.', 'error');
+            return;
+        }
+        if (!form.website.trim()) {
+            dialog.toast('Website is required.', 'error');
+            return;
+        }
+        const startIso = dmyToIsoDate(form.start_date);
+        const endIso = dmyToIsoDate(form.end_date);
+        if (startIso === 'INVALID' || endIso === 'INVALID') {
+            dialog.toast('Start and end dates must be valid (dd-mm-yyyy) or left blank.', 'error');
+            return;
+        }
         setSaving(true);
         try {
             const fd = new FormData();
-            Object.entries(form).forEach(([k, v]) => {
-                if (k === 'logo') {
-                    if (v) fd.append('logo', v);
-                    return;
-                }
-                if (v !== null && v !== '') fd.append(k, v);
-            });
+            fd.append('sponsorcategory_id', form.sponsorcategory_id);
+            fd.append('organization_name', form.organization_name);
+            fd.append('website', normalizeWebsiteUrl(form.website));
+            fd.append('contact_name', form.contact_name);
+            if (form.email) fd.append('email', form.email);
+            if (form.mobile) fd.append('mobile', form.mobile);
+            fd.append('amount_sponsored', String(Math.max(0, parseInt(String(form.amount_sponsored), 10) || 0)));
+            fd.append('status', form.status);
+            if (startIso) fd.append('start_date', startIso);
+            if (endIso) fd.append('end_date', endIso);
+            if (logoFile) fd.append('logo', logoFile);
+
             await axios.post('/api/mwadmin/sponsors', fd, {
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
             dialog.toast('Sponsor created successfully.', 'success');
-            window.setTimeout(() => window.location.assign('/mwadmin/sponsor'), 1500);
+            window.setTimeout(() => window.location.assign('/mwadmin/sponsor'), 1200);
         } catch (err) {
-            const msg = err?.response?.data?.message || 'Unable to create sponsor.';
-            dialog.toast(msg, 'error');
+            dialog.toast(laravelErrorFirstLine(err, 'Unable to create sponsor.'), 'error');
         } finally {
             setSaving(false);
         }
@@ -154,19 +211,17 @@ export default function SponsorCreate({ authUser = {} }) {
                                 />
                             </div>
                             <div>
-                                <label>Start Date</label>
-                                <input
-                                    type="date"
+                                <label>Start Date (dd-mm-yyyy)</label>
+                                <DmyDateInput
                                     value={form.start_date}
-                                    onChange={(e) => setForm((f) => ({ ...f, start_date: e.target.value }))}
+                                    onChange={(dmy) => setForm((f) => ({ ...f, start_date: dmy }))}
                                 />
                             </div>
                             <div>
-                                <label>End Date</label>
-                                <input
-                                    type="date"
+                                <label>End Date (dd-mm-yyyy)</label>
+                                <DmyDateInput
                                     value={form.end_date}
-                                    onChange={(e) => setForm((f) => ({ ...f, end_date: e.target.value }))}
+                                    onChange={(dmy) => setForm((f) => ({ ...f, end_date: dmy }))}
                                 />
                             </div>
                             <div>
@@ -179,15 +234,37 @@ export default function SponsorCreate({ authUser = {} }) {
                                     <option value="0">In-Active</option>
                                 </select>
                             </div>
-                            <div style={{ gridColumn: '1 / -1' }}>
-                                <label>Logo</label>
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={(e) =>
-                                        setForm((f) => ({ ...f, logo: e.target.files?.[0] || null }))
-                                    }
-                                />
+                            <div className="mwadmin-form-grid-full mwadmin-user-profile-photo-row">
+                                <div>
+                                    <label>Logo</label>
+                                    <p className="mwadmin-field-hint">
+                                        Image size — {SPONSOR_LOGO_EXPORT.w}px × {SPONSOR_LOGO_EXPORT.h}px
+                                    </p>
+                                </div>
+                                <div className="mwadmin-category-image-field">
+                                    <div
+                                        className="mwadmin-category-image-preview-wrap mwadmin-category-image-preview-wrap--box mwadmin-sponsor-logo-preview mwadmin-category-image-preview-wrap--clickable mwadmin-user-profile-preview"
+                                        role="button"
+                                        tabIndex={0}
+                                        aria-label="Open logo editor"
+                                        onClick={() => setLogoEditorOpen(true)}
+                                        onKeyDown={(ev) => {
+                                            if (ev.key === 'Enter' || ev.key === ' ') {
+                                                ev.preventDefault();
+                                                setLogoEditorOpen(true);
+                                            }
+                                        }}
+                                    >
+                                        {logoPreview ? (
+                                            <img src={logoPreview} alt="" className="mwadmin-category-image-preview" />
+                                        ) : (
+                                            <div className="mwadmin-category-image-placeholder-card">
+                                                NO LOGO
+                                                <span className="mwadmin-category-image-click-hint">Click to upload and edit</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
                             <div className="mwadmin-form-actions">
                                 <button type="submit" disabled={saving}>
@@ -198,6 +275,18 @@ export default function SponsorCreate({ authUser = {} }) {
                         </form>
                     </section>
                 </div>
+                <MwadminImageEditorModal
+                    open={logoEditorOpen}
+                    onClose={() => setLogoEditorOpen(false)}
+                    title="Sponsor Logo"
+                    outputWidth={SPONSOR_LOGO_EXPORT.w}
+                    outputHeight={SPONSOR_LOGO_EXPORT.h}
+                    notify={notify}
+                    placeholderBlurb="SPONSOR LOGO GOES HERE"
+                    initialImageFile={logoSourceFile || logoFile}
+                    initialImageUrl={logoSourceFile || logoFile ? null : logoPreview || null}
+                    onApply={(file, meta) => setLogoFromFile(file, meta)}
+                />
             </MwadminLayout>
         </>
     );

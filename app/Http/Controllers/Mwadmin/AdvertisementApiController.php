@@ -163,6 +163,11 @@ class AdvertisementApiController extends Controller
             return $deny;
         }
 
+        $adType = (int) $request->input('ad_type', 0);
+        $categoryRules = $adType === 1
+            ? ['required', 'integer', Rule::exists('subcategorymst', 'id')->where('status', 1)]
+            : ['nullable', 'integer'];
+
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:150'],
             'company_name' => ['required', 'string', 'max:150'],
@@ -172,14 +177,16 @@ class AdvertisementApiController extends Controller
             'mobile' => ['nullable', 'string', 'max:20'],
             'brand' => ['nullable', 'string', 'max:150'],
             'model' => ['nullable', 'string', 'max:150'],
-            'ad_type' => ['nullable', 'integer', 'in:0,1'],
-            'category_id' => ['nullable', 'integer'],
+            'ad_type' => ['required', 'integer', 'in:0,1'],
+            'category_id' => $categoryRules,
             'annual_rates' => ['required', 'numeric'],
             'start_date' => ['nullable', 'date'],
             'end_date' => ['nullable', 'date'],
             'status' => ['required', 'in:0,1'],
             'img' => ['nullable', 'file', 'image', 'max:5120'],
         ]);
+
+        $categoryId = $adType === 0 ? 0 : (int) $validated['category_id'];
 
         if (Advertisement::query()->where('contactperson_name', $validated['contactperson_name'])->where('status', 1)->exists()) {
             return response()->json(['message' => 'Same Contact Person Name already exists for another active advertisement.'], 422);
@@ -194,7 +201,7 @@ class AdvertisementApiController extends Controller
         }
 
         $userId = $this->resolveRealUserId($request);
-        $mobileInt = isset($validated['mobile']) && $validated['mobile'] !== '' ? (int) preg_replace('/\D/', '', $validated['mobile']) : 0;
+        $mobile = isset($validated['mobile']) ? trim((string) $validated['mobile']) : '';
 
         $row = Advertisement::query()->create([
             'title' => $validated['title'],
@@ -205,9 +212,9 @@ class AdvertisementApiController extends Controller
             'ad_url' => $validated['ad_url'],
             'contactperson_name' => ucwords(strtolower($validated['contactperson_name'])),
             'email' => $validated['email'] ?? '',
-            'mobile' => $mobileInt,
-            'ad_type' => (int) ($validated['ad_type'] ?? 0),
-            'category_id' => (int) ($validated['category_id'] ?? 0),
+            'mobile' => $mobile,
+            'ad_type' => (int) $validated['ad_type'],
+            'category_id' => $categoryId,
             'annual_rates' => $validated['annual_rates'],
             'start_date' => ! empty($validated['start_date']) ? $validated['start_date'] : '1970-01-01',
             'end_date' => ! empty($validated['end_date']) ? $validated['end_date'] : '1970-01-01',
@@ -228,6 +235,11 @@ class AdvertisementApiController extends Controller
         }
 
         $row = Advertisement::query()->findOrFail($id);
+        $adType = (int) $request->input('ad_type', 0);
+        $categoryRules = $adType === 1
+            ? ['required', 'integer', Rule::exists('subcategorymst', 'id')->where('status', 1)]
+            : ['nullable', 'integer'];
+
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:150'],
             'company_name' => ['required', 'string', 'max:150'],
@@ -237,14 +249,16 @@ class AdvertisementApiController extends Controller
             'mobile' => ['nullable', 'string', 'max:20'],
             'brand' => ['nullable', 'string', 'max:150'],
             'model' => ['nullable', 'string', 'max:150'],
-            'ad_type' => ['nullable', 'integer', 'in:0,1'],
-            'category_id' => ['nullable', 'integer'],
+            'ad_type' => ['required', 'integer', 'in:0,1'],
+            'category_id' => $categoryRules,
             'annual_rates' => ['required', 'numeric'],
             'start_date' => ['nullable', 'date'],
             'end_date' => ['nullable', 'date'],
             'status' => ['required', 'in:0,1'],
             'img' => ['nullable', 'file', 'image', 'max:5120'],
         ]);
+
+        $categoryId = $adType === 0 ? 0 : (int) $validated['category_id'];
 
         if (Advertisement::query()->where('id', '!=', $id)->where('contactperson_name', $validated['contactperson_name'])->where('status', 1)->exists()) {
             return response()->json(['message' => 'Same Contact Person Name already exists for another active advertisement.'], 422);
@@ -260,7 +274,7 @@ class AdvertisementApiController extends Controller
         }
 
         $userId = $this->resolveRealUserId($request);
-        $mobileInt = isset($validated['mobile']) && $validated['mobile'] !== '' ? (int) preg_replace('/\D/', '', $validated['mobile']) : 0;
+        $mobile = isset($validated['mobile']) ? trim((string) $validated['mobile']) : '';
 
         $row->title = $validated['title'];
         $row->company_name = ucwords(strtolower($validated['company_name']));
@@ -270,9 +284,9 @@ class AdvertisementApiController extends Controller
         $row->ad_url = $validated['ad_url'];
         $row->contactperson_name = ucwords(strtolower($validated['contactperson_name']));
         $row->email = $validated['email'] ?? '';
-        $row->mobile = $mobileInt;
-        $row->ad_type = (int) ($validated['ad_type'] ?? 0);
-        $row->category_id = (int) ($validated['category_id'] ?? 0);
+        $row->mobile = $mobile;
+        $row->ad_type = (int) $validated['ad_type'];
+        $row->category_id = $categoryId;
         $row->annual_rates = $validated['annual_rates'];
         $row->start_date = ! empty($validated['start_date']) ? $validated['start_date'] : '1970-01-01';
         $row->end_date = ! empty($validated['end_date']) ? $validated['end_date'] : '1970-01-01';
@@ -291,11 +305,13 @@ class AdvertisementApiController extends Controller
         }
 
         $row = Advertisement::query()->findOrFail($id);
-        $img = $row->img_url;
-        $row->delete();
-        $this->deleteImg($img);
+        $userId = $this->resolveRealUserId($request);
+        $row->status = 0;
+        $row->modifieddate = now()->toDateString();
+        $row->modifiedby = $userId;
+        $row->save();
 
-        return response()->json(['message' => 'Advertisement deleted successfully.']);
+        return response()->json(['message' => 'Advertisement has been marked as inactive.']);
     }
 
     private function storeImg(\Illuminate\Http\UploadedFile $file): string

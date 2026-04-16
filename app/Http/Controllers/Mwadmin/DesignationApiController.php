@@ -129,8 +129,13 @@ class DesignationApiController extends Controller
             return $deny;
         }
 
-        Designation::query()->findOrFail($id)->delete();
+        $row = Designation::query()->findOrFail($id);
+        $userId = $this->resolveRealUserId($request);
+        $row->status = 0;
+        $row->modifieddate = now();
+        $row->modifiedby = $userId;
+        $row->save();
 
-        return response()->json(['message' => 'Designation deleted successfully.']);
+        return response()->json(['message' => 'Designation has been marked as inactive.']);
     }
 }

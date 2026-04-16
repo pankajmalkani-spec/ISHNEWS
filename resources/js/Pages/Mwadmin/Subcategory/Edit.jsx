@@ -38,7 +38,9 @@ export default function SubcategoryEdit({ authUser = {}, subcategoryId }) {
         status: '1',
     });
     const [bannerFile, setBannerFile] = useState(null);
+    const [bannerSourceFile, setBannerSourceFile] = useState(null);
     const [boxFile, setBoxFile] = useState(null);
+    const [boxSourceFile, setBoxSourceFile] = useState(null);
     const [bannerPreview, setBannerPreview] = useState('');
     const [boxPreview, setBoxPreview] = useState('');
     const [bannerEditorOpen, setBannerEditorOpen] = useState(false);
@@ -107,8 +109,13 @@ export default function SubcategoryEdit({ authUser = {}, subcategoryId }) {
         if (data?.exists) setSortError(data.message || 'Sort number already exists.');
     };
 
-    const setBannerFromFile = (file) => {
+    const setBannerFromFile = (file, meta = {}) => {
+        const src = meta?.editorSourceFile;
         if (file.size > MAX_IMAGE_BYTES) {
+            notify(`Banner image must be ${MAX_IMAGE_BYTES / 1024 / 1024}MB or smaller.`);
+            return;
+        }
+        if (src instanceof File && src.size > MAX_IMAGE_BYTES) {
             notify(`Banner image must be ${MAX_IMAGE_BYTES / 1024 / 1024}MB or smaller.`);
             return;
         }
@@ -117,10 +124,16 @@ export default function SubcategoryEdit({ authUser = {}, subcategoryId }) {
             if (prev.startsWith('blob:')) URL.revokeObjectURL(prev);
             return URL.createObjectURL(file);
         });
+        if (src instanceof File) setBannerSourceFile(src);
     };
 
-    const setBoxFromFile = (file) => {
+    const setBoxFromFile = (file, meta = {}) => {
+        const src = meta?.editorSourceFile;
         if (file.size > MAX_IMAGE_BYTES) {
+            notify(`Box image must be ${MAX_IMAGE_BYTES / 1024 / 1024}MB or smaller.`);
+            return;
+        }
+        if (src instanceof File && src.size > MAX_IMAGE_BYTES) {
             notify(`Box image must be ${MAX_IMAGE_BYTES / 1024 / 1024}MB or smaller.`);
             return;
         }
@@ -129,6 +142,7 @@ export default function SubcategoryEdit({ authUser = {}, subcategoryId }) {
             if (prev.startsWith('blob:')) URL.revokeObjectURL(prev);
             return URL.createObjectURL(file);
         });
+        if (src instanceof File) setBoxSourceFile(src);
     };
 
     const validateClient = () => {
@@ -369,7 +383,9 @@ export default function SubcategoryEdit({ authUser = {}, subcategoryId }) {
                     outputWidth={BANNER_OUT.w}
                     outputHeight={BANNER_OUT.h}
                     notify={notify}
-                    onApply={(file) => setBannerFromFile(file)}
+                    initialImageFile={bannerSourceFile || bannerFile}
+                    initialImageUrl={bannerSourceFile || bannerFile ? null : bannerPreview || null}
+                    onApply={(file, meta) => setBannerFromFile(file, meta)}
                 />
                 <MwadminImageEditorModal
                     open={boxEditorOpen}
@@ -378,7 +394,9 @@ export default function SubcategoryEdit({ authUser = {}, subcategoryId }) {
                     outputWidth={BOX_OUT.w}
                     outputHeight={BOX_OUT.h}
                     notify={notify}
-                    onApply={(file) => setBoxFromFile(file)}
+                    initialImageFile={boxSourceFile || boxFile}
+                    initialImageUrl={boxSourceFile || boxFile ? null : boxPreview || null}
+                    onApply={(file, meta) => setBoxFromFile(file, meta)}
                 />
             </MwadminLayout>
         </>

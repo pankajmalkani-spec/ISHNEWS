@@ -1,11 +1,15 @@
 import { Head, Link, router } from '@inertiajs/react';
 import axios from 'axios';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import MwadminImageEditorModal from '../../../Components/Mwadmin/MwadminImageEditorModal';
 import MwadminLayout from '../../../Components/Mwadmin/Layout';
 import DmyDateInput from '../../../Components/Mwadmin/DmyDateInput';
 import MwadminTimeInput from '../../../Components/Mwadmin/MwadminTimeInput';
 import { useClassicDialog } from '../../../Components/Mwadmin/ClassicDialog';
+import { MWADMIN_NEWS_BANNER, MWADMIN_NEWS_COVER } from '../../../lib/mwadminImageEditorTargets';
 import { dmyToIsoDate, isoDateToDmy } from '../Sponsor/sponsorDateFormat';
+
+const MAX_NEWS_IMAGE_BYTES = 8 * 1024 * 1024;
 
 const DRAFT_STATUS = ['Pending', 'WIP', 'Ready', 'Issue', 'Dropped', 'Hold'];
 const EDIT_STATUS = [...DRAFT_STATUS, 'Released', 'Booked'];
@@ -28,6 +32,7 @@ function clampStep(n) {
 
 export default function NewslistingEdit({ authUser = {}, newslistingId, initialStep = 1 }) {
     const dialog = useClassicDialog();
+    const notify = useCallback((message) => dialog.toast(message, 'error'), [dialog]);
     const [categories, setCategories] = useState([]);
     const [subcategories, setSubcategories] = useState([]);
     const [newsSources, setNewsSources] = useState([]);
@@ -64,15 +69,16 @@ export default function NewslistingEdit({ authUser = {}, newslistingId, initialS
         youtube_subtitles: '',
     });
     const [bannerFile, setBannerFile] = useState(null);
+    const [bannerSourceFile, setBannerSourceFile] = useState(null);
     const [coverFile, setCoverFile] = useState(null);
+    const [coverSourceFile, setCoverSourceFile] = useState(null);
     const [bannerImgUrl, setBannerImgUrl] = useState('');
     const [coverImgUrl, setCoverImgUrl] = useState('');
-    const [fileInputsKey, setFileInputsKey] = useState(0);
     const [saving, setSaving] = useState(false);
     const [bannerPickUrl, setBannerPickUrl] = useState('');
     const [coverPickUrl, setCoverPickUrl] = useState('');
-    const bannerFileRef = useRef(null);
-    const coverFileRef = useRef(null);
+    const [bannerEditorOpen, setBannerEditorOpen] = useState(false);
+    const [coverEditorOpen, setCoverEditorOpen] = useState(false);
 
     useEffect(() => {
         setActiveStep(clampStep(initialStep));
@@ -100,6 +106,40 @@ export default function NewslistingEdit({ authUser = {}, newslistingId, initialS
 
     const bannerDisplaySrc = bannerPickUrl || bannerImgUrl;
     const coverDisplaySrc = coverPickUrl || coverImgUrl;
+
+    const setBannerFromFile = useCallback(
+        (file, meta = {}) => {
+            const src = meta?.editorSourceFile;
+            if (file.size > MAX_NEWS_IMAGE_BYTES) {
+                notify(`Banner image must be ${MAX_NEWS_IMAGE_BYTES / 1024 / 1024}MB or smaller.`);
+                return;
+            }
+            if (src instanceof File && src.size > MAX_NEWS_IMAGE_BYTES) {
+                notify(`Banner image must be ${MAX_NEWS_IMAGE_BYTES / 1024 / 1024}MB or smaller.`);
+                return;
+            }
+            setBannerFile(file);
+            if (src instanceof File) setBannerSourceFile(src);
+        },
+        [notify]
+    );
+
+    const setCoverFromFile = useCallback(
+        (file, meta = {}) => {
+            const src = meta?.editorSourceFile;
+            if (file.size > MAX_NEWS_IMAGE_BYTES) {
+                notify(`Cover image must be ${MAX_NEWS_IMAGE_BYTES / 1024 / 1024}MB or smaller.`);
+                return;
+            }
+            if (src instanceof File && src.size > MAX_NEWS_IMAGE_BYTES) {
+                notify(`Cover image must be ${MAX_NEWS_IMAGE_BYTES / 1024 / 1024}MB or smaller.`);
+                return;
+            }
+            setCoverFile(file);
+            if (src instanceof File) setCoverSourceFile(src);
+        },
+        [notify]
+    );
 
     useEffect(() => {
         let c = false;
@@ -149,6 +189,8 @@ export default function NewslistingEdit({ authUser = {}, newslistingId, initialS
                 });
                 setBannerImgUrl(d.banner_img_url && String(d.banner_img_url).trim() ? String(d.banner_img_url) : '');
                 setCoverImgUrl(d.cover_img_url && String(d.cover_img_url).trim() ? String(d.cover_img_url) : '');
+                setBannerSourceFile(null);
+                setCoverSourceFile(null);
             } catch {
                 if (!c) dialog.toast('Unable to load content.', 'error');
             } finally {
@@ -241,7 +283,8 @@ export default function NewslistingEdit({ authUser = {}, newslistingId, initialS
             setCoverImgUrl(r.cover_img_url && String(r.cover_img_url).trim() ? String(r.cover_img_url) : '');
             setBannerFile(null);
             setCoverFile(null);
-            setFileInputsKey((k) => k + 1);
+            setBannerSourceFile(null);
+            setCoverSourceFile(null);
             setArticleContent(r.article_content != null ? String(r.article_content) : articleContent);
             dialog.toast('News content updated successfully.', 'success');
         } catch (err) {
@@ -670,60 +713,66 @@ export default function NewslistingEdit({ authUser = {}, newslistingId, initialS
                         {activeStep === 4 && (
                             <form onSubmit={onSubmit} className="mwadmin-form-grid mwadmin-news-create-form">
                                 <h2 className="mwadmin-form-grid-full mwadmin-news-edit-step-title">Multimedia</h2>
-                                <div className="mwadmin-form-grid-full mwadmin-news-image-field">
-                                    <label htmlFor={`edit-banner-file-${fileInputsKey}`}>Banner image</label>
-                                    {bannerDisplaySrc ? (
-                                        <div className="mwadmin-news-edit-img-preview">
-                                            <img src={bannerDisplaySrc} alt="" />
+                                <div className="mwadmin-form-grid-full mwadmin-category-images-row">
+                                    <div className="mwadmin-category-image-block">
+                                        <label>Banner image</label>
+                                        <p className="mwadmin-field-hint">
+                                            {MWADMIN_NEWS_BANNER.w}px × {MWADMIN_NEWS_BANNER.h}px — click to crop
+                                        </p>
+                                        <div className="mwadmin-category-image-field">
+                                            <div
+                                                className="mwadmin-category-image-preview-wrap mwadmin-category-image-preview-wrap--banner mwadmin-category-image-preview-wrap--clickable"
+                                                role="button"
+                                                tabIndex={0}
+                                                aria-label="Open banner editor"
+                                                onClick={() => setBannerEditorOpen(true)}
+                                                onKeyDown={(ev) => {
+                                                    if (ev.key === 'Enter' || ev.key === ' ') {
+                                                        ev.preventDefault();
+                                                        setBannerEditorOpen(true);
+                                                    }
+                                                }}
+                                            >
+                                                {bannerDisplaySrc ? (
+                                                    <img src={bannerDisplaySrc} alt="" className="mwadmin-category-image-preview" />
+                                                ) : (
+                                                    <div className="mwadmin-category-image-placeholder-card">
+                                                        NO BANNER
+                                                        <span className="mwadmin-category-image-click-hint">Click to upload and edit</span>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
-                                    ) : (
-                                        <p className="mwadmin-news-img-placeholder">No banner image uploaded yet.</p>
-                                    )}
-                                    <div className="mwadmin-news-image-controls">
-                                        <input
-                                            ref={bannerFileRef}
-                                            id={`edit-banner-file-${fileInputsKey}`}
-                                            key={`banner-${fileInputsKey}`}
-                                            type="file"
-                                            className="mwadmin-news-file-input-hidden"
-                                            accept="image/jpeg,image/png,image/gif"
-                                            onChange={(e) => setBannerFile(e.target.files?.[0] || null)}
-                                        />
-                                        <button
-                                            type="button"
-                                            className="mwadmin-news-image-choose-btn"
-                                            onClick={() => bannerFileRef.current?.click()}
-                                        >
-                                            {bannerFile || bannerImgUrl ? 'Replace banner image' : 'Choose banner image'}
-                                        </button>
                                     </div>
-                                </div>
-                                <div className="mwadmin-form-grid-full mwadmin-news-image-field">
-                                    <label htmlFor={`edit-cover-file-${fileInputsKey}`}>Cover image</label>
-                                    {coverDisplaySrc ? (
-                                        <div className="mwadmin-news-edit-img-preview">
-                                            <img src={coverDisplaySrc} alt="" />
+                                    <div className="mwadmin-category-image-block">
+                                        <label>Cover image</label>
+                                        <p className="mwadmin-field-hint">
+                                            {MWADMIN_NEWS_COVER.w}px × {MWADMIN_NEWS_COVER.h}px — click to crop
+                                        </p>
+                                        <div className="mwadmin-category-image-field">
+                                            <div
+                                                className="mwadmin-category-image-preview-wrap mwadmin-category-image-preview-wrap--box mwadmin-category-image-preview-wrap--clickable"
+                                                role="button"
+                                                tabIndex={0}
+                                                aria-label="Open cover editor"
+                                                onClick={() => setCoverEditorOpen(true)}
+                                                onKeyDown={(ev) => {
+                                                    if (ev.key === 'Enter' || ev.key === ' ') {
+                                                        ev.preventDefault();
+                                                        setCoverEditorOpen(true);
+                                                    }
+                                                }}
+                                            >
+                                                {coverDisplaySrc ? (
+                                                    <img src={coverDisplaySrc} alt="" className="mwadmin-category-image-preview" />
+                                                ) : (
+                                                    <div className="mwadmin-category-image-placeholder-card">
+                                                        NO COVER
+                                                        <span className="mwadmin-category-image-click-hint">Click to upload and edit</span>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
-                                    ) : (
-                                        <p className="mwadmin-news-img-placeholder">No cover image uploaded yet.</p>
-                                    )}
-                                    <div className="mwadmin-news-image-controls">
-                                        <input
-                                            ref={coverFileRef}
-                                            id={`edit-cover-file-${fileInputsKey}`}
-                                            key={`cover-${fileInputsKey}`}
-                                            type="file"
-                                            className="mwadmin-news-file-input-hidden"
-                                            accept="image/jpeg,image/png,image/gif"
-                                            onChange={(e) => setCoverFile(e.target.files?.[0] || null)}
-                                        />
-                                        <button
-                                            type="button"
-                                            className="mwadmin-news-image-choose-btn"
-                                            onClick={() => coverFileRef.current?.click()}
-                                        >
-                                            {coverFile || coverImgUrl ? 'Replace cover image' : 'Choose cover image'}
-                                        </button>
                                     </div>
                                 </div>
                                 <div className="mwadmin-form-grid-full">
@@ -834,6 +883,30 @@ export default function NewslistingEdit({ authUser = {}, newslistingId, initialS
                         )}
                     </section>
                 </div>
+                <MwadminImageEditorModal
+                    open={bannerEditorOpen}
+                    onClose={() => setBannerEditorOpen(false)}
+                    title="News banner image"
+                    outputWidth={MWADMIN_NEWS_BANNER.w}
+                    outputHeight={MWADMIN_NEWS_BANNER.h}
+                    notify={notify}
+                    placeholderBlurb="BANNER IMAGE"
+                    initialImageFile={bannerSourceFile || bannerFile}
+                    initialImageUrl={bannerSourceFile || bannerFile ? null : bannerDisplaySrc || null}
+                    onApply={(file, meta) => setBannerFromFile(file, meta)}
+                />
+                <MwadminImageEditorModal
+                    open={coverEditorOpen}
+                    onClose={() => setCoverEditorOpen(false)}
+                    title="News cover image"
+                    outputWidth={MWADMIN_NEWS_COVER.w}
+                    outputHeight={MWADMIN_NEWS_COVER.h}
+                    notify={notify}
+                    placeholderBlurb="COVER IMAGE"
+                    initialImageFile={coverSourceFile || coverFile}
+                    initialImageUrl={coverSourceFile || coverFile ? null : coverDisplaySrc || null}
+                    onApply={(file, meta) => setCoverFromFile(file, meta)}
+                />
             </MwadminLayout>
         </>
     );

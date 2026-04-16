@@ -35,7 +35,7 @@ class Advertisement extends Model
     protected function casts(): array
     {
         return [
-            'mobile' => 'integer',
+            'mobile' => 'string',
             'ad_type' => 'integer',
             'category_id' => 'integer',
             'annual_rates' => 'string',
