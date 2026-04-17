@@ -180,17 +180,17 @@ export default function NewslistingIndex({ authUser = {} }) {
             {
                 field: 'cover_img_url',
                 headerName: 'Cover Image',
-                width: 110,
+                width: 168,
+                minWidth: 160,
                 sortable: false,
+                cellClass: 'mwadmin-newslisting-cover-col',
                 cellRenderer: (p) => {
                     const src = p.value || '/images/categoryImages/boxImages/no_img.gif';
                     return (
                         <span className="mwadmin-newslisting-cover-cell">
-                            <img
-                                className="mwadmin-newslisting-cover-thumb"
-                                src={src}
-                                alt=""
-                            />
+                            <span className="mwadmin-newslisting-cover-frame">
+                                <img className="mwadmin-newslisting-cover-thumb" src={src} alt="" />
+                            </span>
                         </span>
                     );
                 },
@@ -432,7 +432,7 @@ export default function NewslistingIndex({ authUser = {} }) {
                                     suppressCellFocus
                                     alwaysShowVerticalScroll
                                     rowBuffer={20}
-                                    rowHeight={36}
+                                    rowHeight={100}
                                     headerHeight={40}
                                     overlayNoRowsTemplate={loading ? 'Loading...' : 'No data available in table'}
                                 />
