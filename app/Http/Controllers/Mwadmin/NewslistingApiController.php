@@ -22,13 +22,21 @@ class NewslistingApiController extends Controller
 
     public function options(Request $request): JsonResponse
     {
-        if ($deny = $this->mwadminDenyUnless($request, 'newslisting', 'allow_view')) {
+        // Legacy create/edit screens need these options even for add-only users.
+        if ($deny = $this->mwadminDenyUnlessAny($request, 'newslisting', ['allow_add', 'allow_edit', 'allow_view'])) {
             return $deny;
         }
 
         $categoryId = (int) $request->query('category_id', 0);
         $categories = DB::table('categorymst')->select('id', 'title')->where('status', 1)->orderBy('title')->get();
         $newsSources = DB::table('newsource')->select('id', 'name')->where('status', 1)->orderBy('name')->get();
+        $designations = DB::table('designation')->select('id', 'designation')->where('status', 1)->orderBy('designation')->get();
+        $users = DB::table('users')
+            ->select('userid', 'first_name', 'last_name', 'designation')
+            ->where('status', 1)
+            ->orderBy('first_name')
+            ->orderBy('last_name')
+            ->get();
         $subcategories = $categoryId > 0
             ? DB::table('subcategorymst')->select('id', 'name', 'category_id')->where('category_id', $categoryId)->where('status', 1)->orderBy('name')->get()
             : [];
@@ -38,6 +46,8 @@ class NewslistingApiController extends Controller
         return response()->json([
             'categories' => $categories,
             'news_sources' => $newsSources,
+            'designations' => $designations,
+            'users' => $users,
             'subcategories' => $subcategories,
             'suggested_next_id' => $nextId,
         ]);
@@ -45,7 +55,8 @@ class NewslistingApiController extends Controller
 
     public function nextMeta(Request $request): JsonResponse
     {
-        if ($deny = $this->mwadminDenyUnless($request, 'newslisting', 'allow_view')) {
+        // Next IDs/serials are used by create flow; allow add/edit/view roles.
+        if ($deny = $this->mwadminDenyUnlessAny($request, 'newslisting', ['allow_add', 'allow_edit', 'allow_view'])) {
             return $deny;
         }
 
@@ -205,6 +216,17 @@ class NewslistingApiController extends Controller
         ];
 
         $id = DB::table('contenttrans')->insertGetId($payload);
+        $members = $validated['members'] ?? [];
+        if (is_array($members) && count($members) > 0) {
+            foreach ($members as $m) {
+                DB::table('memberstrans')->insert([
+                    'contenttrans_id' => $id,
+                    'designation_id' => (int) $m['designation_id'],
+                    'user_id' => (int) $m['user_id'],
+                    'instructions' => (string) ($m['instructions'] ?? ''),
+                ]);
+            }
+        }
 
         return response()->json([
             'message' => 'News content created successfully.',
@@ -378,6 +400,10 @@ class NewslistingApiController extends Controller
             'schedule_time' => ['nullable', 'string', 'max:10'],
             'banner_img' => ['nullable', 'image', 'mimes:jpg,jpeg,png,gif', 'max:8192'],
             'cover_img' => ['nullable', 'image', 'mimes:jpg,jpeg,png,gif', 'max:8192'],
+            'members' => ['nullable', 'array'],
+            'members.*.designation_id' => ['required_with:members', 'integer', 'exists:designation,id'],
+            'members.*.user_id' => ['required_with:members', 'integer', 'exists:users,userid'],
+            'members.*.instructions' => ['nullable', 'string', 'max:255'],
         ]);
     }
 

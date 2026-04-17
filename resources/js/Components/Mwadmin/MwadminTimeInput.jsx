@@ -56,11 +56,14 @@ export default function MwadminTimeInput({
     density = 'default',
     title,
     inputAriaLabel,
+    preferNativeDialog = false,
+    disabled = false,
 }) {
     const genId = useId();
     const inputId = id || `mwadmin-time-${genId}`;
     const wrapRef = useRef(null);
     const triggerRef = useRef(null);
+    const nativeTimeRef = useRef(null);
     const popoverRef = useRef(null);
     const [open, setOpen] = useState(false);
     const [popoverPos, setPopoverPos] = useState({ top: 0, left: 0 });
@@ -137,10 +140,11 @@ export default function MwadminTimeInput({
 
     const commit = useCallback(
         (next) => {
+            if (disabled) return;
             setDraft(next);
             onChange(timePartsTo24(next));
         },
-        [onChange]
+        [onChange, disabled]
     );
 
     const bumpHour = (dir) => {
@@ -162,6 +166,22 @@ export default function MwadminTimeInput({
     };
 
     const onOpen = () => {
+        if (disabled) return;
+        if (preferNativeDialog) {
+            const el = nativeTimeRef.current;
+            if (el) {
+                try {
+                    if (typeof el.showPicker === 'function') {
+                        el.showPicker();
+                        return;
+                    }
+                    el.click();
+                    return;
+                } catch {
+                    // Fall through to custom popover when native picker is unavailable.
+                }
+            }
+        }
         setDraft(parseTime24ToParts(value));
         setOpen(true);
     };
@@ -241,6 +261,7 @@ export default function MwadminTimeInput({
                 aria-haspopup="dialog"
                 aria-expanded={open}
                 autoComplete="off"
+                disabled={disabled}
                 onClick={onOpen}
                 onFocus={onOpen}
                 onKeyDown={(e) => {
@@ -256,6 +277,7 @@ export default function MwadminTimeInput({
                 className="mwadmin-time-input-clock"
                 tabIndex={-1}
                 aria-label="Open time picker"
+                disabled={disabled}
                 onClick={(e) => {
                     e.preventDefault();
                     onOpen();
@@ -266,6 +288,25 @@ export default function MwadminTimeInput({
                     <path d="M12 7v5l3 2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
             </button>
+            <input
+                ref={nativeTimeRef}
+                type="time"
+                value={value || ''}
+                onChange={(e) => {
+                    if (disabled) return;
+                    onChange(e.target.value || '');
+                }}
+                tabIndex={-1}
+                aria-hidden="true"
+                disabled={disabled}
+                style={{
+                    position: 'absolute',
+                    width: 0,
+                    height: 0,
+                    opacity: 0,
+                    pointerEvents: 'none',
+                }}
+            />
             {popover ? createPortal(popover, document.body) : null}
         </div>
     );

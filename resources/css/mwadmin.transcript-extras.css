@@ -523,15 +523,27 @@
 .mwadmin-news-create-tabs {
     display: flex;
     flex-wrap: wrap;
-    gap: 0;
-    margin: 0 0 14px;
+    gap: 6px;
+    margin: 0 0 16px;
     padding: 0;
     list-style: none;
-    border-bottom: 1px solid #ddd;
+    border-bottom: 1px solid #d6dde8;
+    padding-bottom: 8px;
 }
 
 .mwadmin-news-create-tabs li {
     margin: 0;
+    border: 1px solid #cfd8e3;
+    background: #f4f7fb;
+    color: #5f6f86;
+    padding: 7px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.2;
+    border-radius: 6px;
+    cursor: default;
+    user-select: none;
+    letter-spacing: 0.01em;
 }
 
 .mwadmin-news-create-tabs button,
@@ -546,11 +558,21 @@
     margin-right: 4px;
 }
 
+.mwadmin-news-create-tabs li.active,
 .mwadmin-news-create-tabs li.active button,
 .mwadmin-news-edit-tab-btn.active {
-    background: #fff;
-    border-color: #ddd;
+    background: #ffffff;
+    border-color: #8eb6de;
+    color: #1f3e63;
     font-weight: 600;
+    box-shadow: inset 0 0 0 1px rgba(118, 161, 208, 0.25);
+}
+
+.mwadmin-news-create-tabs li.disabled {
+    opacity: 0.78;
+    color: #7a8798;
+    background: #f8fafd;
+    border-color: #dde4ee;
 }
 
 .mwadmin-news-create-form {
@@ -2647,17 +2669,28 @@ a.mwadmin-btn-primary {
     border-bottom-color: #334155;
 }
 
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-news-create-tabs li,
 .mwadmin-shell.mwadmin-theme-dark .mwadmin-news-create-tabs button,
 .mwadmin-shell.mwadmin-theme-dark .mwadmin-news-edit-tab-btn {
     background: #1e293b;
     color: #cbd5e1;
+    border-color: #475569;
 }
 
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-news-create-tabs li.active,
 .mwadmin-shell.mwadmin-theme-dark .mwadmin-news-create-tabs li.active button,
 .mwadmin-shell.mwadmin-theme-dark .mwadmin-news-edit-tab-btn.active {
     background: #151b24;
-    border-color: #475569;
+    border-color: #5d7ea3;
     color: #f1f5f9;
+    box-shadow: inset 0 0 0 1px rgba(126, 165, 205, 0.22);
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-news-create-tabs li.disabled {
+    color: #94a3b8;
+    border-color: #3f4d62;
+    background: #222d3a;
+    opacity: 0.7;
 }
 
 .mwadmin-shell.mwadmin-theme-dark .mwadmin-news-create-featured {

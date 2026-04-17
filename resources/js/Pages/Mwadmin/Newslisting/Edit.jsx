@@ -322,6 +322,11 @@ export default function NewslistingEdit({ authUser = {}, newslistingId, initialS
 
     const releaseStatusReady = form.status1 === 'Ready';
 
+    useEffect(() => {
+        if (releaseStatusReady) return;
+        setForm((f) => ({ ...f, schedule_date: '', schedule_time: '' }));
+    }, [releaseStatusReady]);
+
     if (load) {
         return (
             <>
@@ -538,6 +543,7 @@ export default function NewslistingEdit({ authUser = {}, newslistingId, initialS
                                                 }));
                                             }}
                                             placeholder="dd-mm-yyyy"
+                                            disabled={!releaseStatusReady}
                                         />
                                     </div>
                                     <div>
@@ -547,6 +553,7 @@ export default function NewslistingEdit({ authUser = {}, newslistingId, initialS
                                             density="compact"
                                             value={form.schedule_time}
                                             onChange={(hhmm) => setForm((f) => ({ ...f, schedule_time: hhmm }))}
+                                            disabled={!releaseStatusReady}
                                         />
                                     </div>
                                 </div>

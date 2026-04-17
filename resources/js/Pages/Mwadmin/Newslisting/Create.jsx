@@ -1,10 +1,13 @@
 import { Head, Link } from '@inertiajs/react';
 import axios from 'axios';
 import { useCallback, useEffect, useState } from 'react';
+import DmyDateInput from '../../../Components/Mwadmin/DmyDateInput';
+import MwadminTimeInput from '../../../Components/Mwadmin/MwadminTimeInput';
 import MwadminImageEditorModal from '../../../Components/Mwadmin/MwadminImageEditorModal';
 import MwadminLayout from '../../../Components/Mwadmin/Layout';
 import { useClassicDialog } from '../../../Components/Mwadmin/ClassicDialog';
 import { MWADMIN_NEWS_BANNER, MWADMIN_NEWS_COVER } from '../../../lib/mwadminImageEditorTargets';
+import { dmyToIsoDate, isoDateToDmy } from '../Sponsor/sponsorDateFormat';
 
 const MAX_NEWS_IMAGE_BYTES = 8 * 1024 * 1024;
 
@@ -29,6 +32,8 @@ export default function NewslistingCreate({ authUser = {} }) {
     const [categories, setCategories] = useState([]);
     const [subcategories, setSubcategories] = useState([]);
     const [newsSources, setNewsSources] = useState([]);
+    const [designations, setDesignations] = useState([]);
+    const [users, setUsers] = useState([]);
     const [form, setForm] = useState({
         category_id: '',
         subcategory_id: '',
@@ -59,6 +64,14 @@ export default function NewslistingCreate({ authUser = {} }) {
     const [bannerEditorOpen, setBannerEditorOpen] = useState(false);
     const [coverEditorOpen, setCoverEditorOpen] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [memberRows, setMemberRows] = useState([]);
+    const [dateValues, setDateValues] = useState({
+        p2d_date: isoDateToDmy(today()),
+        due_date: isoDateToDmy(today()),
+        completion_date: '',
+        schedule_date: '',
+    });
+    const releaseStatusReady = form.status1 === 'Ready';
 
     useEffect(() => {
         if (!bannerFile) {
@@ -126,8 +139,8 @@ export default function NewslistingCreate({ authUser = {} }) {
                 if (c) return;
                 setCategories(data.categories || []);
                 setNewsSources(data.news_sources || []);
-                const sid = data.suggested_next_id ?? '';
-                setForm((f) => ({ ...f, p2d_caseno: sid ? String(sid) : f.p2d_caseno }));
+                setDesignations(data.designations || []);
+                setUsers(data.users || []);
             } catch {
                 dialog.toast('Unable to load form options.', 'error');
             }
@@ -169,21 +182,51 @@ export default function NewslistingCreate({ authUser = {} }) {
         };
     }, [form.category_id]);
 
+    useEffect(() => {
+        if (releaseStatusReady) return;
+        setDateValues((s) => ({ ...s, schedule_date: '' }));
+        setForm((f) => ({ ...f, schedule_time: '' }));
+    }, [releaseStatusReady]);
+
     const onAddMembersClick = () => {
         if (!titleOk) {
             dialog.toast('Please Enter News Title, to unlock Add Members button..', 'error');
             return;
         }
-        dialog.toast(
-            'After you save this content, open Edit to assign members (designation / user) in the full workflow.',
-            'info'
-        );
+        setMemberRows((rows) => [
+            ...rows,
+            { designation_id: '', user_id: '', instructions: '' },
+        ]);
     };
 
     const onSubmit = async (e) => {
         e.preventDefault();
         if (!form.category_id || !form.subcategory_id) {
             dialog.toast('Category and sub-category are required.', 'error');
+            return;
+        }
+        const p2dDateIso = dmyToIsoDate(dateValues.p2d_date);
+        const dueDateIso = dmyToIsoDate(dateValues.due_date);
+        const completionDateIso = dmyToIsoDate(dateValues.completion_date);
+        const scheduleDateIso = dmyToIsoDate(dateValues.schedule_date);
+        if (
+            p2dDateIso === 'INVALID' ||
+            dueDateIso === 'INVALID' ||
+            completionDateIso === 'INVALID' ||
+            scheduleDateIso === 'INVALID'
+        ) {
+            dialog.toast('Please enter valid dates in dd-mm-yyyy format.', 'error');
+            return;
+        }
+        if (!p2dDateIso || !dueDateIso) {
+            dialog.toast('P2D Date and Due Date are required (dd-mm-yyyy).', 'error');
+            return;
+        }
+        const hasInvalidMembers = memberRows.some(
+            (m) => !m.designation_id || !m.user_id
+        );
+        if (hasInvalidMembers) {
+            dialog.toast('Each member row must have Designation and User selected.', 'error');
             return;
         }
         setSaving(true);
@@ -198,18 +241,23 @@ export default function NewslistingCreate({ authUser = {} }) {
             fd.append('authorized_by', form.authorized_by.trim());
             fd.append('permalink', form.permalink.trim());
             fd.append('status1', form.status1);
-            fd.append('due_date', form.due_date);
-            fd.append('p2d_date', form.p2d_date);
+            fd.append('due_date', dueDateIso);
+            fd.append('p2d_date', p2dDateIso);
             fd.append('last_serialno', form.last_serialno);
             fd.append('p2d_caseno', form.p2d_caseno.trim());
             if (form.description) fd.append('description', form.description);
             if (form.shared_folder) fd.append('shared_folder', form.shared_folder);
-            if (form.completion_date) fd.append('completion_date', form.completion_date);
+            if (completionDateIso) fd.append('completion_date', completionDateIso);
             if (form.featured_content) fd.append('featured_content', '1');
-            if (form.schedule_date) {
-                fd.append('schedule_date', form.schedule_date);
+            if (scheduleDateIso) {
+                fd.append('schedule_date', scheduleDateIso);
                 fd.append('schedule_time', form.schedule_time || '00:00');
             }
+            memberRows.forEach((m, i) => {
+                fd.append(`members[${i}][designation_id]`, String(m.designation_id));
+                fd.append(`members[${i}][user_id]`, String(m.user_id));
+                fd.append(`members[${i}][instructions]`, m.instructions || '');
+            });
             if (bannerFile) fd.append('banner_img', bannerFile);
             if (coverFile) fd.append('cover_img', coverFile);
 
@@ -277,31 +325,33 @@ export default function NewslistingCreate({ authUser = {} }) {
                                 <label>
                                     P2D Date (<span className="mwadmin-label-hint">d-m-Y</span>)<Req />
                                 </label>
-                                <input
-                                    type="date"
-                                    value={form.p2d_date}
-                                    onChange={(e) => setForm((f) => ({ ...f, p2d_date: e.target.value }))}
-                                    required
+                                <DmyDateInput
+                                    value={dateValues.p2d_date}
+                                    onChange={(dmy) => setDateValues((s) => ({ ...s, p2d_date: dmy }))}
+                                    placeholder="dd-mm-yyyy"
                                 />
                             </div>
                             <div>
                                 <label>
                                     Release Date (<span className="mwadmin-label-hint">d-m-Y</span>)
                                 </label>
-                                <input
-                                    type="date"
-                                    value={form.schedule_date}
-                                    onChange={(e) => setForm((f) => ({ ...f, schedule_date: e.target.value }))}
+                                <DmyDateInput
+                                    value={dateValues.schedule_date}
+                                    onChange={(dmy) => setDateValues((s) => ({ ...s, schedule_date: dmy }))}
+                                    placeholder="dd-mm-yyyy"
+                                    normalizeOnBlur
+                                    disabled={!releaseStatusReady}
                                 />
                             </div>
                             <div>
                                 <label>
-                                    Time (<span className="mwadmin-label-hint">Hrs:Min</span>)
+                                    Time (<span className="mwadmin-label-hint">IST, Hrs:Min</span>)
                                 </label>
-                                <input
-                                    type="time"
+                                <MwadminTimeInput
                                     value={form.schedule_time}
-                                    onChange={(e) => setForm((f) => ({ ...f, schedule_time: e.target.value }))}
+                                    onChange={(hhmm) => setForm((f) => ({ ...f, schedule_time: hhmm }))}
+                                    preferNativeDialog
+                                    disabled={!releaseStatusReady}
                                 />
                             </div>
 
@@ -326,21 +376,20 @@ export default function NewslistingCreate({ authUser = {} }) {
                                 <label>
                                     Due Date (<span className="mwadmin-label-hint">d-m-Y</span>)<Req />
                                 </label>
-                                <input
-                                    type="date"
-                                    value={form.due_date}
-                                    onChange={(e) => setForm((f) => ({ ...f, due_date: e.target.value }))}
-                                    required
+                                <DmyDateInput
+                                    value={dateValues.due_date}
+                                    onChange={(dmy) => setDateValues((s) => ({ ...s, due_date: dmy }))}
+                                    placeholder="dd-mm-yyyy"
                                 />
                             </div>
                             <div>
                                 <label>
                                     Completion Date (<span className="mwadmin-label-hint">d-m-Y</span>)
                                 </label>
-                                <input
-                                    type="date"
-                                    value={form.completion_date}
-                                    onChange={(e) => setForm((f) => ({ ...f, completion_date: e.target.value }))}
+                                <DmyDateInput
+                                    value={dateValues.completion_date}
+                                    onChange={(dmy) => setDateValues((s) => ({ ...s, completion_date: dmy }))}
+                                    placeholder="dd-mm-yyyy"
                                 />
                             </div>
 
@@ -573,12 +622,94 @@ export default function NewslistingCreate({ authUser = {} }) {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <tr>
-                                                <td colSpan={3} className="mwadmin-news-members-empty">
-                                                    No members added yet. Enter a News Title to use Add Members, then
-                                                    save and continue in Edit for the full assignment workflow.
-                                                </td>
-                                            </tr>
+                                            {memberRows.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan={3} className="mwadmin-news-members-empty">
+                                                        No members added yet. Enter News Title and click Add Members.
+                                                    </td>
+                                                </tr>
+                                            ) : (
+                                                memberRows.map((row, idx) => {
+                                                    const availableUsers = users.filter(
+                                                        (u) =>
+                                                            !row.designation_id ||
+                                                            String(u.designation ?? '') === String(row.designation_id)
+                                                    );
+                                                    return (
+                                                        <tr key={`member-row-${idx}`}>
+                                                            <td>
+                                                                <select
+                                                                    value={row.designation_id}
+                                                                    onChange={(e) =>
+                                                                        setMemberRows((rows) =>
+                                                                            rows.map((r, i) =>
+                                                                                i === idx
+                                                                                    ? { ...r, designation_id: e.target.value, user_id: '' }
+                                                                                    : r
+                                                                            )
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    <option value="">Select Designation</option>
+                                                                    {designations.map((d) => (
+                                                                        <option key={d.id} value={String(d.id)}>
+                                                                            {d.designation}
+                                                                        </option>
+                                                                    ))}
+                                                                </select>
+                                                            </td>
+                                                            <td>
+                                                                <select
+                                                                    value={row.user_id}
+                                                                    onChange={(e) =>
+                                                                        setMemberRows((rows) =>
+                                                                            rows.map((r, i) =>
+                                                                                i === idx ? { ...r, user_id: e.target.value } : r
+                                                                            )
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    <option value="">Select User</option>
+                                                                    {availableUsers.map((u) => (
+                                                                        <option key={u.userid} value={String(u.userid)}>
+                                                                            {[u.first_name, u.last_name].filter(Boolean).join(' ') ||
+                                                                                String(u.userid)}
+                                                                        </option>
+                                                                    ))}
+                                                                </select>
+                                                            </td>
+                                                            <td>
+                                                                <div style={{ display: 'flex', gap: 8 }}>
+                                                                    <input
+                                                                        value={row.instructions}
+                                                                        onChange={(e) =>
+                                                                            setMemberRows((rows) =>
+                                                                                rows.map((r, i) =>
+                                                                                    i === idx
+                                                                                        ? { ...r, instructions: e.target.value }
+                                                                                        : r
+                                                                                )
+                                                                            )
+                                                                        }
+                                                                        placeholder="Character / instructions"
+                                                                    />
+                                                                    <button
+                                                                        type="button"
+                                                                        className="mwadmin-filter-clear"
+                                                                        onClick={() =>
+                                                                            setMemberRows((rows) =>
+                                                                                rows.filter((_, i) => i !== idx)
+                                                                            )
+                                                                        }
+                                                                    >
+                                                                        Remove
+                                                                    </button>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })
+                                            )}
                                         </tbody>
                                     </table>
                                 </div>

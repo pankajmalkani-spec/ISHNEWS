@@ -14,6 +14,7 @@ export default function DmyDateInput({
     placeholder = 'dd-mm-yyyy',
     density = 'default',
     normalizeOnBlur = true,
+    disabled = false,
 }) {
     const genId = useId();
     const inputId = id || `dmy-date-${genId}`;
@@ -23,21 +24,24 @@ export default function DmyDateInput({
 
     const handleChange = useCallback(
         (e) => {
+            if (disabled) return;
             onChange(e.target.value);
         },
-        [onChange]
+        [onChange, disabled]
     );
 
     const handleBlur = useCallback(() => {
+        if (disabled) return;
         if (!normalizeOnBlur) return;
         const raw = String(value ?? '').trim();
         if (raw === '') return;
         const d = parseDmyToDate(raw);
         if (d) onChange(dateToDmy(d));
-    }, [normalizeOnBlur, onChange, value]);
+    }, [normalizeOnBlur, onChange, value, disabled]);
 
     const handleNativeChange = useCallback(
         (e) => {
+            if (disabled) return;
             const iso = e.target.value;
             if (!iso) {
                 onChange('');
@@ -56,10 +60,11 @@ export default function DmyDateInput({
             }
             onChange(dateToDmy(dt));
         },
-        [onChange]
+        [onChange, disabled]
     );
 
     const openDateDialog = useCallback(() => {
+        if (disabled) return;
         const el = nativeDateRef.current;
         if (!el) return;
         try {
@@ -71,7 +76,7 @@ export default function DmyDateInput({
         } catch {
             el.click();
         }
-    }, []);
+    }, [disabled]);
 
     return (
         <div
@@ -94,6 +99,7 @@ export default function DmyDateInput({
                     autoComplete="off"
                     spellCheck={false}
                     maxLength={10}
+                    disabled={disabled}
                 />
                 <button
                     type="button"
@@ -101,6 +107,7 @@ export default function DmyDateInput({
                     onClick={openDateDialog}
                     aria-label="Open calendar"
                     title="Open calendar"
+                    disabled={disabled}
                 >
                     <svg
                         className="mwadmin-dmy-picker-calendar-icon"
@@ -130,6 +137,7 @@ export default function DmyDateInput({
                 onChange={handleNativeChange}
                 tabIndex={-1}
                 aria-hidden="true"
+                disabled={disabled}
             />
         </div>
     );
