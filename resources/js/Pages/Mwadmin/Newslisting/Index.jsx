@@ -171,19 +171,20 @@ export default function NewslistingIndex({ authUser = {} }) {
     };
 
     /* Column order matches legacy mwadmin/newslisting: ID → … → Final release → Actions (11 cols). */
+    const vc = 'mwadmin-ag-cell-vcenter';
     const columns = useMemo(
         () => [
-            { field: 'id', headerName: 'ID', width: 72, sortable: true },
-            { field: 'p2d_caseno', headerName: 'P2D Case No', minWidth: 110, sortable: true },
-            { field: 'category_name', headerName: 'Category', minWidth: 120, sortable: false },
-            { field: 'subcategory_name', headerName: 'Sub Category', minWidth: 120, sortable: false },
+            { field: 'id', headerName: 'ID', width: 72, sortable: true, cellClass: vc },
+            { field: 'p2d_caseno', headerName: 'P2D Case No', minWidth: 110, sortable: true, cellClass: vc },
+            { field: 'category_name', headerName: 'Category', minWidth: 120, sortable: false, cellClass: vc },
+            { field: 'subcategory_name', headerName: 'Sub Category', minWidth: 120, sortable: false, cellClass: vc },
             {
                 field: 'cover_img_url',
                 headerName: 'Cover Image',
                 width: 168,
                 minWidth: 160,
                 sortable: false,
-                cellClass: 'mwadmin-newslisting-cover-col',
+                cellClass: `${vc} mwadmin-newslisting-cover-col`,
                 cellRenderer: (p) => {
                     const src = p.value || '/images/categoryImages/boxImages/no_img.gif';
                     return (
@@ -195,13 +196,22 @@ export default function NewslistingIndex({ authUser = {} }) {
                     );
                 },
             },
-            { field: 'title', headerName: 'Content Title', flex: 1, minWidth: 180, sortable: false },
-            { field: 'news_source_name', headerName: 'News Source', minWidth: 120, sortable: false },
+            {
+                field: 'title',
+                headerName: 'Content Title',
+                flex: 1,
+                minWidth: 180,
+                sortable: false,
+                cellClass: vc,
+                tooltipValueGetter: (p) => (p.value == null ? '' : String(p.value)),
+            },
+            { field: 'news_source_name', headerName: 'News Source', minWidth: 120, sortable: false, cellClass: vc },
             {
                 field: 'schedule_date',
                 headerName: 'Schedule Date',
                 minWidth: 130,
                 sortable: false,
+                cellClass: vc,
                 valueFormatter: (p) => {
                     const v = p.value;
                     if (v === null || v === undefined || v === '') return 'Unscheduled';
@@ -210,7 +220,7 @@ export default function NewslistingIndex({ authUser = {} }) {
                     return s;
                 },
             },
-            { field: 'status1', headerName: 'Status', width: 100, sortable: false },
+            { field: 'status1', headerName: 'Status', width: 100, sortable: false, cellClass: vc },
             {
                 field: 'final_releasestatus',
                 headerName: 'Final\nRelease Status',
@@ -218,6 +228,7 @@ export default function NewslistingIndex({ authUser = {} }) {
                 sortable: false,
                 wrapHeaderText: true,
                 autoHeaderHeight: true,
+                cellClass: `${vc} mwadmin-newslisting-badge-col`,
                 cellRenderer: (p) => <MwadminStatusBadge value={p.value} />,
             },
             {
@@ -226,6 +237,7 @@ export default function NewslistingIndex({ authUser = {} }) {
                 width: 130,
                 minWidth: 120,
                 sortable: false,
+                cellClass: `${vc} mwadmin-ag-cell-actions`,
                 cellRenderer: (params) => (
                     <MwadminActionsDropdown
                         flags={{ edit: perms.edit, delete: perms.delete }}

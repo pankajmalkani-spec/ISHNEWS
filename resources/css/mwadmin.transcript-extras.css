@@ -381,6 +381,16 @@
     background: #0f172a;
 }
 
+/* Final release Active/In-Active pills: center in tall rows (rowHeight 100) like other badge grids */
+.mwadmin-news-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-newslisting-badge-col {
+    justify-content: center !important;
+}
+
+.mwadmin-news-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-newslisting-badge-col .ag-cell-wrapper,
+.mwadmin-news-listing-grid.mwadmin-ag-grid .ag-cell.mwadmin-newslisting-badge-col .ag-cell-value {
+    justify-content: center !important;
+}
+
 .mwadmin-shell.mwadmin-theme-dark .mwadmin-newslisting-adv {
     border-color: #2d3544;
     background: #151b24;
