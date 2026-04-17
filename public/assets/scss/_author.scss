@@ -1,0 +1,121 @@
+
+/*-------------------------------------------------- */
+/*  Author pages
+/*------------------------------------------------- */
+
+
+ul.author-list {
+    @extend .reset-elem;
+    margin-bottom: 30px;
+    > li {
+        list-style: none;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 30px;
+        .autor-box {
+            padding: 30px;
+            background: #fafafa;
+            border: 1px solid transparent;
+            @include transition(0.2s);
+            img {
+                max-width: 100px;
+                @include border-radius(50%);
+                float: left;
+            }
+            .autor-content {
+                margin-left: 120px;
+                .autor-title {
+                    overflow: hidden;
+                    margin-bottom: 10px;
+                    h1 {
+                    	font-size: 16px;
+                    	margin-bottom: 6px;
+                    	font-weight: 600;
+                        span:after {
+                            content: '/';
+                            @extend .heading2;
+                            margin: 0 6px; 
+                        }
+                        a {
+                            text-decoration: underline;
+                            display: inline-block;
+                            color: $primary-color;
+                        }
+                        a:hover {
+                            opacity: 0.7;
+                        }
+                    }
+                    ul.autor-social {
+                        @extend .reset-elem;
+                        li {
+                            display: inline-block;
+                            margin-right: 7px;
+                            a {
+                                color: $third-color;
+                                font-size: 13px;
+                            }
+                            a:hover {
+                                color: $primary-color;
+                            }
+                        }
+                    }
+                }
+                p {
+                    margin: 0;
+                }
+            }
+        }
+        .autor-last-line {
+            overflow: hidden;
+            padding: 10px 30px;
+            ul.autor-tags {
+                @extend .reset-elem;
+                float: left;
+                li {
+                    display: inline-block;
+                    margin-right: 3px;
+                    span {
+                        display: inline-block;
+                        color: $third-color;
+                        font-size: 13px;
+                        font-family: $font-default;
+                        line-height: 30px;
+                        padding-right: 3px;
+                        i {
+                            margin-right: 10px;
+                            color: $third-color;
+                            font-size: 14px;
+                        }
+                    }
+                    a {
+                        color: $third-color;
+                        font-size: 12px;
+                        font-family: $font-default;
+                        padding: 6px 10px;
+                        border: 1px solid #f0f0f0;
+                    }
+                    a:hover {
+                        color: #ffffff;
+                        background: $primary-color;
+                        border-color: $primary-color;
+                    }
+                }
+            }
+            a.autor-site {
+                float: right;
+                text-decoration: underline;
+                color: #33a3f1;
+                font-size: 13px;
+                line-height: 30px;
+                font-family: $font-default;
+            }
+            a.autor-site:hover {
+                opacity: 0.7;
+            }
+        }
+    }
+    > li:hover {
+        .autor-box {
+            border-color: #999999;
+        }
+    }
+}

@@ -1,0 +1,242 @@
+
+/*-------------------------------------------------- */
+/*  Forums
+/*------------------------------------------------- */
+
+.forum-box {
+    .search-box {
+        padding: 10px 30px 30px;
+    }
+    p.line-for-loggin {
+    	color: #fff;
+        padding: 10px 20px;
+        background: #f44336;
+        font-size: 13px;
+    }
+}
+
+.forum-table {
+    margin-bottom: 30px;
+    .table-head {
+        overflow: hidden;
+        background: #222222;
+        > div {
+            float: left;
+            padding: 12px 16px;
+            span {
+                color: #ffffff;
+                font-size: 11px;
+                text-transform: uppercase;
+                font-weight: 700;
+            }
+        }
+    }
+    div.first-col {
+        width: 55%;
+        a {
+            font-size: 14px;
+            color: #ffffff;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+        a:hover {
+            color: $primary-color;
+        }
+    }
+    div.second-col {
+        width: 20%;
+    }
+    div.third-col {
+        width: 25%;
+        text-align: right;
+    }
+    div.table-row {
+        overflow: hidden;
+        background: #fafafa;
+        position: relative;
+        > div {
+            float: left;
+            padding: 15px 15px;
+            span {
+                color: #ffffff;
+                font-size: 11px;
+                text-transform: uppercase;
+                font-weight: 700;
+            }
+            h2 {
+                font-size: 14px;
+                font-family: $font-default;
+                font-weight: 700;
+                color: $second-color;
+                margin: 0 0 8px;
+                a {
+                    color: $second-color;
+                }
+                a:hover {
+                    color: $primary-color;
+                }
+            }
+            p {
+                display: block;
+                margin: 0;
+                font-size: 14px;
+            }
+        }
+        div.second-col {
+            span {
+                color: $second-color;
+            }
+            p {
+                font-size: 11px;
+                text-transform: uppercase;
+            }
+        }
+        div.third-col {
+            img {
+                width: 60px;
+                float: right;
+                @include border-radius(50%);
+                margin-left: 17px;
+            }
+            p {
+                font-size: 11px;
+                line-height: 16px;
+                a {
+                    color: $primary-color;
+                    text-transform: inherit;
+                }
+            }
+        }
+        div.forum-post {
+            overflow: hidden;
+            float: left;
+            width: 80%;
+            img {
+                max-width: 45px;
+                @include border-radius(50%);
+                float: left;
+            }
+            .post-autor-date {
+                margin-left: 60px;
+                h2 {
+                    color: $second-color;
+                    font-size: 14px;
+                    font-family: $font-default;
+                    font-weight: 700;
+                    line-height: 16px;
+                    margin: 0 0 3px;
+                    a {
+                        color: $second-color;
+                    }
+                    a:hover {
+                        color: $primary-color;
+                    }
+                }
+                p {
+                    font-size: 11px;
+                    line-height: 16px;
+                    a {
+                        color: $primary-color;
+                        text-transform: inherit;
+                    }
+                }
+            }
+        }
+        div.forum-post.comment-post {
+            width: 100%;
+            img {
+                max-width: 100px;
+            }
+            .post-autor-date {
+                margin-left: 120px;
+                p span {
+                    color: $third-color;
+                }
+                div.content-post-area {
+                    p {
+                        margin-top: 10px;
+                        font-size: 14px;
+                        line-height: 22px;
+                    }
+                }
+            }
+        }
+        div.forum-topics {
+            width: 20%;
+            float: left;
+            padding-top: 25px;
+            padding-bottom: 25px;
+            span {
+                color: $second-color;
+            }
+            p {
+                font-size: 11px;
+                text-transform: uppercase;
+                margin: 0;
+            }
+        }
+    }
+    div.table-row:after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 20px;
+        right: 20px;
+        border-top: 1px solid #f0f0f0;
+    }
+    div.table-row:first-child:after {
+        border-top: none;
+    }
+    div.table-title {
+        background: $second-color;
+        padding: 20px;
+        h2 {
+            font-size: 14px;
+            color: #ffffff;
+            text-transform: uppercase;
+            font-weight: 700;
+            margin: 0;
+            line-height: 24px;
+        }
+        p {
+        	color: #aaa;
+            margin: 0;
+            font-size: 13px;
+        }
+    }
+    p.posted-in-category {
+        font-size: 12px;
+        margin: 7px 0;
+        padding-left: 20px;
+        a {
+            color: $primary-color;
+        }
+    }
+}
+
+form.search-form {
+    position: relative;
+    margin: 0;
+    input[type="text"] {
+        border: 1px solid #eeeeee;
+        padding: 10px;
+        color: $third-color;
+        font-size: 11px;
+        font-family: $font-default;
+        text-transform: uppercase;
+        @include border-radius(2px);
+        outline: none;
+        width: 100%;
+        margin: 0 !important;
+    }
+    button {
+        background: transparent;
+        border: none;
+        position: absolute;
+        top: 10px;
+        right: 13px;
+        padding: 0;
+        font-size: 13px;
+        color: $third-color;
+    }
+}

@@ -1,0 +1,138 @@
+
+/*------------------------------------------------- */
+/* =  Contact */
+/*------------------------------------------------- */
+
+
+#register-form,
+#login-form {
+    margin: 0 0 50px;
+    p {
+    	margin-bottom: 25px;
+    }
+    label {
+    	color: $second-color;
+    	font-size: 12px;
+    	font-family: $font-default;
+    	display: block;
+    	margin-bottom: 8px;
+    	font-weight: 600;
+    }
+    input[type="text"],
+    input[type="password"] {
+    	width: 100%;
+        padding: 12px 20px;
+        background: transparent;
+        color: $third-color;
+        font-size: 13px;
+        font-family: $font-default;
+        outline: none;
+        border: 1px solid #e1e1e1;
+        margin: 0 0 30px;
+        @include transition(0.2s);
+        @include border-radius(0px);
+    }
+    .user-thumbnail {
+    	position: relative;
+    	margin-bottom: 30px;
+    	overflow: hidden;
+    	input[type="file"] {
+    		position: relative;
+    		z-index: 2;
+    		opacity: 0;
+    		width: 200px;
+    		height: 60px;
+    		float: left;
+    		margin-right: 30px;
+    		margin-top: 20px;
+    	}
+    	input[type="file"] + span {
+    		position: absolute;
+    		top: 20px;
+    		left: 0;
+    		width: 200px;
+    		height: 60px;
+    		text-align: center;
+    		line-height: 60px;
+    		font-family: $font-default;
+    		text-transform: capitalize;
+    		font-size: 13px;
+    		background: $primary-color;
+    		color: #fff;
+    		@include transition(0.2s);
+    	}
+    	input[type="file"]:hover + span {
+    		opacity: 0.8;
+    	}
+    	.thumb-holder {
+    		width: 100px;
+    		height: 100px;
+    		border: 1px solid #e1e1e1;
+    		background: #f1f1f1;
+    		text-align: center;
+    		line-height: 100px;
+    		float: left;
+    		span {
+				font-family: $font-default;
+				text-transform: capitalize;
+				font-size: 13px;
+				font-weight: 700;
+				color: #aaa;
+    		}
+    	}
+    }
+    button {
+	    color: #fff;
+	    font-size: 14px;
+	    font-family: $font-default;
+	    padding: 12px 25px;
+	    background: $primary-color;
+        @include border-radius(0px);
+        @include transition(0.2s);
+        margin: 0;
+        border: none;
+        outline: none;
+	    i {
+	    	display: inline-block;
+	        margin-right: 10px;
+	    }
+    }
+    button:hover {
+        opacity: 0.85;
+    }
+}
+
+#login-form {
+	margin: 0 0 20px;
+    label {
+    	color: #efefef;
+    }
+    input[type="text"],
+    input[type="password"] {
+        border: 1px solid #343434;
+        color: #afafaf;
+        margin: 0 0 20px;
+    }
+}
+
+#loginModal {
+	z-index: 9999999;
+	.modal-dialog .modal-content {
+		@include border-radius(0px);
+		background: #232323;
+		border: none;
+		.modal-body {
+			padding: 30px;
+			.title-section {
+				h1 {
+					color: #fff;
+					border-bottom: 1px solid #343434;
+				}
+			}
+		}
+	}
+	.modal-dialog {
+		max-width: 370px;
+		margin: 40px auto;
+	}
+}

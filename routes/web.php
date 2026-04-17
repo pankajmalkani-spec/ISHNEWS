@@ -1,14 +1,14 @@
 <?php
 
+use App\Http\Controllers\Frontend\HomeController;
 use App\Http\Controllers\Mwadmin\AuthController;
 use App\Services\MwadminAccessService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::get('/', function () {
-    return Inertia::render('Home');
-});
+Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/index', [HomeController::class, 'index'])->name('home.index');
 
 Route::prefix('mwadmin')->group(function (): void {
     Route::get('/', fn () => redirect()->route('mwadmin.login'));

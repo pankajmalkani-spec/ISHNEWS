@@ -1,0 +1,52 @@
+/* import google fonts */
+@import url("https://fonts.googleapis.com/css?family=Open+Sans:300,400,400i,600,700,800");
+.reset-elem {
+  margin: 0;
+  padding: 0; }
+
+.paragraph, p {
+  font-size: 13px;
+  color: #565656;
+  font-family: "Open Sans", sans-serif;
+  font-weight: 400;
+  line-height: 22px;
+  margin: 0 0 10px; }
+
+.heading1, h1 {
+  color: #212121;
+  font-size: 17px;
+  font-family: "Open Sans", sans-serif;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin: 0 0 20px; }
+
+.heading2, h2 {
+  color: #212121;
+  font-size: 15px;
+  font-family: "Open Sans", sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin: 0 0 10px;
+  line-height: 28px; }
+
+.heading3, h3 {
+  color: #333333;
+  font-size: 14px;
+  font-family: "Open Sans", sans-serif;
+  font-weight: 400;
+  margin: 0;
+  line-height: 28px; }
+
+.back-cover {
+  background-size: cover !important;
+  -webkit-background-size: cover !important;
+  -moz-background-size: cover !important;
+  -o-background-size: cover !important; }
+
+.anchor, a {
+  display: inline-block;
+  text-decoration: none !important;
+  transition: all 0.2s ease-in-out;
+  -moz-transition: all 0.2s ease-in-out;
+  -webkit-transition: all 0.2s ease-in-out;
+  -o-transition: all 0.2s ease-in-out; }

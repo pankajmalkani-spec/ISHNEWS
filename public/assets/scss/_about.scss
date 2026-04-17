@@ -1,0 +1,57 @@
+
+/*-------------------------------------------------- */
+/*  About Page
+/*------------------------------------------------- */
+
+.about-box {
+	margin-bottom: 30px;
+	img {
+		width: 100%;
+		height: auto;
+		margin-bottom: 30px;
+	}
+	p {
+		font-size: 14px;
+		margin-bottom: 25px;
+	}
+}
+
+.compare-box {
+	margin-bottom: 30px;
+	.box-holder {
+		padding: 20px;
+		border: 1px solid #E3E4E8;
+		margin-bottom: 0px;
+	}
+	img {
+		width: 100%;
+		height: auto;
+		margin-bottom: 30px;
+	}
+	p {
+		font-size: 14px;
+		margin-bottom: 25px;
+	}
+}
+
+.team-box {
+	margin-bottom: 50px;
+	img {
+		width: 100%;
+		height: auto;
+		margin-bottom: 20px;
+	}
+	h2 {
+		margin-bottom: 0px;
+		font-weight: 600;
+		line-height: 20px;
+	}
+	span {
+		display: inline-block;
+        font-size: 14px;
+        font-family: $font-default;
+        font-weight: 400;
+        color: #999;
+        margin: 0 0 30px;
+	}
+}

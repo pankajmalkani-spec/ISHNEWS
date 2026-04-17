@@ -22,7 +22,10 @@ export default defineConfig(({ mode }) => {
                 host: devHost,
             },
             watch: {
-                ignored: ['**/storage/framework/views/**'],
+                ignored: [
+                    '**/storage/framework/views/**',
+                    '**/public/assets/**',
+                ],
             },
         },
     };

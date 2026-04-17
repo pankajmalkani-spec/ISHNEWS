@@ -1,0 +1,97 @@
+
+/*-------------------------------------------------- */
+/*  Underconstruction page
+/*------------------------------------------------- */
+
+body.underconstruction {
+	@include retina('../upload/others/back.jpg', 2, cover, center center no-repeat);
+	#container {
+		padding: 100px 0;
+		text-align: center;
+	}
+	p {
+		color: #fff;
+		font-size: 15px;
+		line-height: 26px;
+	}
+	.logo-place {
+		margin-bottom: 100px;
+		p {
+			font-size: 11px;
+			margin-top: 3px;
+		}
+	}
+	form.subscribe {
+		margin-bottom: 100px;
+		h1 {
+			font-size: 48px;
+			font-weight: 400;
+			color: #fff;
+			letter-spacing: 0;
+			span {
+				//color: #f44336;
+				font-weight: 900;
+			}
+		}
+		p {
+			font-size: 17px;
+			font-weight: 700;
+			margin-bottom: 40px;
+		}
+	    input[type="text"] {
+	    	display: block;
+	    	width: 400px;
+	    	max-width: 100%;
+	        padding: 12px 20px;
+	        background: #ffffff;
+	        color: $third-color;
+	        font-size: 13px;
+	        font-family: $font-default;
+	        outline: none;
+	        border: 1px solid transparent;
+	        margin: 0 auto 30px;
+	        @include transition(0.2s);
+	        @include border-radius(0px);
+	    }
+	    button {
+		    color: #fff;
+		    font-size: 14px;
+		    font-family: $font-default;
+		    padding: 12px 25px;
+		    background: $primary-color;
+	        @include border-radius(0px);
+	        @include transition(0.2s);
+	        margin: 0;
+	        border: none;
+	        outline: none;
+		    i {
+		    	display: inline-block;
+		        margin-right: 10px;
+		    }
+	    }
+	    button:hover {
+	        opacity: 0.85;
+	    }
+	}
+	div.social-box {
+		ul.social-icons {
+			@extend .reset-elem;
+				overflow: hidden;
+				li {
+					display: inline-block;
+					a {
+						width: 40px;
+						height: 40px;
+						background: #232323;
+						text-align: center;
+						line-height: 40px;
+						font-size: 14px;
+						color: #fff;
+					}
+					a:hover {
+						background: $primary-color;
+					}
+				}
+		}
+	}
+}

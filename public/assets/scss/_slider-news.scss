@@ -1,0 +1,144 @@
+
+ 
+/*-------------------------------------------------- */
+/* 1. Slider news
+/*------------------------------------------------- */
+
+.slider-news {
+	margin-bottom: 40px;
+	img {
+		width: 100%;
+		height: auto;
+	}
+	.slider-caption {
+		position: absolute;
+		width: 280px;
+		bottom: 0px;
+		height: 100%;
+		right: 0;
+		padding: 30px;
+		background: rgba(245,245,245, 0.95);
+		h2 {
+			margin-bottom: 5px;
+			font-size: 22px;
+			a {
+				color: $second-color;
+			}
+			a:hover {
+				opacity: 0.85;
+			}
+		}
+		p {
+			margin-bottom: 0;
+			max-width: 400px;
+		}
+		a.category {
+			margin-bottom: 12px; 
+		}
+	}
+	.flex-control-paging {
+		display: none;
+	}
+	.flex-control-paging li a {
+		background: $second-color;
+		padding: 3px 7px;
+		color: #fff;
+		font-family: $font-default;
+		font-size: 10px;
+	}
+	.flex-control-paging li a:hover,
+	.flex-control-paging li a.flex-active {
+		background: $primary-color;
+		color: #fff;
+	}
+}
+
+.slider-widget {
+	overflow: hidden;
+	ul {
+		margin-top: 16px;
+	}
+	img {
+		width: 100%;
+		height: auto;
+	}
+	.flex-control-paging {
+		display: none;
+	}
+	.flex-direction-nav {
+		bottom: 2px;
+		right: 2px;
+		opacity: 0;
+	}
+	.flexslider:hover {
+		.flex-direction-nav {
+			opacity: 1;
+		}
+	}
+	.flex-direction-nav li a {
+		background: #fff !important;
+	}
+	.flex-direction-nav li a:after {
+		color: #343434 !important;
+	}
+	.slider-caption {
+		position: absolute;
+		width: 280px;
+		bottom: 0px;
+		width: 100%;
+		left: 0;
+		padding: 15px;
+		@include linear-gradient(rgba(17,17,17,0), rgba(17,17,17,0.95));
+		h2 {
+			margin-bottom: -3px !important;
+			font-size: 14px;
+			font-weight: 400;
+			a {
+				color: #fff;
+			}
+			a:hover {
+				opacity: 0.85;
+			}
+		}
+		ul.post-tags {
+			margin: 0;
+			li {
+				color: #e1e1e1;
+				i {
+					color: #fff;
+				}
+				a {
+					color: #e1e1e1;
+				}
+			}
+		}
+		a.category {
+			margin-bottom: 5px;
+		}
+	}
+}
+
+.news-headline2 {
+	.flex-direction-nav {
+		top: 50%;
+		right: 0px;
+		width: 100%;
+		height: 40px;
+		margin-top: -10px;
+		bottom: inherit;
+		opacity: 0;
+	}
+	.flexslider:hover {
+		.flex-direction-nav {
+			opacity: 1;
+		}
+	}
+	.flex-direction-nav li a {
+		width: 40px;
+		height: 40px;
+		line-height: 40px;
+	}
+	.flex-direction-nav li a:after {
+		font-size: 20px;
+	}
+}

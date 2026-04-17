@@ -1,0 +1,183 @@
+
+/* import google fonts */
+@import url('https://fonts.googleapis.com/css?family=Open+Sans:300,400,400i,600,700,800');
+
+//the default font in our template
+$font-default: 'Open Sans', sans-serif;
+
+//default color skin
+$primary-color: #232323; //Very Dark Grey
+
+//default color skin2
+$primary-color2: #0a2565; //Navy Blue
+
+//default color skin with opacity
+$primary-color-trans: rgba(64, 81, 181, 0.9);
+
+//text color 1 (some titles)
+$second-color: #212121;
+
+//text color 1 (some titles)
+$third-color: #565656;
+
+$border-color: #E3E4E8; // Grey borders for headlines and others
+
+$bg-light : #f8f9fa; //Very light grey background
+
+//Main Category Tags
+$news : #2f5fa9;
+$entertainment : #c21807;
+$deaf_buzz : #f5cd1f;
+$awareness : #afcc33;
+$tv : #7719aa;
+
+/*$news : #0066CC;
+$entertainment : #c70039;
+$deaf_buzz : #007678;
+$awareness : #ffc300;
+$tv : #ff5733;*/
+
+//reset element paddings and margins
+
+.reset-elem {
+    margin: 0;
+    padding: 0;
+}
+
+//default style for paragraphs in this template
+.paragraph, p {
+    font-size: 13px;
+    color: $third-color;
+    font-family: $font-default;
+    font-weight: 400;
+    line-height: 22px;
+    margin: 0 0 10px;
+}
+
+//default style for hading1 in this template
+.heading1, h1 {
+    color: $second-color;
+    font-size: 17px;
+    font-family: $font-default;
+    //text-transform: uppercase;
+    font-weight: 600;
+    margin: 0 0 20px;
+}
+
+//default style for hading2 in this template
+.heading2, h2 {
+    color: $second-color;
+    font-size: 15px;
+    font-family: $font-default;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin: 0 0 10px;
+    line-height: 28px;
+}
+
+//default style for hading2 in this template
+.heading3, h3 {
+    color: #333333;
+    font-size: 14px;
+    font-family: $font-default;
+    font-weight: 400;
+    margin: 0;
+    line-height: 28px;
+}
+
+//variable for radius corners
+@mixin border-radius($radius) {
+    -webkit-border-radius: $radius;
+    -moz-border-radius: $radius;
+    -ms-border-radius: $radius;
+    border-radius: $radius;
+}
+
+//variable for radius corners
+@mixin border-bottom-left-radius($radius) {
+    -webkit-border-bottom-left-radius: $radius;
+    -moz-border-bottom-left-radius: $radius;
+    -o-border-bottom-left-radius: $radius;
+    border-bottom-left-radius: $radius;
+}
+
+//variable for radius corners
+@mixin border-bottom-right-radius($radius) {
+    -webkit-border-bottom-right-radius: $radius;
+    -moz-border-bottom-right-radius: $radius;
+    -o-border-bottom-right-radius: $radius;
+    border-bottom-right-radius: $radius;
+}
+
+//variable for radius corners
+@mixin border-top-left-radius($radius) {
+    -webkit-border-top-left-radius: $radius;
+    -moz-border-top-left-radius: $radius;
+    -o-border-top-left-radius: $radius;
+    border-top-left-radius: $radius;
+}
+
+//variable for radius corners
+@mixin border-top-right-radius($radius) {
+    -webkit-border-top-right-radius: $radius;
+    -moz-border-top-right-radius: $radius;
+    -o-border-top-right-radius: $radius;
+    border-top-right-radius: $radius;
+}
+
+//variable for transitions
+@mixin transition($speed) {
+    transition: all $speed ease-in-out;
+    -moz-transition: all $speed ease-in-out;
+    -webkit-transition: all $speed ease-in-out;
+    -o-transition: all $speed ease-in-out;
+}
+
+//variable for tranform grow elem scale
+@mixin transform($scale) {
+    transform: scale($scale);
+    -webkit-transform: scale($scale);
+    -moz-transform: scale($scale);
+    -o-transform: scale($scale);
+}
+
+//box shadow  variable
+@mixin box-shadow($val) { 
+    box-shadow: $val;
+    -webkit-box-shadow: $val;
+    -moz-box-shadow: $val;
+    -o-box-shadow: $val;
+}
+
+//animate transform rotate variable
+@mixin rotate($rotate) {
+    -webkit-transform: rotate($rotate);
+    -moz-transform: rotate($rotate);
+    -ms-transform: rotate($rotate);
+    -o-transform: rotate($rotate);
+    transform: rotate($rotate);
+}
+
+//linear gradient variable
+@mixin linear-gradient($direction, $color-stops...) {
+  background: nth(nth($color-stops, 1), 1);
+  background: -webkit-linear-gradient(legacy-direction($direction), $color-stops);
+  background: linear-gradient($direction, $color-stops);
+}
+
+//background size cover
+.back-cover {
+    background-size: cover !important;
+    -webkit-background-size: cover !important;
+    -moz-background-size: cover !important;
+    -o-background-size: cover !important;
+}
+
+//default style for anchors in this template
+.anchor, a {
+    display: inline-block;
+    text-decoration: none !important;
+
+    @include transition(0.2s);
+}
+
