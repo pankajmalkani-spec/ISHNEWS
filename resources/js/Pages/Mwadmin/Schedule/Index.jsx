@@ -324,12 +324,6 @@ export default function ScheduleIndex({ authUser = {} }) {
                                                 animate={{ opacity: 1 }}
                                                 transition={{ duration: reduceMotion ? 0 : 0.28 }}
                                             >
-                                                {calendarEvents.length === 0 ? (
-                                                    <div className="mwadmin-schedule-rbc-empty">
-                                                        No scheduled releases for this week (only items with Final
-                                                        release = Active appear here).
-                                                    </div>
-                                                ) : null}
                                                 <Calendar
                                                     key={payload.week_start}
                                                     localizer={scheduleCalendarLocalizer}
@@ -356,12 +350,20 @@ export default function ScheduleIndex({ authUser = {} }) {
                                                     }
                                                     messages={{
                                                         next: 'Next',
-                                                        previous: 'Previous',
+                                                        previous: 'Prev',
                                                         today: 'Today',
                                                         week: 'Week',
                                                         agenda: 'Agenda',
+                                                        noEventsInRange:
+                                                            'No active releases in this period. Only content with Final release = Active is listed.',
                                                     }}
                                                 />
+                                                {calendarEvents.length === 0 && calView === Views.WEEK ? (
+                                                    <p className="mwadmin-schedule-cal-hint" role="status">
+                                                        No active releases this week — Final release must be Active to
+                                                        appear.
+                                                    </p>
+                                                ) : null}
                                             </motion.div>
                                         </motion.div>
                                     )}

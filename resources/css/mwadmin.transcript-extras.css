@@ -2027,18 +2027,18 @@ a.mwadmin-btn-primary {
     box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
 }
 
-.mwadmin-schedule-rbc-empty {
-    padding: 12px 14px;
-    font-size: 13px;
-    color: #64748b;
-    background: rgba(49, 184, 165, 0.08);
-    border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+/* One-line hint under week grid when there are zero events */
+.mwadmin-schedule-cal-hint {
+    margin: 0;
+    padding: 12px 14px 2px;
+    font-size: 12px;
+    line-height: 1.5;
+    text-align: center;
+    color: #6b5d4d;
 }
 
-.mwadmin-shell.mwadmin-theme-dark .mwadmin-schedule-rbc-empty {
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-schedule-cal-hint {
     color: #94a3b8;
-    background: rgba(42, 157, 143, 0.12);
-    border-bottom-color: #334155;
 }
 
 .mwadmin-schedule-rbc .rbc-calendar {
@@ -2070,8 +2070,43 @@ a.mwadmin-btn-primary {
     padding: 12px 14px;
     flex-wrap: wrap;
     gap: 8px;
+    justify-content: space-between;
+    align-items: center;
+    column-gap: 16px;
+    row-gap: 12px;
     background: linear-gradient(180deg, #faf6f0 0%, #f0e8dc 100%);
     border-bottom: 1px solid #e0d5c8;
+}
+
+.mwadmin-schedule-rbc .rbc-toolbar .rbc-toolbar-label {
+    flex: 1 1 200px;
+    text-align: center;
+    line-height: 1.35;
+}
+
+/* Segmented controls: Today | Prev | Next and Week | Agenda */
+.mwadmin-schedule-rbc .rbc-toolbar .rbc-btn-group {
+    display: inline-flex;
+    align-items: stretch;
+    flex-shrink: 0;
+    border-radius: 10px;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.mwadmin-schedule-rbc .rbc-toolbar .rbc-btn-group button {
+    margin: 0 !important;
+    border-radius: 0 !important;
+    min-height: 40px;
+    padding: 8px 16px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    line-height: 1.2;
+    box-shadow: none !important;
+}
+
+.mwadmin-schedule-rbc .rbc-toolbar .rbc-btn-group button + button {
+    margin-left: 0 !important;
 }
 
 .mwadmin-shell.mwadmin-theme-dark .mwadmin-schedule-rbc .rbc-toolbar {
@@ -2101,6 +2136,78 @@ a.mwadmin-btn-primary {
     color: #fff;
 }
 
+.mwadmin-shell:not(.mwadmin-theme-dark) .mwadmin-schedule-rbc .rbc-toolbar .rbc-btn-group {
+    border: 1px solid var(--mwadmin-rbc-l-border-strong, #dacbb8);
+    background: #fffefb;
+    box-shadow: 0 1px 2px rgba(58, 44, 32, 0.06);
+}
+
+.mwadmin-shell:not(.mwadmin-theme-dark) .mwadmin-schedule-rbc .rbc-toolbar .rbc-btn-group button {
+    border: none !important;
+    background: transparent !important;
+    color: var(--mwadmin-rbc-l-text, #3f3328) !important;
+}
+
+.mwadmin-shell:not(.mwadmin-theme-dark) .mwadmin-schedule-rbc .rbc-toolbar .rbc-btn-group button + button {
+    border-left: 1px solid var(--mwadmin-rbc-l-border, #e8dfd2) !important;
+}
+
+.mwadmin-shell:not(.mwadmin-theme-dark) .mwadmin-schedule-rbc .rbc-toolbar .rbc-btn-group button:not(.rbc-active):hover,
+.mwadmin-shell:not(.mwadmin-theme-dark) .mwadmin-schedule-rbc .rbc-toolbar .rbc-btn-group button:not(.rbc-active):focus {
+    background: #faf6f0 !important;
+    color: var(--mwadmin-rbc-l-text, #3f3328) !important;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-schedule-rbc .rbc-toolbar .rbc-btn-group {
+    border: 1px solid #334155;
+    background: #0f172a;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-schedule-rbc .rbc-toolbar .rbc-btn-group button {
+    border: none !important;
+    background: transparent !important;
+    color: #e2e8f0 !important;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-schedule-rbc .rbc-toolbar .rbc-btn-group button + button {
+    border-left: 1px solid #334155 !important;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-schedule-rbc .rbc-toolbar .rbc-btn-group button:not(.rbc-active):hover,
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-schedule-rbc .rbc-toolbar .rbc-btn-group button:not(.rbc-active):focus {
+    background: #1e293b !important;
+    color: #f8fafc !important;
+}
+
+/* Agenda: default RBC empty copy */
+.mwadmin-schedule-rbc .rbc-agenda-empty {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    margin: 0;
+    padding: 28px 24px;
+    text-align: center;
+    font-size: 14px;
+    line-height: 1.55;
+    font-weight: 500;
+    border-radius: 0 0 10px 10px;
+}
+
+.mwadmin-shell:not(.mwadmin-theme-dark) .mwadmin-schedule-rbc .rbc-agenda-empty {
+    color: var(--mwadmin-rbc-l-muted, #6b5d4d);
+    background: linear-gradient(180deg, #faf6f0 0%, #fffefb 100%);
+    border: 1px dashed var(--mwadmin-rbc-l-border-strong, #dacbb8);
+    border-top: none;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-schedule-rbc .rbc-agenda-empty {
+    color: #cbd5e1;
+    background: linear-gradient(180deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.35) 100%);
+    border: 1px dashed #475569;
+    border-top: none;
+}
+
 .mwadmin-schedule-rbc .rbc-today {
     background: rgba(49, 184, 165, 0.12);
 }
@@ -2124,14 +2231,6 @@ a.mwadmin-btn-primary {
     font-weight: 700;
     font-size: 15px;
     letter-spacing: 0.02em;
-}
-
-.mwadmin-shell:not(.mwadmin-theme-dark) .mwadmin-schedule-rbc .rbc-toolbar button:hover,
-.mwadmin-shell:not(.mwadmin-theme-dark) .mwadmin-schedule-rbc .rbc-toolbar button:focus {
-    background: #fffefb !important;
-    border-color: var(--mwadmin-rbc-l-border-strong) !important;
-    color: var(--mwadmin-rbc-l-text) !important;
-    box-shadow: 0 1px 3px rgba(58, 44, 32, 0.08) !important;
 }
 
 .mwadmin-shell:not(.mwadmin-theme-dark) .mwadmin-schedule-rbc .rbc-toolbar button.rbc-active:hover,
@@ -2258,12 +2357,6 @@ a.mwadmin-btn-primary {
     color: var(--mwadmin-rbc-l-muted);
 }
 
-.mwadmin-shell:not(.mwadmin-theme-dark) .mwadmin-schedule-rbc-empty {
-    color: var(--mwadmin-rbc-l-muted);
-    background: rgba(63, 213, 192, 0.12);
-    border-bottom-color: var(--mwadmin-rbc-l-border);
-}
-
 /* Dark theme: full week grid polish (time gutter, slots, today column, toolbar label) */
 .mwadmin-shell.mwadmin-theme-dark .mwadmin-schedule-rbc {
     --mwadmin-rbc-border: #2a3344;
@@ -2282,14 +2375,6 @@ a.mwadmin-btn-primary {
     font-weight: 600;
     font-size: 15px;
     letter-spacing: 0.02em;
-}
-
-.mwadmin-shell.mwadmin-theme-dark .mwadmin-schedule-rbc .rbc-toolbar button:hover,
-.mwadmin-shell.mwadmin-theme-dark .mwadmin-schedule-rbc .rbc-toolbar button:focus {
-    background: #1e293b !important;
-    border-color: #475569 !important;
-    color: #f1f5f9 !important;
-    box-shadow: none !important;
 }
 
 .mwadmin-shell.mwadmin-theme-dark .mwadmin-schedule-rbc .rbc-toolbar button.rbc-active:hover,
