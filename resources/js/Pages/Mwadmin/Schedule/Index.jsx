@@ -1,9 +1,15 @@
 import { Head, Link } from '@inertiajs/react';
 import axios from 'axios';
-import { useCallback, useEffect, useState } from 'react';
+import { format, startOfWeek } from 'date-fns';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Calendar, Views } from 'react-big-calendar';
+import 'react-big-calendar/lib/css/react-big-calendar.css';
 import MwadminLayout from '../../../Components/Mwadmin/Layout';
 import { useClassicDialog } from '../../../Components/Mwadmin/ClassicDialog';
 import { canEdit } from '../../../lib/mwadminPermissions';
+import { buildScheduleCalendarEvents } from './scheduleCalendarEvents';
+import { scheduleCalendarLocalizer } from './scheduleCalendarLocalizer';
 
 function shiftWeekStart(isoDate, deltaDays) {
     const d = new Date(`${isoDate}T12:00:00`);
@@ -26,6 +32,7 @@ function shiftDateYears(isoDate, deltaYears) {
 
 export default function ScheduleIndex({ authUser = {} }) {
     const dialog = useClassicDialog();
+    const reduceMotion = useReducedMotion();
     const canUpdateStatus = canEdit(authUser, 'schedule');
     const [loading, setLoading] = useState(true);
     const [weekStart, setWeekStart] = useState('');
@@ -34,6 +41,9 @@ export default function ScheduleIndex({ authUser = {} }) {
     const [modal, setModal] = useState(null);
     const [modalStatus, setModalStatus] = useState('1');
     const [saving, setSaving] = useState(false);
+    const [viewMode, setViewMode] = useState('grid');
+    /** RBC week vs agenda — must be controlled with onView or toolbar cannot switch views */
+    const [calView, setCalView] = useState(Views.WEEK);
 
     const loadWeek = useCallback(
         async (start) => {
@@ -57,6 +67,13 @@ export default function ScheduleIndex({ authUser = {} }) {
     useEffect(() => {
         loadWeek();
     }, [loadWeek]);
+
+    const calendarEvents = useMemo(() => buildScheduleCalendarEvents(payload), [payload]);
+
+    const calendarDate = useMemo(() => {
+        if (!payload?.week_start) return new Date();
+        return new Date(`${payload.week_start}T12:00:00`);
+    }, [payload?.week_start]);
 
     const openContent = async (id) => {
         try {
@@ -96,10 +113,39 @@ export default function ScheduleIndex({ authUser = {} }) {
         loadWeek(next);
     };
 
+    const handleCalendarNavigate = useCallback(
+        (nextDate) => {
+            const monday = startOfWeek(nextDate, { weekStartsOn: 1 });
+            const ymd = format(monday, 'yyyy-MM-dd');
+            if (ymd === weekStart) return;
+            loadWeek(ymd);
+        },
+        [loadWeek, weekStart]
+    );
+
+    const eventPropGetter = useCallback((event) => {
+        const bg = event.resource?.color || '#31b8a5';
+        return {
+            style: {
+                backgroundColor: bg,
+                borderColor: 'rgba(15, 23, 42, 0.18)',
+                color: '#fff',
+                borderRadius: '6px',
+                fontSize: '11px',
+                lineHeight: 1.25,
+            },
+        };
+    }, []);
+
     const visibleCategories =
         payload?.categories?.filter((cat) => cat.cells.some((cell) => cell.length > 0)) || [];
     const categoriesToRender =
         visibleCategories.length > 0 ? visibleCategories : payload?.categories || [];
+
+    const motionEnter = reduceMotion ? { opacity: 1 } : { opacity: 0, y: 10 };
+    const motionAnim = reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 };
+    const motionExit = reduceMotion ? { opacity: 0 } : { opacity: 0, y: -8 };
+    const motionTrans = { duration: reduceMotion ? 0 : 0.22 };
 
     return (
         <>
@@ -159,6 +205,32 @@ export default function ScheduleIndex({ authUser = {} }) {
                                     >
                                         Current Week
                                     </button>
+                                    <div className="mwadmin-schedule-view-toggle" role="group" aria-label="View mode">
+                                        <motion.button
+                                            type="button"
+                                            className={
+                                                viewMode === 'grid'
+                                                    ? 'mwadmin-schedule-view-btn is-active'
+                                                    : 'mwadmin-schedule-view-btn'
+                                            }
+                                            onClick={() => setViewMode('grid')}
+                                            whileTap={reduceMotion ? {} : { scale: 0.98 }}
+                                        >
+                                            Grid
+                                        </motion.button>
+                                        <motion.button
+                                            type="button"
+                                            className={
+                                                viewMode === 'calendar'
+                                                    ? 'mwadmin-schedule-view-btn is-active'
+                                                    : 'mwadmin-schedule-view-btn'
+                                            }
+                                            onClick={() => setViewMode('calendar')}
+                                            whileTap={reduceMotion ? {} : { scale: 0.98 }}
+                                        >
+                                            Calendar
+                                        </motion.button>
+                                    </div>
                                 </div>
 
                                 <div className="mwadmin-toolbar mwadmin-schedule-toolbar">
@@ -188,43 +260,112 @@ export default function ScheduleIndex({ authUser = {} }) {
                                     </div>
                                 </div>
 
-                                <div className="mwadmin-schedule-table-wrap mwadmin-schedule-scroll-wrap">
-                                    <table className="mwadmin-schedule-table">
-                                        <thead>
-                                            <tr>
-                                                <th className="mwadmin-schedule-th-cat">Category</th>
-                                                {payload.week_days.map((d) => (
-                                                    <th key={d.date} className="mwadmin-schedule-th-day">
-                                                        {d.weekday}/{d.day}
-                                                    </th>
-                                                ))}
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {categoriesToRender.map((cat) => (
-                                                <tr key={cat.id}>
-                                                    <td className="mwadmin-schedule-td-cat">{cat.title}</td>
-                                                    {cat.cells.map((cell, idx) => (
-                                                        <td key={`${cat.id}-${payload.week_days[idx].date}`} className="mwadmin-schedule-td-cell">
-                                                            {cell.map((item) => (
-                                                                <button
-                                                                    key={item.id}
-                                                                    type="button"
-                                                                    className="mwadmin-schedule-chip"
-                                                                    style={{ backgroundColor: item.color }}
-                                                                    title={item.title}
-                                                                    onClick={() => openContent(item.id)}
+                                <AnimatePresence mode="wait">
+                                    {viewMode === 'grid' ? (
+                                        <motion.div
+                                            key="schedule-grid"
+                                            className="mwadmin-schedule-table-wrap mwadmin-schedule-scroll-wrap"
+                                            initial={motionEnter}
+                                            animate={motionAnim}
+                                            exit={motionExit}
+                                            transition={motionTrans}
+                                        >
+                                            <table className="mwadmin-schedule-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th className="mwadmin-schedule-th-cat">Category</th>
+                                                        {payload.week_days.map((d) => (
+                                                            <th key={d.date} className="mwadmin-schedule-th-day">
+                                                                {d.weekday}/{d.day}
+                                                            </th>
+                                                        ))}
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {categoriesToRender.map((cat) => (
+                                                        <tr key={cat.id}>
+                                                            <td className="mwadmin-schedule-td-cat">{cat.title}</td>
+                                                            {cat.cells.map((cell, idx) => (
+                                                                <td
+                                                                    key={`${cat.id}-${payload.week_days[idx].date}`}
+                                                                    className="mwadmin-schedule-td-cell"
                                                                 >
-                                                                    {item.title}
-                                                                </button>
+                                                                    {cell.map((item) => (
+                                                                        <button
+                                                                            key={item.id}
+                                                                            type="button"
+                                                                            className="mwadmin-schedule-chip"
+                                                                            style={{ backgroundColor: item.color }}
+                                                                            title={item.title}
+                                                                            onClick={() => openContent(item.id)}
+                                                                        >
+                                                                            {item.title}
+                                                                        </button>
+                                                                    ))}
+                                                                </td>
                                                             ))}
-                                                        </td>
+                                                        </tr>
                                                     ))}
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
+                                                </tbody>
+                                            </table>
+                                        </motion.div>
+                                    ) : (
+                                        <motion.div
+                                            key="schedule-calendar"
+                                            className="mwadmin-schedule-rbc-wrap"
+                                            initial={motionEnter}
+                                            animate={motionAnim}
+                                            exit={motionExit}
+                                            transition={motionTrans}
+                                        >
+                                            <motion.div
+                                                className="mwadmin-schedule-rbc"
+                                                initial={reduceMotion ? false : { opacity: 0.92 }}
+                                                animate={{ opacity: 1 }}
+                                                transition={{ duration: reduceMotion ? 0 : 0.28 }}
+                                            >
+                                                {calendarEvents.length === 0 ? (
+                                                    <div className="mwadmin-schedule-rbc-empty">
+                                                        No scheduled releases for this week (only items with Final
+                                                        release = Active appear here).
+                                                    </div>
+                                                ) : null}
+                                                <Calendar
+                                                    key={payload.week_start}
+                                                    localizer={scheduleCalendarLocalizer}
+                                                    events={calendarEvents}
+                                                    startAccessor="start"
+                                                    endAccessor="end"
+                                                    style={{ height: 560 }}
+                                                    view={calView}
+                                                    views={[Views.WEEK, Views.AGENDA]}
+                                                    onView={setCalView}
+                                                    date={calendarDate}
+                                                    onNavigate={handleCalendarNavigate}
+                                                    scrollToTime={new Date(1970, 0, 1, 8, 0, 0)}
+                                                    onSelectEvent={(ev) => {
+                                                        const id = ev.resource?.contentId;
+                                                        if (id) openContent(id);
+                                                    }}
+                                                    eventPropGetter={eventPropGetter}
+                                                    popup
+                                                    tooltipAccessor={(e) =>
+                                                        e.resource?.categoryTitle
+                                                            ? `${e.resource.categoryTitle} — ${e.title}`
+                                                            : e.title
+                                                    }
+                                                    messages={{
+                                                        next: 'Next',
+                                                        previous: 'Previous',
+                                                        today: 'Today',
+                                                        week: 'Week',
+                                                        agenda: 'Agenda',
+                                                    }}
+                                                />
+                                            </motion.div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
                             </>
                         )}
                     </section>
