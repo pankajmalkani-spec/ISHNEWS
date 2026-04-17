@@ -80,6 +80,8 @@ class NewslistingApiController extends Controller
         $filterStatus = trim((string) $request->query('filter_status1', ''));
         $filterFeatured = trim((string) $request->query('filter_featured', ''));
         $filterTitle = trim((string) $request->query('filter_title', ''));
+        $filterDateFrom = trim((string) $request->query('filter_date_from', ''));
+        $filterDateTo = trim((string) $request->query('filter_date_to', ''));
 
         $query = DB::table('contenttrans as ct')
             ->leftJoin('categorymst as cm', 'cm.id', '=', 'ct.category_id')
@@ -109,6 +111,12 @@ class NewslistingApiController extends Controller
         }
         if ($filterFeatured === '1' || $filterFeatured === '0') {
             $query->where('ct.featured_content', $filterFeatured);
+        }
+        if ($filterDateFrom !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $filterDateFrom)) {
+            $query->whereDate('ct.schedule_date', '>=', $filterDateFrom);
+        }
+        if ($filterDateTo !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $filterDateTo)) {
+            $query->whereDate('ct.schedule_date', '<=', $filterDateTo);
         }
 
         $paginator = $query->orderByDesc('ct.id')->paginate($perPage)->withQueryString();
@@ -444,6 +452,25 @@ class NewslistingApiController extends Controller
     }
 
     /**
+     * MySQL zero-date / empty schedule → null for JSON (listing shows “Unscheduled”).
+     */
+    private function normalizeListScheduleDate(mixed $raw): ?string
+    {
+        if ($raw === null) {
+            return null;
+        }
+        $s = trim((string) $raw);
+        if ($s === '') {
+            return null;
+        }
+        if (str_starts_with($s, '0000-00-00')) {
+            return null;
+        }
+
+        return $s;
+    }
+
+    /**
      * @param  array<string, mixed>  $item
      * @return array<string, mixed>
      */
@@ -460,7 +487,7 @@ class NewslistingApiController extends Controller
             'title' => (string) ($item['title'] ?? ''),
             'permalink' => (string) ($item['permalink'] ?? ''),
             'news_source_name' => (string) ($item['news_source_name'] ?? ''),
-            'schedule_date' => $item['schedule_date'] ?? null,
+            'schedule_date' => $this->normalizeListScheduleDate($item['schedule_date'] ?? null),
             'status1' => (string) ($item['status1'] ?? ''),
             'final_releasestatus' => (string) ($item['final_releasestatus'] ?? ''),
             'featured_content' => (string) ($item['featured_content'] ?? '0'),

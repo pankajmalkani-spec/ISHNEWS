@@ -7,6 +7,9 @@ import MwadminActionsDropdown from '../../../Components/Mwadmin/MwadminActionsDr
 import { useClassicDialog } from '../../../Components/Mwadmin/ClassicDialog';
 import { canAdd, canDelete, canEdit } from '../../../lib/mwadminPermissions';
 import MwadminThemedAgGrid from '../../../Components/Mwadmin/MwadminThemedAgGrid';
+import MwadminStatusBadge from '../../../Components/Mwadmin/MwadminStatusBadge';
+import DmyDateInput from '../../../Components/Mwadmin/DmyDateInput';
+import { dmyToIsoDate } from '../Sponsor/sponsorDateFormat';
 
 const STATUS_OPTS = ['', 'Pending', 'WIP', 'Ready', 'Issue', 'Dropped', 'Hold', 'Released', 'Booked'];
 
@@ -29,7 +32,7 @@ export default function NewslistingIndex({ authUser = {} }) {
     const [meta, setMeta] = useState({ current_page: 1, last_page: 1, total: 0 });
     const [categories, setCategories] = useState([]);
     const [draftSubcats, setDraftSubcats] = useState([]);
-    const [advancedOpen, setAdvancedOpen] = useState(false);
+    const [advancedOpen, setAdvancedOpen] = useState(true);
     const [draftFilters, setDraftFilters] = useState(emptyAdv);
     const [appliedFilters, setAppliedFilters] = useState(emptyAdv);
 
@@ -42,8 +45,13 @@ export default function NewslistingIndex({ authUser = {} }) {
         [authUser]
     );
 
-    const query = useMemo(
-        () => ({
+    const query = useMemo(() => {
+        const apiDate = (dmy) => {
+            const iso = dmyToIsoDate(dmy);
+            if (iso === null || iso === 'INVALID') return '';
+            return iso;
+        };
+        return {
             search,
             page,
             per_page: perPage,
@@ -51,11 +59,10 @@ export default function NewslistingIndex({ authUser = {} }) {
             filter_subcategory_id: appliedFilters.subcategory_id,
             filter_status1: appliedFilters.status1,
             filter_featured: appliedFilters.featured,
-            filter_date_from: appliedFilters.date_from,
-            filter_date_to: appliedFilters.date_to,
-        }),
-        [search, page, perPage, appliedFilters]
-    );
+            filter_date_from: apiDate(appliedFilters.date_from),
+            filter_date_to: apiDate(appliedFilters.date_to),
+        };
+    }, [search, page, perPage, appliedFilters]);
 
     useEffect(() => {
         let c = false;
@@ -119,6 +126,20 @@ export default function NewslistingIndex({ authUser = {} }) {
     }, [query]);
 
     const runAdvancedSearch = () => {
+        const fromIso = dmyToIsoDate(draftFilters.date_from);
+        const toIso = dmyToIsoDate(draftFilters.date_to);
+        if (fromIso === 'INVALID' || toIso === 'INVALID') {
+            dialog.toast('Enter schedule dates as dd-mm-yyyy, or leave the fields blank.', 'error');
+            return;
+        }
+        if (
+            fromIso &&
+            toIso &&
+            String(fromIso) > String(toIso)
+        ) {
+            dialog.toast('Date from must be on or before date to.', 'error');
+            return;
+        }
         setPage(1);
         setAppliedFilters({ ...draftFilters });
     };
@@ -149,9 +170,56 @@ export default function NewslistingIndex({ authUser = {} }) {
         if (action === 'delete') await deleteRow(id);
     };
 
+    /* Column order matches legacy mwadmin/newslisting: ID → … → Final release → Actions (11 cols). */
     const columns = useMemo(
         () => [
             { field: 'id', headerName: 'ID', width: 72, sortable: true },
+            { field: 'p2d_caseno', headerName: 'P2D Case No', minWidth: 110, sortable: true },
+            { field: 'category_name', headerName: 'Category', minWidth: 120, sortable: false },
+            { field: 'subcategory_name', headerName: 'Sub Category', minWidth: 120, sortable: false },
+            {
+                field: 'cover_img_url',
+                headerName: 'Cover Image',
+                width: 110,
+                sortable: false,
+                cellRenderer: (p) => {
+                    const src = p.value || '/images/categoryImages/boxImages/no_img.gif';
+                    return (
+                        <span className="mwadmin-newslisting-cover-cell">
+                            <img
+                                className="mwadmin-newslisting-cover-thumb"
+                                src={src}
+                                alt=""
+                            />
+                        </span>
+                    );
+                },
+            },
+            { field: 'title', headerName: 'Content Title', flex: 1, minWidth: 180, sortable: false },
+            { field: 'news_source_name', headerName: 'News Source', minWidth: 120, sortable: false },
+            {
+                field: 'schedule_date',
+                headerName: 'Schedule Date',
+                minWidth: 130,
+                sortable: false,
+                valueFormatter: (p) => {
+                    const v = p.value;
+                    if (v === null || v === undefined || v === '') return 'Unscheduled';
+                    const s = String(v).trim();
+                    if (s === '' || s.startsWith('0000-00-00')) return 'Unscheduled';
+                    return s;
+                },
+            },
+            { field: 'status1', headerName: 'Status', width: 100, sortable: false },
+            {
+                field: 'final_releasestatus',
+                headerName: 'Final\nRelease Status',
+                minWidth: 118,
+                sortable: false,
+                wrapHeaderText: true,
+                autoHeaderHeight: true,
+                cellRenderer: (p) => <MwadminStatusBadge value={p.value} />,
+            },
             {
                 field: 'actions',
                 headerName: 'Actions',
@@ -165,49 +233,6 @@ export default function NewslistingIndex({ authUser = {} }) {
                     />
                 ),
             },
-            { field: 'p2d_caseno', headerName: 'P2D Case No', minWidth: 110, sortable: true },
-            { field: 'category_name', headerName: 'Category', minWidth: 120, sortable: false },
-            { field: 'subcategory_name', headerName: 'Sub Category', minWidth: 120, sortable: false },
-            {
-                field: 'cover_img_url',
-                headerName: 'Cover Image',
-                width: 110,
-                sortable: false,
-                cellRenderer: (p) => {
-                    const src = p.value || '/images/categoryImages/boxImages/no_img.gif';
-                    return <img src={src} style={{ maxWidth: '72px', maxHeight: '40px', objectFit: 'cover' }} alt="" />;
-                },
-            },
-            { field: 'title', headerName: 'Content Title', flex: 1, minWidth: 180, sortable: false },
-            { field: 'news_source_name', headerName: 'News Source', minWidth: 120, sortable: false },
-            {
-                field: 'schedule_date',
-                headerName: 'Schedule Date',
-                minWidth: 130,
-                sortable: false,
-                valueFormatter: (p) => {
-                    const v = p.value;
-                    if (v === null || v === undefined || v === '') return 'Unscheduled';
-                    return String(v);
-                },
-            },
-            { field: 'status1', headerName: 'Status', width: 100, sortable: false },
-            {
-                field: 'final_releasestatus',
-                headerName: 'Final Release Status',
-                minWidth: 140,
-                sortable: false,
-                cellRenderer: (p) => {
-                    const active = p.value === '1' || p.value === 1;
-                    return (
-                        <span
-                            className={`mwadmin-news-final-badge ${active ? 'is-active' : 'is-inactive'}`}
-                        >
-                            {active ? 'Active' : 'In Active'}
-                        </span>
-                    );
-                },
-            },
         ],
         [perms]
     );
@@ -216,27 +241,29 @@ export default function NewslistingIndex({ authUser = {} }) {
         <>
             <Head title="Manage Content Listing" />
             <MwadminLayout authUser={authUser} activeMenu="newslisting">
-                <div className="mwadmin-category-classic">
+                <div className="mwadmin-category-classic mwadmin-newslisting-page">
                     <div className="mwadmin-pagebar">
                         <span>Content</span> <span className="sep">›</span> <span>Manage Content</span>{' '}
                         <span className="sep">›</span> <strong>Listing</strong>
                     </div>
                     <h1 className="mwadmin-title">Manage Content</h1>
 
-                    <div className="mwadmin-advanced-search">
+                    <section className={`mwadmin-newslisting-adv ${advancedOpen ? 'is-open' : ''}`}>
                         <button
                             type="button"
-                            className="mwadmin-advanced-search-toggle"
+                            className="mwadmin-newslisting-adv-head"
                             onClick={() => setAdvancedOpen((o) => !o)}
                             aria-expanded={advancedOpen}
                         >
-                            <span>Advanced Search</span>
-                            <span aria-hidden>{advancedOpen ? '▾' : '▸'}</span>
+                            <span className="mwadmin-newslisting-adv-head-title">Advanced Search</span>
+                            <span className="mwadmin-newslisting-adv-head-icon" aria-hidden>
+                                {advancedOpen ? '−' : '+'}
+                            </span>
                         </button>
                         {advancedOpen && (
-                            <div className="mwadmin-advanced-search-body">
-                                <div className="mwadmin-advanced-search-grid">
-                                    <div>
+                            <div className="mwadmin-newslisting-adv-body">
+                                <div className="mwadmin-newslisting-adv-grid">
+                                    <div className="mwadmin-newslisting-adv-field">
                                         <label htmlFor="adv-cat">Category</label>
                                         <select
                                             id="adv-cat"
@@ -257,7 +284,7 @@ export default function NewslistingIndex({ authUser = {} }) {
                                             ))}
                                         </select>
                                     </div>
-                                    <div>
+                                    <div className="mwadmin-newslisting-adv-field">
                                         <label htmlFor="adv-sub">Sub Category</label>
                                         <select
                                             id="adv-sub"
@@ -275,7 +302,7 @@ export default function NewslistingIndex({ authUser = {} }) {
                                             ))}
                                         </select>
                                     </div>
-                                    <div>
+                                    <div className="mwadmin-newslisting-adv-field">
                                         <label htmlFor="adv-status">Status</label>
                                         <select
                                             id="adv-status"
@@ -291,29 +318,34 @@ export default function NewslistingIndex({ authUser = {} }) {
                                             ))}
                                         </select>
                                     </div>
-                                    <div>
-                                        <label htmlFor="adv-from">Date from (d-m-Y)</label>
-                                        <input
-                                            id="adv-from"
-                                            type="date"
-                                            value={draftFilters.date_from}
-                                            onChange={(e) =>
-                                                setDraftFilters((s) => ({ ...s, date_from: e.target.value }))
-                                            }
-                                        />
+                                    <div className="mwadmin-newslisting-adv-field mwadmin-newslisting-adv-field--dates">
+                                        <span className="mwadmin-newslisting-adv-label" id="adv-dates-label">
+                                            Schedule date range (dd-mm-yyyy)
+                                        </span>
+                                        <span className="mwadmin-newslisting-adv-hint">
+                                            Filters rows by schedule date; use the calendar or type dd-mm-yyyy.
+                                        </span>
+                                        <div
+                                            className="mwadmin-newslisting-adv-date-pair"
+                                            role="group"
+                                            aria-labelledby="adv-dates-label"
+                                        >
+                                            <DmyDateInput
+                                                id="adv-from"
+                                                density="compact"
+                                                value={draftFilters.date_from}
+                                                onChange={(v) => setDraftFilters((s) => ({ ...s, date_from: v }))}
+                                            />
+                                            <span className="mwadmin-newslisting-adv-date-sep">to</span>
+                                            <DmyDateInput
+                                                id="adv-to"
+                                                density="compact"
+                                                value={draftFilters.date_to}
+                                                onChange={(v) => setDraftFilters((s) => ({ ...s, date_to: v }))}
+                                            />
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label htmlFor="adv-to">Date to</label>
-                                        <input
-                                            id="adv-to"
-                                            type="date"
-                                            value={draftFilters.date_to}
-                                            onChange={(e) =>
-                                                setDraftFilters((s) => ({ ...s, date_to: e.target.value }))
-                                            }
-                                        />
-                                    </div>
-                                    <div>
+                                    <div className="mwadmin-newslisting-adv-field">
                                         <label htmlFor="adv-feat">Featured content</label>
                                         <select
                                             id="adv-feat"
@@ -328,19 +360,19 @@ export default function NewslistingIndex({ authUser = {} }) {
                                         </select>
                                     </div>
                                 </div>
-                                <div className="mwadmin-advanced-search-actions">
+                                <div className="mwadmin-newslisting-adv-actions">
                                     <button type="button" className="mwadmin-btn-reset" onClick={resetAdvancedSearch}>
                                         Reset
                                     </button>
-                                    <button type="button" onClick={runAdvancedSearch}>
+                                    <button type="button" className="mwadmin-newslisting-adv-submit" onClick={runAdvancedSearch}>
                                         Search
                                     </button>
                                 </div>
                             </div>
                         )}
-                    </div>
+                    </section>
 
-                    <section className="mwadmin-panel">
+                    <section className="mwadmin-panel mwadmin-newslisting-grid-panel">
                         <div className="mwadmin-panel-head">Manage Content(s)</div>
                         <div className="mwadmin-toolbar">
                             <div>
@@ -382,7 +414,10 @@ export default function NewslistingIndex({ authUser = {} }) {
                         </div>
 
                         <div className="mwadmin-table-wrap">
-                            <MwadminThemedAgGrid>
+                            <MwadminThemedAgGrid
+                                className="mwadmin-news-listing-grid"
+                                style={{ flex: '1 1 0', minHeight: 0, height: '100%', width: '100%' }}
+                            >
                                 <AgGridReact
                                     rowData={rows}
                                     columnDefs={columns}
@@ -395,8 +430,10 @@ export default function NewslistingIndex({ authUser = {} }) {
                                     popupParent={typeof document !== 'undefined' ? document.body : undefined}
                                     animateRows
                                     suppressCellFocus
+                                    alwaysShowVerticalScroll
+                                    rowBuffer={20}
                                     rowHeight={36}
-                                    headerHeight={32}
+                                    headerHeight={40}
                                     overlayNoRowsTemplate={loading ? 'Loading...' : 'No data available in table'}
                                 />
                             </MwadminThemedAgGrid>
