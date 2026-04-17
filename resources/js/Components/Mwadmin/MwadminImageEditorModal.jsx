@@ -51,16 +51,28 @@ function canvasToObjectUrl(canvas, format, quality) {
     });
 }
 
-function LegacyPreviewPlaceholder({ outW, outH, frameWidth, caption, blurb }) {
-    const aspect = outW / outH;
-    const h = frameWidth / aspect;
+/**
+ * Legacy assets/global/plugins/cropper/cropper.css — .preview-lg / .preview-md / .preview-sm
+ * Square boxes (not export aspect). Matches Metronic cropper modals (col-md-9 stage + col-md-3 previews).
+ */
+const IMAGE_EDITOR_PREVIEW_BOX_SIZES = [184, 100, 50];
+const IMAGE_EDITOR_PREVIEW_SIZE_CLASS = [
+    'mwadmin-legacy-cropper-preview--lg',
+    'mwadmin-legacy-cropper-preview--md',
+    'mwadmin-legacy-cropper-preview--sm',
+];
+
+function LegacyPreviewPlaceholder({ outW, outH, boxSize, caption, sizeClass }) {
     return (
         <figure className="mwadmin-legacy-preview-empty">
-            <div className="mwadmin-legacy-preview-empty-frame" style={{ width: frameWidth, height: h }}>
+            <div
+                className={`mwadmin-legacy-cropper-preview mwadmin-legacy-preview-placeholder-inner ${sizeClass || ''}`}
+                style={{ width: boxSize, height: boxSize }}
+            >
+                <span className="mwadmin-legacy-preview-empty-primary">NO IMAGE AVAILABLE</span>
                 <span className="mwadmin-legacy-preview-empty-dim">
-                    {outW}px X {outH}px
+                    {outW} × {outH}px
                 </span>
-                <span className="mwadmin-legacy-preview-empty-blurb">{blurb}</span>
             </div>
             <figcaption className="mwadmin-category-export-preview-caption">{caption}</figcaption>
         </figure>
@@ -83,7 +95,7 @@ export default function MwadminImageEditorModal({
     outputWidth,
     outputHeight,
     notify,
-    placeholderBlurb = 'IMAGE GOES HERE',
+    placeholderBlurb: _placeholderBlurb = 'IMAGE GOES HERE',
     initialImageFile = null,
     initialImageUrl = null,
 }) {
@@ -108,11 +120,10 @@ export default function MwadminImageEditorModal({
     const [cropperReady, setCropperReady] = useState(false);
     const baseZoomRef = useRef(1);
 
-    const outputAspect = outputWidth / outputHeight;
-    // Legacy avatar_category.js uses a square interactive crop box.
+    // Legacy avatar_category.js / cropper: square crop box; export size is separate (canvas).
     const editorAspect = 1;
-    const stageWidth = 618;
-    const stageHeight = 420;
+    /** Legacy .avatar-wrapper { height: 364px } — main stage beside col-md-3 previews */
+    const stageHeight = 364;
     const initialCropArea = 0.8;
 
     const revokeModalBlob = useCallback(() => {
@@ -242,7 +253,7 @@ export default function MwadminImageEditorModal({
 
     if (!open) return null;
 
-    const previewFrames = [168, 120, 76];
+    const previewBoxSizes = IMAGE_EDITOR_PREVIEW_BOX_SIZES;
     const previewLabels = ['Large', 'Medium', 'Small'];
 
     const node = (
@@ -287,7 +298,10 @@ export default function MwadminImageEditorModal({
                         <strong>
                             Output size — {outputWidth} × {outputHeight}px
                         </strong>
-                        <span className="mwadmin-image-editor-output-note"> (Done exports exactly this; previews match this aspect)</span>
+                        <span className="mwadmin-image-editor-output-note">
+                            {' '}
+                            (Done exports this size; L/M/S are square crop previews like legacy.)
+                        </span>
                     </p>
                 </div>
 
@@ -302,8 +316,8 @@ export default function MwadminImageEditorModal({
                             className={`mwadmin-easy-crop-stage ${dragOver ? 'is-dragover' : ''}`}
                             style={{
                                 height: stageHeight,
+                                width: '100%',
                                 maxWidth: '100%',
-                                width: stageWidth,
                             }}
                         >
                             {displayUrl ? (
@@ -350,26 +364,26 @@ export default function MwadminImageEditorModal({
                     </div>
 
                     <aside className="mwadmin-legacy-previews-column" aria-label="Export previews">
-                        {previewFrames.map((fw, i) =>
+                        {previewBoxSizes.map((box, i) =>
                             displayUrl ? (
-                                <figure key={fw} className="mwadmin-category-export-preview mwadmin-legacy-export-preview">
+                                <figure key={`pv-${box}-${i}`} className="mwadmin-category-export-preview mwadmin-legacy-export-preview">
                                     <div
-                                        className="mwadmin-category-export-preview-frame mwadmin-export-preview-frame--aspect mwadmin-live-preview-target"
+                                        className={`mwadmin-category-export-preview-frame mwadmin-export-preview-frame--aspect mwadmin-live-preview-target mwadmin-legacy-cropper-preview ${IMAGE_EDITOR_PREVIEW_SIZE_CLASS[i] || ''}`}
                                         style={{
-                                            width: fw,
-                                            height: Math.max(1, Math.round(fw / outputAspect)),
+                                            width: box,
+                                            height: box,
                                         }}
                                     />
                                     <figcaption className="mwadmin-category-export-preview-caption">{previewLabels[i]}</figcaption>
                                 </figure>
                             ) : (
                                 <LegacyPreviewPlaceholder
-                                    key={fw}
+                                    key={`ph-${box}-${i}`}
                                     outW={outputWidth}
                                     outH={outputHeight}
-                                    frameWidth={fw}
+                                    boxSize={box}
                                     caption={previewLabels[i]}
-                                    blurb={placeholderBlurb}
+                                    sizeClass={IMAGE_EDITOR_PREVIEW_SIZE_CLASS[i]}
                                 />
                             )
                         )}

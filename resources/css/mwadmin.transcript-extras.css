@@ -2175,9 +2175,25 @@ a.mwadmin-btn-primary {
     display: flex;
     flex-direction: row;
     align-items: flex-start;
-    gap: 16px;
+    gap: 12px;
     margin-bottom: 10px;
     min-height: 0;
+}
+
+/* Bootstrap row: col-md-9 + col-md-3 (~75% / 25%) */
+.mwadmin-image-editor-legacy.mwadmin-legacy-editor-columns {
+    gap: 12px;
+}
+
+.mwadmin-image-editor-legacy .mwadmin-legacy-stage-column {
+    flex: 1 1 75%;
+    min-width: 0;
+}
+
+.mwadmin-image-editor-legacy .mwadmin-easy-crop-stage {
+    height: 364px;
+    min-height: 364px;
+    max-height: none;
 }
 
 .mwadmin-legacy-editor-columns.is-dragover .mwadmin-legacy-crop-surface,
@@ -2240,14 +2256,72 @@ a.mwadmin-btn-primary {
     max-width: 220px;
 }
 
+/* col-md-3 (~200px): fits .preview-lg 184px — sync with IMAGE_EDITOR_PREVIEW_BOX_SIZES */
 .mwadmin-legacy-previews-column {
     flex: 0 0 auto;
     width: 200px;
+    min-width: 196px;
+    max-width: 220px;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 12px;
-    padding: 8px 0;
+    padding: 0;
+}
+
+/*
+ * Legacy cropper.css — .avatar-preview + .preview-lg / .preview-md / .preview-sm (square boxes)
+ */
+.mwadmin-legacy-cropper-preview {
+    box-sizing: border-box;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    background-color: #fff;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.mwadmin-legacy-cropper-preview:hover {
+    border-color: #ccf;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.15);
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-legacy-cropper-preview {
+    background-color: #0f172a;
+    border-color: #334155;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-legacy-cropper-preview:hover {
+    border-color: #64748b;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.35);
+}
+
+/* .preview-lg { margin-top: 15px } in legacy — column gap handles vertical rhythm */
+.mwadmin-legacy-cropper-preview--lg {
+    margin-top: 0;
+}
+
+.mwadmin-legacy-preview-placeholder-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px;
+    text-align: center;
+}
+
+/* Inside image editor modal: match legacy frame, not the brown “export preview” card */
+.mwadmin-image-editor-legacy .mwadmin-category-export-preview-frame.mwadmin-legacy-cropper-preview {
+    border-radius: 4px;
+    border: 1px solid #eee;
+    box-shadow: none;
+    background-color: #fff;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-image-editor-legacy .mwadmin-category-export-preview-frame.mwadmin-legacy-cropper-preview {
+    background-color: #0f172a;
+    border-color: #334155;
 }
 
 @media (max-width: 720px) {
@@ -2289,10 +2363,32 @@ a.mwadmin-btn-primary {
     border-color: #475569;
 }
 
-.mwadmin-legacy-preview-empty-dim {
+.mwadmin-legacy-preview-empty-primary {
     font-size: 11px;
     font-weight: 700;
+    letter-spacing: 0.06em;
     color: #555;
+    text-transform: uppercase;
+    line-height: 1.25;
+}
+
+.mwadmin-legacy-cropper-preview--sm .mwadmin-legacy-preview-empty-primary {
+    font-size: 9px;
+    letter-spacing: 0.04em;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-legacy-preview-empty-primary {
+    color: #94a3b8;
+}
+
+.mwadmin-legacy-preview-empty-dim {
+    font-size: 10px;
+    font-weight: 600;
+    color: #666;
+}
+
+.mwadmin-legacy-cropper-preview--sm .mwadmin-legacy-preview-empty-dim {
+    font-size: 8px;
 }
 
 .mwadmin-shell.mwadmin-theme-dark .mwadmin-legacy-preview-empty-dim {
