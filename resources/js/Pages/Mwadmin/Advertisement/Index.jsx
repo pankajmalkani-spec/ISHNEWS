@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
@@ -9,7 +9,82 @@ import MwadminStatusBadge from '../../../Components/Mwadmin/MwadminStatusBadge';
 import MwadminThemedAgGrid from '../../../Components/Mwadmin/MwadminThemedAgGrid';
 import { canAdd, canDelete, canEdit, canViewDetail } from '../../../lib/mwadminPermissions';
 
+function mwadminResolvePublicUrl(path, publicRoot = '') {
+    if (!path || !String(path).trim()) return '';
+    const p = String(path).trim();
+    if (/^https?:\/\//i.test(p)) return p;
+    const root = typeof publicRoot === 'string' ? publicRoot.replace(/\/$/, '') : '';
+    if (root) return `${root}${p.startsWith('/') ? p : `/${p}`}`;
+    if (typeof window !== 'undefined') return new URL(p.startsWith('/') ? p : `/${p}`, window.location.origin).href;
+    return p;
+}
+
+/** `public/images/AdvertiseImages/no_img.gif` — same idea as sponsor/category listing placeholders */
+function advertisementListingNoImagePlaceholderSrc(publicRoot) {
+    return mwadminResolvePublicUrl('/images/AdvertiseImages/no_img.gif', publicRoot);
+}
+
+const adThumbWrap = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    height: '100%',
+};
+
+const adThumbImg = { maxWidth: '80px', maxHeight: '28px', objectFit: 'cover' };
+
+/**
+ * Preload so AG Grid remounts do not fire spurious img onError (see Sponsor listing).
+ */
+function AdvertisementListingImageCell({ src, publicRoot }) {
+    const placeholderSrc = advertisementListingNoImagePlaceholderSrc(publicRoot);
+    const resolved = src ? mwadminResolvePublicUrl(src, publicRoot) : '';
+    const [phase, setPhase] = useState(() => (resolved ? 'check' : 'empty'));
+
+    useEffect(() => {
+        if (!resolved) {
+            setPhase('empty');
+            return;
+        }
+        setPhase('check');
+        const img = new Image();
+        let canceled = false;
+        img.onload = () => {
+            if (!canceled) setPhase('ok');
+        };
+        img.onerror = () => {
+            if (!canceled) setPhase('bad');
+        };
+        img.src = resolved;
+        return () => {
+            canceled = true;
+        };
+    }, [resolved]);
+
+    if (phase === 'empty' || phase === 'bad') {
+        return (
+            <div style={adThumbWrap}>
+                <img src={placeholderSrc} alt="" style={adThumbImg} />
+            </div>
+        );
+    }
+    if (phase === 'check') {
+        return (
+            <span className="mwadmin-grid-action-muted" style={{ fontSize: 10, opacity: 0.65 }}>
+                …
+            </span>
+        );
+    }
+    return (
+        <div style={adThumbWrap}>
+            <img src={resolved} alt="" style={adThumbImg} />
+        </div>
+    );
+}
+
 export default function AdvertisementIndex({ authUser = {} }) {
+    const { mwadminPublicRoot = '' } = usePage().props;
     const dialog = useClassicDialog();
     const gridApiRef = useRef(null);
     const [rows, setRows] = useState([]);
@@ -130,12 +205,9 @@ export default function AdvertisementIndex({ authUser = {} }) {
                 headerName: 'Image',
                 width: 100,
                 cellClass: 'mwadmin-ag-cell-vcenter',
-                cellRenderer: (p) =>
-                    p.value ? (
-                        <img src={p.value} alt="" style={{ maxWidth: '80px', maxHeight: '28px', objectFit: 'cover' }} />
-                    ) : (
-                        '-'
-                    ),
+                cellRenderer: (p) => (
+                    <AdvertisementListingImageCell src={p.value || ''} publicRoot={mwadminPublicRoot} />
+                ),
             },
             { field: 'subcat_code', headerName: 'Subcategory', width: 110, cellClass: 'mwadmin-ag-cell-vcenter' },
             { field: 'contactperson_name', headerName: 'Contact', minWidth: 120, flex: 0.8, cellClass: 'mwadmin-ag-cell-vcenter' },
@@ -151,7 +223,7 @@ export default function AdvertisementIndex({ authUser = {} }) {
                 cellRenderer: (p) => <MwadminStatusBadge value={p.value} />,
             },
         ],
-        [perms]
+        [perms, mwadminPublicRoot]
     );
 
     return (

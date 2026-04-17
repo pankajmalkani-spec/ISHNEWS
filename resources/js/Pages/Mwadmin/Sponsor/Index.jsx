@@ -78,11 +78,31 @@ function sponsorListingLogoSrc(data, publicRoot = '') {
     return enc ? withRoot(`/images/sponsorLogo/${enc}`) : '';
 }
 
+/** Placeholder asset under `public/images/sponsorLogo/` (same style as category `no_img.gif`). */
+function sponsorListingNoLogoPlaceholderSrc(publicRoot = '') {
+    const path = '/images/sponsorLogo/no_img.gif';
+    const root = typeof publicRoot === 'string' ? publicRoot.replace(/\/$/, '') : '';
+    if (root) return `${root}${path}`;
+    if (typeof window !== 'undefined') return new URL(path, window.location.origin).href;
+    return path;
+}
+
+const logoThumbWrap = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    height: '100%',
+};
+
+const logoThumbImg = { maxWidth: '88px', maxHeight: '32px', objectFit: 'contain' };
+
 /**
  * Preload in an effect so React Strict Mode / AG Grid remounts do not fire spurious img onError
  * (which was hiding real logos as “No image”).
  */
-function SponsorListingLogoCell({ src }) {
+function SponsorListingLogoCell({ src, publicRoot }) {
+    const placeholderSrc = sponsorListingNoLogoPlaceholderSrc(publicRoot);
     const [phase, setPhase] = useState(() => (src ? 'check' : 'empty'));
 
     useEffect(() => {
@@ -106,7 +126,11 @@ function SponsorListingLogoCell({ src }) {
     }, [src]);
 
     if (phase === 'empty' || phase === 'bad') {
-        return <span className="mwadmin-grid-action-muted">No image</span>;
+        return (
+            <div style={logoThumbWrap}>
+                <img src={placeholderSrc} alt="" style={logoThumbImg} />
+            </div>
+        );
     }
     if (phase === 'check') {
         return (
@@ -116,16 +140,8 @@ function SponsorListingLogoCell({ src }) {
         );
     }
     return (
-        <div
-            style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '100%',
-                height: '100%',
-            }}
-        >
-            <img src={src} alt="" style={{ maxWidth: '88px', maxHeight: '32px', objectFit: 'contain' }} />
+        <div style={logoThumbWrap}>
+            <img src={src} alt="" style={logoThumbImg} />
         </div>
     );
 }
@@ -285,7 +301,9 @@ export default function SponsorIndex({ authUser = {} }) {
                 sortable: false,
                 valueGetter: (p) => sponsorListingLogoSrc(p.data, mwadminPublicRoot),
                 cellClass: 'mwadmin-ag-cell-vcenter',
-                cellRenderer: (p) => <SponsorListingLogoCell src={p.value || ''} />,
+                cellRenderer: (p) => (
+                    <SponsorListingLogoCell src={p.value || ''} publicRoot={mwadminPublicRoot} />
+                ),
             },
             {
                 field: 'website',
