@@ -34,6 +34,7 @@ export default function ScheduleIndex({ authUser = {} }) {
     const dialog = useClassicDialog();
     const reduceMotion = useReducedMotion();
     const canUpdateStatus = canEdit(authUser, 'schedule');
+    const canOpenManageContent = canEdit(authUser, 'newslisting');
     const [loading, setLoading] = useState(true);
     const [weekStart, setWeekStart] = useState('');
     const [dateFilter, setDateFilter] = useState('');
@@ -433,12 +434,14 @@ export default function ScheduleIndex({ authUser = {} }) {
                                 <button type="button" className="mwadmin-news-create-cancel" onClick={() => setModal(null)}>
                                     Cancel
                                 </button>
-                                <Link
-                                    href={`/mwadmin/newslisting/${modal.id}/edit`}
-                                    className="mwadmin-schedule-edit-link"
-                                >
-                                    Open in Manage Content
-                                </Link>
+                                {canOpenManageContent ? (
+                                    <Link
+                                        href={`/mwadmin/newslisting/${modal.id}/edit`}
+                                        className="mwadmin-schedule-edit-link"
+                                    >
+                                        Open in Manage Content
+                                    </Link>
+                                ) : null}
                             </div>
                         </div>
                     </div>
