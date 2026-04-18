@@ -21,8 +21,66 @@ const LEGACY_EDIT_STEPS = [
     { id: 3, label: 'Text Article' },
     { id: 4, label: 'Multimedia' },
     { id: 5, label: 'Comments' },
-    { id: 6, label: "Review's" },
+    { id: 6, label: 'Reviews' },
 ];
+
+function moduleAllowEdit(modules, key) {
+    return Number(modules?.[key]?.allow_edit) > 0;
+}
+
+/** Legacy edit.php: sub-module allow_edit for tabs 1–4; Reviews uses step===6 only for active styling. */
+function canEditNewslistingStep(isSuper, modules, stepId) {
+    if (isSuper) {
+        return stepId !== 5;
+    }
+    if (stepId === 5) {
+        return false;
+    }
+    if (stepId === 6) {
+        return true;
+    }
+    const m = modules ?? {};
+    if (stepId === 1) {
+        return moduleAllowEdit(m, 'p2dprocess');
+    }
+    if (stepId === 2) {
+        return moduleAllowEdit(m, 'p2dchecklist');
+    }
+    if (stepId === 3) {
+        return moduleAllowEdit(m, 'texteditor');
+    }
+    if (stepId === 4) {
+        return moduleAllowEdit(m, 'multimedia');
+    }
+    return false;
+}
+
+function tabItemClassLegacy(isSuper, activeStep, modules, stepId) {
+    if (stepId === 5) {
+        return 'disabled';
+    }
+    if (isSuper) {
+        return activeStep === stepId ? 'active' : '';
+    }
+    if (stepId === 6) {
+        return activeStep === 6 ? 'active' : 'disabled';
+    }
+    const ok = canEditNewslistingStep(isSuper, modules, stepId);
+    return activeStep === stepId && ok ? 'active' : 'disabled';
+}
+
+function tabTitleLegacy(isSuper, modules, stepId) {
+    if (stepId === 5) {
+        return 'Comments tab is not used in legacy workflow.';
+    }
+    if (isSuper) {
+        return undefined;
+    }
+    if (stepId === 6) {
+        return 'You have no authorization';
+    }
+    return canEditNewslistingStep(false, modules, stepId) ? undefined : 'You have no authorization';
+}
 
 function clampStep(n) {
     const x = Number(n);
@@ -30,7 +88,13 @@ function clampStep(n) {
     return Math.min(6, Math.max(1, x));
 }
 
-export default function NewslistingEdit({ authUser = {}, newslistingId, initialStep = 1 }) {
+export default function NewslistingEdit({
+    authUser = {},
+    newslistingId,
+    initialStep = 1,
+    /** `create`: opened from `/newslisting/create/{id}/{step}` after P2D save (Add flow). */
+    pageVariant = 'edit',
+}) {
     const dialog = useClassicDialog();
     const notify = useCallback((message) => dialog.toast(message, 'error'), [dialog]);
     const [categories, setCategories] = useState([]);
@@ -227,7 +291,11 @@ export default function NewslistingEdit({ authUser = {}, newslistingId, initialS
 
     const goToStep = (stepId) => {
         const s = clampStep(stepId);
-        router.visit(`/mwadmin/newslisting/${newslistingId}/edit/${s}`, { preserveScroll: true });
+        if (pageVariant === 'create') {
+            router.visit(`/mwadmin/newslisting/create/${newslistingId}/${s}`, { preserveScroll: true });
+        } else {
+            router.visit(`/mwadmin/newslisting/${newslistingId}/edit/${s}`, { preserveScroll: true });
+        }
     };
 
     const appendCommonFields = (fd) => {
@@ -327,10 +395,15 @@ export default function NewslistingEdit({ authUser = {}, newslistingId, initialS
         setForm((f) => ({ ...f, schedule_date: '', schedule_time: '' }));
     }, [releaseStatusReady]);
 
+    const isSuper = !!authUser?.superaccess;
+    const modules = authUser?.modules ?? {};
+    const docTitle = pageVariant === 'create' ? 'Add News Content' : 'Edit News Content';
+    const crumbLabel = pageVariant === 'create' ? 'Create' : 'Edit';
+
     if (load) {
         return (
             <>
-                <Head title="Edit News Content" />
+                <Head title={docTitle} />
                 <MwadminLayout authUser={authUser} activeMenu="newslisting">
                     <div className="mwadmin-category-classic">
                         <p className="mwadmin-title">Loading…</p>
@@ -342,40 +415,36 @@ export default function NewslistingEdit({ authUser = {}, newslistingId, initialS
 
     return (
         <>
-            <Head title="Edit News Content" />
+            <Head title={docTitle} />
             <MwadminLayout authUser={authUser} activeMenu="newslisting">
                 <div className="mwadmin-category-classic mwadmin-news-create">
                     <div className="mwadmin-pagebar">
                         <span>Content</span> <span className="sep">›</span> <span>Manage Content</span>{' '}
-                        <span className="sep">›</span> <strong>Edit</strong>
+                        <span className="sep">›</span> <strong>{crumbLabel}</strong>
                         <Link href="/mwadmin/newslisting" className="mwadmin-back-btn">
                             Back
                         </Link>
                     </div>
-                    <h1 className="mwadmin-title">Edit News Content</h1>
+                    <h1 className="mwadmin-title">{docTitle}</h1>
 
                     <section className="mwadmin-panel mwadmin-form-panel">
                         <ul className="mwadmin-news-create-tabs" role="tablist">
                             {LEGACY_EDIT_STEPS.map((t) => {
-                                const isActive = activeStep === t.id;
                                 const isComments = t.id === 5;
+                                const liClass = tabItemClassLegacy(isSuper, activeStep, modules, t.id);
+                                const title = tabTitleLegacy(isSuper, modules, t.id);
+                                const isActive = liClass === 'active';
                                 return (
                                     <li
                                         key={t.id}
                                         role="tab"
                                         aria-selected={isActive}
-                                        className={
-                                            isActive ? 'active' : isComments ? 'disabled' : ''
-                                        }
-                                        title={
-                                            isComments
-                                                ? 'Comments tab is not used in legacy workflow.'
-                                                : undefined
-                                        }
+                                        className={liClass}
+                                        title={title}
                                     >
                                         {isComments ? (
                                             <span>{t.label}</span>
-                                        ) : (
+                                        ) : isSuper ? (
                                             <button
                                                 type="button"
                                                 className="mwadmin-news-edit-tab-btn"
@@ -383,6 +452,8 @@ export default function NewslistingEdit({ authUser = {}, newslistingId, initialS
                                             >
                                                 {t.label}
                                             </button>
+                                        ) : (
+                                            <span className="mwadmin-news-edit-tab-label">{t.label}</span>
                                         )}
                                     </li>
                                 );
@@ -678,7 +749,12 @@ export default function NewslistingEdit({ authUser = {}, newslistingId, initialS
                                 </p>
                                 <p className="mwadmin-news-edit-step-intro">
                                     Full checklist grid (assignments, dates, status per activity) will match legacy once
-                                    content-chart APIs are wired. Use the next tabs for Text Article and Multimedia.
+                                    content-chart APIs are wired.
+                                </p>
+                                <p className="mwadmin-news-edit-step-intro">
+                                    <strong>Workflow order (same as legacy tabs):</strong> P2D CheckList → Text Article →
+                                    Multimedia → Reviews. Use <strong>Next: Text Article</strong> below, then continue with
+                                    each step&apos;s Next button (Multimedia, then Reviews).
                                 </p>
                                 <div className="mwadmin-form-actions mwadmin-news-edit-step-actions">
                                     <button type="button" onClick={() => goToStep(1)}>
@@ -858,7 +934,7 @@ export default function NewslistingEdit({ authUser = {}, newslistingId, initialS
 
                         {activeStep === 6 && (
                             <div className="mwadmin-news-edit-step-panel">
-                                <h2 className="mwadmin-news-edit-step-title">Review&apos;s</h2>
+                                <h2 className="mwadmin-news-edit-step-title">Reviews</h2>
                                 <div className="mwadmin-news-review-summary">
                                     <p>
                                         <strong>Title:</strong> {form.title}

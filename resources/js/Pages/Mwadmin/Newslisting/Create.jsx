@@ -1,6 +1,7 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import axios from 'axios';
 import { useCallback, useEffect, useState } from 'react';
+import NewslistingEdit from './Edit';
 import DmyDateInput from '../../../Components/Mwadmin/DmyDateInput';
 import MwadminTimeInput from '../../../Components/Mwadmin/MwadminTimeInput';
 import MwadminImageEditorModal from '../../../Components/Mwadmin/MwadminImageEditorModal';
@@ -15,20 +16,64 @@ const today = () => new Date().toISOString().slice(0, 10);
 
 const DRAFT_STATUS = ['Pending', 'WIP', 'Ready', 'Issue', 'Dropped', 'Hold'];
 
-const TAB_DISABLED = [
-    { id: 'checklist', label: 'P2D CheckList' },
-    { id: 'text', label: 'Text Article' },
-    { id: 'media', label: 'Multimedia' },
-    { id: 'review', label: "Review's" },
+/** Legacy mwadmin/newslisting/create.php tooltips (create has only P2D Process form; other tabs unlock after save/edit). */
+const CREATE_LOCKED_TABS = [
+    {
+        id: 'checklist',
+        label: 'P2D CheckList',
+        title:
+            'Fill details of P2D Process, Text Article & Multimedia Tab to unlock P2D CheckList Tab.',
+    },
+    {
+        id: 'text',
+        label: 'Text Article',
+        title: 'Fill details of P2D Process to unlock Text Article Tab.',
+    },
+    {
+        id: 'media',
+        label: 'Multimedia',
+        title: 'Fill details of P2D Process, Text Article Tab to unlock Multimedia Tab.',
+    },
+    {
+        id: 'review',
+        label: "Review's",
+        title: 'Fill details of P2D Process, Text Article Tab to unlock Multimedia Tab.',
+    },
 ];
 
 function Req() {
     return <span className="mwadmin-required"> *</span>;
 }
 
-export default function NewslistingCreate({ authUser = {} }) {
+function moduleFlag(modules, key, flag) {
+    const v = modules?.[key]?.[flag];
+    return Number(v) > 0;
+}
+
+export default function NewslistingCreate({
+    authUser = {},
+    newslistingId: wizardNewslistingId,
+    initialStep: wizardInitialStep = 1,
+    createWizard = false,
+}) {
+    /** Steps 2–6 after P2D save: same wizard as Edit, but URL stays under `/newslisting/create/{id}/…`. */
+    if (createWizard && wizardNewslistingId != null) {
+        return (
+            <NewslistingEdit
+                authUser={authUser}
+                newslistingId={wizardNewslistingId}
+                initialStep={wizardInitialStep}
+                pageVariant="create"
+            />
+        );
+    }
+
     const dialog = useClassicDialog();
     const notify = useCallback((message) => dialog.toast(message, 'error'), [dialog]);
+    const modules = authUser?.modules ?? {};
+    const isSuper = !!authUser?.superaccess;
+    /** Legacy: non-super needs p2dprocess allow_add to use P2D Process tab; super always can. */
+    const p2dProcessAllowed = isSuper || moduleFlag(modules, 'p2dprocess', 'allow_add');
     const [categories, setCategories] = useState([]);
     const [subcategories, setSubcategories] = useState([]);
     const [newsSources, setNewsSources] = useState([]);
@@ -261,11 +306,21 @@ export default function NewslistingCreate({ authUser = {} }) {
             if (bannerFile) fd.append('banner_img', bannerFile);
             if (coverFile) fd.append('cover_img', coverFile);
 
-            await axios.post('/api/mwadmin/newslistings', fd, {
+            const { data: body } = await axios.post('/api/mwadmin/newslistings', fd, {
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
-            dialog.toast('News content created successfully.', 'success');
-            window.setTimeout(() => window.location.assign('/mwadmin/newslisting'), 1200);
+            const newId = body?.data?.id;
+            const nextStep = Number(body?.data?.next_step) || 2;
+            dialog.toast('News content created successfully. Opening P2D CheckList…', 'success');
+            /** Legacy Newslisting.php: after insert, `step` => 2 (P2D CheckList), not back to index. */
+            if (newId) {
+                window.setTimeout(
+                    () => router.visit(`/mwadmin/newslisting/create/${newId}/${nextStep}`),
+                    400
+                );
+            } else {
+                window.setTimeout(() => router.visit('/mwadmin/newslisting'), 1200);
+            }
         } catch (err) {
             const d = err?.response?.data;
             if (d?.errors) {
@@ -295,20 +350,27 @@ export default function NewslistingCreate({ authUser = {} }) {
 
                     <section className="mwadmin-panel mwadmin-form-panel">
                         <ul className="mwadmin-news-create-tabs" role="tablist">
-                            <li className="active" role="tab" aria-selected>
+                            <li
+                                className={p2dProcessAllowed ? 'active' : 'disabled'}
+                                role="tab"
+                                aria-selected={p2dProcessAllowed}
+                            >
                                 P2D Process
                             </li>
-                            {TAB_DISABLED.map((t) => (
-                                <li
-                                    key={t.id}
-                                    className="disabled"
-                                    title="Available after P2D Process steps (legacy workflow)."
-                                >
+                            {CREATE_LOCKED_TABS.map((t) => (
+                                <li key={t.id} className="disabled" title={t.title}>
                                     {t.label}
                                 </li>
                             ))}
                         </ul>
 
+                        {!p2dProcessAllowed ? (
+                            <p className="mwadmin-news-create-tab-locked-msg">
+                                You have no rights to add P2D Process content. Contact your administrator.
+                            </p>
+                        ) : null}
+
+                        {p2dProcessAllowed ? (
                         <form onSubmit={onSubmit} className="mwadmin-form-grid mwadmin-news-create-form">
                             <input type="hidden" name="last_serialno" value={form.last_serialno} readOnly />
 
@@ -724,6 +786,7 @@ export default function NewslistingCreate({ authUser = {} }) {
                                 </Link>
                             </div>
                         </form>
+                        ) : null}
                     </section>
                 </div>
                 <MwadminImageEditorModal

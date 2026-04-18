@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class NewslistingApiController extends Controller
@@ -19,6 +20,15 @@ class NewslistingApiController extends Controller
 
     /** @var list<string> */
     private const STATUS_DRAFT = ['Pending', 'WIP', 'Ready', 'Issue', 'Dropped', 'Hold'];
+
+    /**
+     * Legacy DB: `contenttrans.schedule_date` is NOT NULL; CodeIgniter stored '' or 1970-01-01 for “no schedule”.
+     * Strict MySQL rejects '' and NULL — use this sentinel (matches mwadmin/newslisting/edit.php checks).
+     */
+    private const LEGACY_EMPTY_SCHEDULE_DATETIME = '1970-01-01 00:00:00';
+
+    /** DATE columns (`completion_date` etc.) are NOT NULL with no default — legacy used empty / 1970-01-01. */
+    private const LEGACY_EMPTY_DATE = '1970-01-01';
 
     public function options(Request $request): JsonResponse
     {
@@ -181,39 +191,28 @@ class NewslistingApiController extends Controller
         $userId = $this->resolveRealUserId($request);
         $now = now();
 
-        $featured = ! empty($validated['featured_content']) ? '1' : '0';
-        $compDate = $this->parseDateOrEmpty($validated['completion_date'] ?? null);
+        $featured = ! empty($validated['featured_content']) ? 1 : 0;
+        $compYmd = $this->parseOptionalDateColumnYmd($validated['completion_date'] ?? null);
 
         $bannerName = $request->hasFile('banner_img') ? $this->storeNewsImage($request->file('banner_img'), 'banner') : '';
         $coverName = $request->hasFile('cover_img') ? $this->storeNewsImage($request->file('cover_img'), 'cover') : '';
 
-        $payload = [
-            'category_id' => (int) $validated['category_id'],
-            'subcategory_id' => (int) $validated['subcategory_id'],
-            'permalink' => ucwords($validated['permalink']),
-            'status1' => $status1,
-            'title' => $validated['title'],
-            'seo_keyword' => $validated['seo_keyword'],
-            'featured_content' => $featured,
-            'news_source' => (int) $validated['news_source'],
-            'shared_folder' => $validated['shared_folder'] ?? '',
-            'last_serialno' => (int) $validated['last_serialno'],
-            'p2d_caseno' => strtoupper($validated['p2d_caseno']),
-            'p2d_date' => $this->parseDateTimeStartOfDay($validated['p2d_date']),
-            'description' => $validated['description'] !== null && $validated['description'] !== ''
-                ? ucfirst($validated['description'])
-                : ($validated['description'] ?? ''),
-            'schedule_date' => $scheduleDate ?? '',
-            'due_date' => $this->parseDateTimeStartOfDay($validated['due_date']),
-            'completion_date' => $compDate,
-            'prepared_by' => $validated['prepared_by'],
-            'authorized_by' => $validated['authorized_by'],
-            'banner_img' => $bannerName,
-            'cover_img' => $coverName,
-            'addeddate' => $now,
-            'addedby' => $userId,
-            'final_releasestatus' => $status1 === 'Released' ? '1' : '0',
-        ];
+        $descRaw = (string) ($validated['description'] ?? '');
+        $description = $descRaw !== '' ? ucfirst($descRaw) : '';
+        $description = Str::limit($description, 200, '');
+
+        $payload = $this->contenttransLegacyInsertPayload(
+            $validated,
+            $status1,
+            $scheduleDate,
+            $description,
+            $featured,
+            $bannerName,
+            $coverName,
+            $compYmd,
+            $now,
+            $userId,
+        );
 
         $id = DB::table('contenttrans')->insertGetId($payload);
         $members = $validated['members'] ?? [];
@@ -230,7 +229,8 @@ class NewslistingApiController extends Controller
 
         return response()->json([
             'message' => 'News content created successfully.',
-            'data' => ['id' => $id],
+            /** Legacy `Newslisting` create JSON: `step` => 2 (P2D CheckList tab). */
+            'data' => ['id' => $id, 'next_step' => 2],
         ], 201);
     }
 
@@ -252,8 +252,8 @@ class NewslistingApiController extends Controller
         $userId = $this->resolveRealUserId($request);
         $now = now();
 
-        $featured = ! empty($validated['featured_content']) ? '1' : '0';
-        $compDate = $this->parseDateOrEmpty($validated['completion_date'] ?? null);
+        $featured = ! empty($validated['featured_content']) ? 1 : 0;
+        $compYmd = $this->parseOptionalDateColumnYmd($validated['completion_date'] ?? null);
 
         $bannerName = (string) ($existing->banner_img ?? '');
         $coverName = (string) ($existing->cover_img ?? '');
@@ -267,29 +267,39 @@ class NewslistingApiController extends Controller
             $coverName = $this->storeNewsImage($request->file('cover_img'), 'cover');
         }
 
+        $descRaw = (string) ($validated['description'] ?? '');
+        $description = $descRaw !== '' ? ucfirst($descRaw) : '';
+        $description = Str::limit($description, 200, '');
+
         $payload = [
             'category_id' => (int) $validated['category_id'],
             'subcategory_id' => (int) $validated['subcategory_id'],
-            'permalink' => ucwords($validated['permalink']),
+            'last_serialno' => (int) $validated['last_serialno'],
+            'p2d_caseno' => Str::limit(strtoupper((string) $validated['p2d_caseno']), 80, ''),
+            'permalink' => ucwords(Str::limit($validated['permalink'], 150, '')),
             'status1' => $status1,
-            'title' => $validated['title'],
-            'seo_keyword' => $validated['seo_keyword'],
+            'title' => Str::limit($validated['title'], 200, ''),
+            'seo_keyword' => Str::limit($validated['seo_keyword'], 100, ''),
             'featured_content' => $featured,
-            'news_source' => (int) $validated['news_source'],
-            'shared_folder' => $validated['shared_folder'] ?? '',
-            'description' => $validated['description'] !== null && $validated['description'] !== ''
-                ? ucfirst($validated['description'])
-                : ($validated['description'] ?? ''),
-            'schedule_date' => $scheduleDate ?? (string) ($existing->schedule_date ?? ''),
-            'due_date' => $this->parseDateTimeStartOfDay($validated['due_date']),
-            'completion_date' => $compDate,
-            'prepared_by' => $validated['prepared_by'],
-            'authorized_by' => $validated['authorized_by'],
-            'banner_img' => $bannerName,
-            'cover_img' => $coverName,
+            'news_source' => (string) (int) $validated['news_source'],
+            'shared_folder' => Str::limit((string) ($validated['shared_folder'] ?? ''), 255, ''),
+            'description' => $description,
+            'schedule_date' => $this->persistScheduleDate($scheduleDate, $existing->schedule_date ?? null),
+            'due_date' => $this->parseSqlDateColumn($validated['due_date']),
+            'p2d_date' => $this->parseSqlDateColumn($validated['p2d_date']),
+            'completion_date' => $this->persistCompletionDate($compYmd, $existing->completion_date ?? null),
+            'prepared_by' => Str::limit($validated['prepared_by'], 100, ''),
+            'authorized_by' => Str::limit($validated['authorized_by'], 100, ''),
+            'banner_img' => Str::limit($bannerName, 80, ''),
+            'cover_img' => Str::limit($coverName, 80, ''),
+            'youtube_url_check' => $this->legacyTinyint($validated['youtube_url_check'] ?? null),
+            'youtube_url' => Str::limit((string) ($validated['youtube_url'] ?? ''), 100, ''),
+            'youtube_video_check' => $this->legacyTinyint($validated['youtube_video_check'] ?? null),
+            'youtube_video' => Str::limit((string) ($validated['youtube_video'] ?? ''), 100, ''),
+            'youtube_subtitles' => Str::limit((string) ($validated['youtube_subtitles'] ?? ''), 100, ''),
             'modifieddate' => $now,
             'modifiedby' => $userId,
-            'final_releasestatus' => $status1 === 'Released' ? '1' : '0',
+            'final_releasestatus' => $status1 === 'Released' ? 1 : 0,
         ];
 
         DB::table('contenttrans')->where('id', $id)->update($payload);
@@ -381,25 +391,31 @@ class NewslistingApiController extends Controller
         return $request->validate([
             'category_id' => ['required', 'integer', 'exists:categorymst,id'],
             'subcategory_id' => ['required', 'integer', $subRule],
-            'title' => ['required', 'string', 'max:500'],
-            'seo_keyword' => ['required', 'string', 'max:255'],
+            /** `contenttrans` column sizes (legacy ishnewsdb). */
+            'title' => ['required', 'string', 'max:200'],
+            'seo_keyword' => ['required', 'string', 'max:100'],
             'news_source' => ['required', 'integer', 'exists:newsource,id'],
-            'prepared_by' => ['required', 'string', 'max:50'],
+            'prepared_by' => ['required', 'string', 'max:100'],
             'authorized_by' => ['required', 'string', 'max:100'],
-            'permalink' => ['required', 'string', 'max:500'],
+            'permalink' => ['required', 'string', 'max:150'],
             'status1' => ['required', 'string', Rule::in(self::STATUS_DRAFT)],
             'due_date' => ['required', 'date'],
             'p2d_date' => ['required', 'date'],
-            'description' => ['nullable', 'string'],
+            'description' => ['nullable', 'string', 'max:200'],
             'shared_folder' => ['nullable', 'string', 'max:255'],
             'last_serialno' => ['required', 'integer', 'min:1'],
-            'p2d_caseno' => ['required', 'string', 'max:50'],
+            'p2d_caseno' => ['required', 'string', 'max:80'],
             'featured_content' => ['nullable'],
             'completion_date' => ['nullable', 'date'],
             'schedule_date' => ['nullable', 'date'],
             'schedule_time' => ['nullable', 'string', 'max:10'],
             'banner_img' => ['nullable', 'image', 'mimes:jpg,jpeg,png,gif', 'max:8192'],
             'cover_img' => ['nullable', 'image', 'mimes:jpg,jpeg,png,gif', 'max:8192'],
+            'youtube_url_check' => ['nullable'],
+            'youtube_url' => ['nullable', 'string', 'max:100'],
+            'youtube_video_check' => ['nullable'],
+            'youtube_video' => ['nullable', 'string', 'max:100'],
+            'youtube_subtitles' => ['nullable', 'string', 'max:100'],
             'members' => ['nullable', 'array'],
             'members.*.designation_id' => ['required_with:members', 'integer', 'exists:designation,id'],
             'members.*.user_id' => ['required_with:members', 'integer', 'exists:users,userid'],
@@ -424,6 +440,103 @@ class NewslistingApiController extends Controller
         if ($permalinkQuery->exists()) {
             abort(response()->json(['message' => 'Same permalink already exists for another content.'], 422));
         }
+    }
+
+    /**
+     * Full `contenttrans` row for INSERT — legacy table has NOT NULL on every column without server defaults.
+     *
+     * @param  array<string, mixed>  $validated
+     */
+    private function contenttransLegacyInsertPayload(
+        array $validated,
+        string $status1,
+        ?string $scheduleResolved,
+        string $description,
+        int $featured,
+        string $bannerName,
+        string $coverName,
+        ?string $completionYmd,
+        \DateTimeInterface $now,
+        int $userId,
+    ): array {
+        return [
+            'flowchart_templateid' => 0,
+            'category_id' => (int) $validated['category_id'],
+            'subcategory_id' => (int) $validated['subcategory_id'],
+            'last_serialno' => (int) $validated['last_serialno'],
+            'p2d_caseno' => Str::limit(strtoupper((string) $validated['p2d_caseno']), 80, ''),
+            'p2d_date' => $this->parseSqlDateColumn((string) $validated['p2d_date']),
+            'status1' => $status1,
+            'banner_img' => Str::limit($bannerName, 80, ''),
+            'cover_img' => Str::limit($coverName, 80, ''),
+            'slider_img' => '',
+            'title' => Str::limit((string) $validated['title'], 200, ''),
+            'seo_keyword' => Str::limit((string) $validated['seo_keyword'], 100, ''),
+            'featured_content' => $featured,
+            'description' => $description,
+            'news_source' => (string) (int) $validated['news_source'],
+            'permalink' => Str::limit(ucwords((string) $validated['permalink']), 150, ''),
+            'due_date' => $this->parseSqlDateColumn((string) $validated['due_date']),
+            'completion_date' => $this->persistCompletionDate($completionYmd, null),
+            'schedule_date' => $this->persistScheduleDate($scheduleResolved, null),
+            'prepared_by' => Str::limit((string) $validated['prepared_by'], 100, ''),
+            'authorized_by' => Str::limit((string) $validated['authorized_by'], 100, ''),
+            'youtube_url_check' => 0,
+            'youtube_url' => '',
+            'youtube_video_check' => 0,
+            'youtube_video' => '',
+            'youtube_subtitles' => '',
+            'addeddate' => $now,
+            'addedby' => $userId,
+            'modifieddate' => $now,
+            'modifiedby' => $userId,
+            'final_releasestatus' => $status1 === 'Released' ? 1 : 0,
+            'shared_folder' => Str::limit((string) ($validated['shared_folder'] ?? ''), 255, ''),
+        ];
+    }
+
+    private function parseSqlDateColumn(string $dateInput): string
+    {
+        return Carbon::parse($dateInput)->format('Y-m-d');
+    }
+
+    private function parseOptionalDateColumnYmd(?string $date): ?string
+    {
+        if ($date === null || $date === '') {
+            return null;
+        }
+        try {
+            return Carbon::parse($date)->format('Y-m-d');
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    /**
+     * `completion_date` is NOT NULL DATE — use {@see self::LEGACY_EMPTY_DATE} when unset (legacy empty / 1970).
+     */
+    private function persistCompletionDate(?string $parsedYmd, mixed $existingRaw): string
+    {
+        if ($parsedYmd !== null && $parsedYmd !== '') {
+            return $parsedYmd;
+        }
+        if ($existingRaw !== null && $existingRaw !== '') {
+            try {
+                $ymd = Carbon::parse((string) $existingRaw)->format('Y-m-d');
+                if (! str_starts_with($ymd, '1970-01-01') && ! str_starts_with($ymd, '0000-00-00')) {
+                    return $ymd;
+                }
+            } catch (\Throwable) {
+                // fall through
+            }
+        }
+
+        return self::LEGACY_EMPTY_DATE;
+    }
+
+    private function legacyTinyint(mixed $value): int
+    {
+        return $value === true || $value === 1 || $value === '1' ? 1 : 0;
     }
 
     /**
@@ -458,23 +571,50 @@ class NewslistingApiController extends Controller
         return [$statusval, $scheduleStr];
     }
 
-    private function parseDateTimeStartOfDay(string $date): string
+    /**
+     * Normalize legacy/empty DB values so we never write '' into DATETIME columns on update.
+     */
+    private function datetimeOrNullFromDb(mixed $raw): ?string
     {
-        return Carbon::parse($date)->startOfDay()->format('Y-m-d H:i:s');
+        if ($raw === null) {
+            return null;
+        }
+        $s = trim((string) $raw);
+        if ($s === '' || str_starts_with($s, '0000-00-00')) {
+            return null;
+        }
+
+        return $s;
     }
 
-    private function parseDateOrEmpty(?string $date): string
+    private function isLegacyEmptyScheduleDatetime(?string $datetime): bool
     {
-        if ($date === null || $date === '') {
-            return '';
+        if ($datetime === null || $datetime === '') {
+            return true;
         }
-        try {
-            $c = Carbon::parse($date);
+        $t = trim($datetime);
 
-            return $c->format('Y-m-d H:i:s');
-        } catch (\Throwable) {
-            return '';
+        return str_starts_with($t, '0000-00-00')
+            || str_starts_with($t, '1970-01-01');
+    }
+
+    /**
+     * Persist schedule: NOT NULL column + strict mode — never '', never NULL; use {@see self::LEGACY_EMPTY_SCHEDULE_DATETIME} when unset.
+     *
+     * @param  string|null  $resolvedFromForm  Y-m-d H:i:s from resolveStatusAndSchedule, or null if form left schedule blank.
+     */
+    private function persistScheduleDate(?string $resolvedFromForm, mixed $existingFromDb): string
+    {
+        if ($resolvedFromForm !== null && $resolvedFromForm !== '') {
+            return $resolvedFromForm;
         }
+
+        $existing = $this->datetimeOrNullFromDb($existingFromDb);
+        if ($existing !== null && ! $this->isLegacyEmptyScheduleDatetime($existing)) {
+            return $existing;
+        }
+
+        return self::LEGACY_EMPTY_SCHEDULE_DATETIME;
     }
 
     /**
@@ -490,6 +630,9 @@ class NewslistingApiController extends Controller
             return null;
         }
         if (str_starts_with($s, '0000-00-00')) {
+            return null;
+        }
+        if (str_starts_with($s, '1970-01-01')) {
             return null;
         }
 
@@ -534,9 +677,10 @@ class NewslistingApiController extends Controller
         $sched = $row['schedule_date'] ?? null;
         $schedDate = '';
         $schedTime = '';
-        if ($sched !== null && $sched !== '') {
+        $schedRaw = $sched !== null ? trim((string) $sched) : '';
+        if ($schedRaw !== '' && ! $this->isLegacyEmptyScheduleDatetime($schedRaw)) {
             try {
-                $c = Carbon::parse((string) $sched);
+                $c = Carbon::parse($schedRaw);
                 $schedDate = $c->format('Y-m-d');
                 $schedTime = $c->format('H:i');
             } catch (\Throwable) {
@@ -570,7 +714,7 @@ class NewslistingApiController extends Controller
             'featured_content' => (string) ($row['featured_content'] ?? '0'),
             'p2d_date' => $this->formatDateInput($row['p2d_date'] ?? null),
             'due_date' => $this->formatDateInput($row['due_date'] ?? null),
-            'completion_date' => $this->formatDateInput($row['completion_date'] ?? null),
+            'completion_date' => $this->formatDateInputForDisplay($row['completion_date'] ?? null),
             'schedule_date' => $schedDate,
             'schedule_time' => $schedTime,
             'status1' => $statusForForm,
@@ -583,6 +727,12 @@ class NewslistingApiController extends Controller
             'cover_img_url' => $cover !== '' ? url('images/NewsContents/coverImages/'.$cover) : null,
             'final_releasestatus' => (string) ($row['final_releasestatus'] ?? '0'),
             'article_content' => (string) ($row['article_content'] ?? ''),
+            'youtube_url_check' => (string) ((int) ($row['youtube_url_check'] ?? 0)),
+            'youtube_url' => (string) ($row['youtube_url'] ?? ''),
+            'youtube_video_check' => (string) ((int) ($row['youtube_video_check'] ?? 0)),
+            'youtube_video' => (string) ($row['youtube_video'] ?? ''),
+            'youtube_subtitles' => (string) ($row['youtube_subtitles'] ?? ''),
+            'flowchart_templateid' => (int) ($row['flowchart_templateid'] ?? 0),
         ];
     }
 
@@ -596,6 +746,20 @@ class NewslistingApiController extends Controller
         } catch (\Throwable) {
             return null;
         }
+    }
+
+    /** Hide legacy DATE sentinels from API consumers (forms). */
+    private function formatDateInputForDisplay(mixed $value): ?string
+    {
+        $f = $this->formatDateInput($value);
+        if ($f === null) {
+            return null;
+        }
+        if (str_starts_with($f, '1970-01-01') || str_starts_with($f, '0000-00-00')) {
+            return null;
+        }
+
+        return $f;
     }
 
     private function storeNewsImage(\Illuminate\Http\UploadedFile $file, string $kind): string

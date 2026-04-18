@@ -19,8 +19,9 @@ Route::prefix('mwadmin')->group(function (): void {
     Route::middleware('mwadmin.auth')->group(function (): void {
         $authProps = static function (Request $request): array {
             $session = (array) $request->session()->get('ishnews_session', []);
-            if (! empty($session['validated']) && empty($session['modules'])) {
-                $session = app(MwadminAccessService::class)->mergeModulesIntoSession($session);
+            $access = app(MwadminAccessService::class);
+            if ($access->shouldRefreshModules($session)) {
+                $session = $access->mergeModulesIntoSession($session);
                 $request->session()->put('ishnews_session', $session);
             }
 
@@ -184,8 +185,43 @@ Route::prefix('mwadmin')->group(function (): void {
 
         Route::middleware('mwadmin.can:newslisting')->group(function () use ($authProps): void {
             Route::get('/newslisting', fn (Request $request) => Inertia::render('Mwadmin/Newslisting/Index', $authProps($request)))->name('mwadmin.newslisting.index');
+            /** Continue “Add News” wizard (steps 2–6) on create URL after P2D save — same UI as edit, not `/edit/…`. */
+            Route::get('/newslisting/create/{newslistingId}/{step?}', function (Request $request, int $newslistingId, ?string $step = null) use ($authProps) {
+                $initial = 1;
+                if ($step !== null && ctype_digit($step)) {
+                    $n = (int) $step;
+                    if ($n >= 1 && $n <= 6) {
+                        $initial = $n;
+                    }
+                }
+
+                return Inertia::render(
+                    'Mwadmin/Newslisting/Create',
+                    array_merge($authProps($request), [
+                        'newslistingId' => $newslistingId,
+                        'initialStep' => $initial,
+                        'createWizard' => true,
+                    ])
+                );
+            })->where(['step' => '[1-6]'])->middleware('mwadmin.canFlag:newslisting,allow_edit')->name('mwadmin.newslisting.create.wizard');
             Route::get('/newslisting/create', fn (Request $request) => Inertia::render('Mwadmin/Newslisting/Create', $authProps($request)))->middleware('mwadmin.canFlag:newslisting,allow_add')->name('mwadmin.newslisting.create');
-            Route::get('/newslisting/{id}/edit', fn (Request $request, int $id) => Inertia::render('Mwadmin/Newslisting/Edit', array_merge($authProps($request), ['newslistingId' => $id])))->middleware('mwadmin.canFlag:newslisting,allow_edit')->name('mwadmin.newslisting.edit');
+            Route::get('/newslisting/{id}/edit/{step?}', function (Request $request, int $id, ?string $step = null) use ($authProps) {
+                $initial = 1;
+                if ($step !== null && ctype_digit($step)) {
+                    $n = (int) $step;
+                    if ($n >= 1 && $n <= 6) {
+                        $initial = $n;
+                    }
+                }
+
+                return Inertia::render(
+                    'Mwadmin/Newslisting/Edit',
+                    array_merge($authProps($request), [
+                        'newslistingId' => $id,
+                        'initialStep' => $initial,
+                    ])
+                );
+            })->where(['step' => '[1-6]'])->middleware('mwadmin.canFlag:newslisting,allow_edit')->name('mwadmin.newslisting.edit');
         });
 
         Route::middleware('mwadmin.can:schedule')->group(function () use ($authProps): void {

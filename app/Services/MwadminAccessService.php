@@ -19,6 +19,12 @@ class MwadminAccessService
         'roles',
         'newsletter',
         'newslisting',
+        /** Sub-modules for newslisting workflow (legacy CheckRights keys / access_modules.modulename). */
+        'p2dprocess',
+        'p2dchecklist',
+        'texteditor',
+        'multimedia',
+        'review',
         'schedule',
         'sponsor',
         'advertisement',
@@ -26,6 +32,27 @@ class MwadminAccessService
         'designation',
         'flowchart',
     ];
+
+    /**
+     * @param  array<string, mixed>  $session
+     */
+    public function shouldRefreshModules(array $session): bool
+    {
+        if (empty($session['validated'])) {
+            return false;
+        }
+        $mods = $session['modules'] ?? [];
+        if (! is_array($mods) || $mods === []) {
+            return true;
+        }
+        foreach (self::MODULE_KEYS as $key) {
+            if (! array_key_exists($key, $mods)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     /**
      * @return array<string, array<string, int>>
