@@ -2,6 +2,8 @@ import { Head, Link, router } from '@inertiajs/react';
 import axios from 'axios';
 import { useCallback, useEffect, useState } from 'react';
 import MwadminImageEditorModal from '../../../Components/Mwadmin/MwadminImageEditorModal';
+import MwadminVideoUploadModal from '../../../Components/Mwadmin/MwadminVideoUploadModal';
+import CkeEditor4 from '../../../Components/Mwadmin/CkeEditor4';
 import MwadminLayout from '../../../Components/Mwadmin/Layout';
 import DmyDateInput from '../../../Components/Mwadmin/DmyDateInput';
 import MwadminTimeInput from '../../../Components/Mwadmin/MwadminTimeInput';
@@ -10,33 +12,48 @@ import { MWADMIN_NEWS_BANNER, MWADMIN_NEWS_COVER } from '../../../lib/mwadminIma
 import { dmyToIsoDate, isoDateToDmy } from '../Sponsor/sponsorDateFormat';
 
 const MAX_NEWS_IMAGE_BYTES = 8 * 1024 * 1024;
+const MAX_NEWS_VIDEO_BYTES = 500 * 1024 * 1024;
 
 const DRAFT_STATUS = ['Pending', 'WIP', 'Ready', 'Issue', 'Dropped', 'Hold'];
 const EDIT_STATUS = [...DRAFT_STATUS, 'Released', 'Booked'];
 
-/** Legacy mwadmin/newslisting/edit/{id}/{step}: 1=P2D, 2=Checklist, 3=Text, 4=Multimedia, 5=Comments, 6=Reviews */
+/** Legacy mwadmin/newslisting/edit/{id}/{step}: 1=P2D, 2=Checklist, 3=Text, 4=Multimedia, 5=Reviews */
 const LEGACY_EDIT_STEPS = [
     { id: 1, label: 'P2D Process' },
     { id: 2, label: 'P2D CheckList' },
     { id: 3, label: 'Text Article' },
     { id: 4, label: 'Multimedia' },
-    { id: 5, label: 'Comments' },
-    { id: 6, label: 'Reviews' },
+    { id: 5, label: 'Reviews' },
 ];
+
+const CHECKLIST_STATUS_OPTS = [
+    { id: 1, label: 'Pending' },
+    { id: 2, label: 'WIP' },
+    { id: 3, label: 'Done' },
+    { id: 4, label: 'Issue' },
+    { id: 5, label: 'NA' },
+];
+
+const PLAN_OPTS = [
+    { id: 1, label: 'Pre Production' },
+    { id: 2, label: 'Production' },
+    { id: 3, label: 'Post Production' },
+];
+
+function youtubeEmbedSrc(url) {
+    if (!url || !String(url).trim()) return null;
+    const u = String(url).trim();
+    const m = u.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{6,})/);
+    return m ? `https://www.youtube.com/embed/${m[1]}` : null;
+}
 
 function moduleAllowEdit(modules, key) {
     return Number(modules?.[key]?.allow_edit) > 0;
 }
 
-/** Legacy edit.php: sub-module allow_edit for tabs 1–4; Reviews uses step===6 only for active styling. */
+/** Legacy edit.php: sub-module allow_edit per tab (p2dprocess … review). */
 function canEditNewslistingStep(isSuper, modules, stepId) {
     if (isSuper) {
-        return stepId !== 5;
-    }
-    if (stepId === 5) {
-        return false;
-    }
-    if (stepId === 6) {
         return true;
     }
     const m = modules ?? {};
@@ -52,32 +69,23 @@ function canEditNewslistingStep(isSuper, modules, stepId) {
     if (stepId === 4) {
         return moduleAllowEdit(m, 'multimedia');
     }
+    if (stepId === 5) {
+        return moduleAllowEdit(m, 'review');
+    }
     return false;
 }
 
 function tabItemClassLegacy(isSuper, activeStep, modules, stepId) {
-    if (stepId === 5) {
+    const can = canEditNewslistingStep(isSuper, modules, stepId);
+    if (!can) {
         return 'disabled';
     }
-    if (isSuper) {
-        return activeStep === stepId ? 'active' : '';
-    }
-    if (stepId === 6) {
-        return activeStep === 6 ? 'active' : 'disabled';
-    }
-    const ok = canEditNewslistingStep(isSuper, modules, stepId);
-    return activeStep === stepId && ok ? 'active' : 'disabled';
+    return activeStep === stepId ? 'active' : '';
 }
 
 function tabTitleLegacy(isSuper, modules, stepId) {
-    if (stepId === 5) {
-        return 'Comments tab is not used in legacy workflow.';
-    }
     if (isSuper) {
         return undefined;
-    }
-    if (stepId === 6) {
-        return 'You have no authorization';
     }
     return canEditNewslistingStep(false, modules, stepId) ? undefined : 'You have no authorization';
 }
@@ -85,7 +93,7 @@ function tabTitleLegacy(isSuper, modules, stepId) {
 function clampStep(n) {
     const x = Number(n);
     if (Number.isNaN(x)) return 1;
-    return Math.min(6, Math.max(1, x));
+    return Math.min(5, Math.max(1, x));
 }
 
 export default function NewslistingEdit({
@@ -100,9 +108,9 @@ export default function NewslistingEdit({
     const [categories, setCategories] = useState([]);
     const [subcategories, setSubcategories] = useState([]);
     const [newsSources, setNewsSources] = useState([]);
+    const [designations, setDesignations] = useState([]);
     const [load, setLoad] = useState(true);
     const [activeStep, setActiveStep] = useState(() => clampStep(initialStep));
-    const [flowchartTemplateId, setFlowchartTemplateId] = useState(0);
     const [articleContent, setArticleContent] = useState('');
     const [savingArticle, setSavingArticle] = useState(false);
 
@@ -143,6 +151,21 @@ export default function NewslistingEdit({
     const [coverPickUrl, setCoverPickUrl] = useState('');
     const [bannerEditorOpen, setBannerEditorOpen] = useState(false);
     const [coverEditorOpen, setCoverEditorOpen] = useState(false);
+    const [videoFile, setVideoFile] = useState(null);
+    const [videoServerUrl, setVideoServerUrl] = useState('');
+    const [videoPickUrl, setVideoPickUrl] = useState('');
+    const [videoEditorOpen, setVideoEditorOpen] = useState(false);
+
+    const [checklistTemplates, setChecklistTemplates] = useState([]);
+    const [selectedTemplateId, setSelectedTemplateId] = useState('');
+    const [checklistRows, setChecklistRows] = useState([]);
+    const [checklistPreviewLoading, setChecklistPreviewLoading] = useState(false);
+    const [savingChecklist, setSavingChecklist] = useState(false);
+    const [allUsers, setAllUsers] = useState([]);
+
+    const [reviewItems, setReviewItems] = useState([]);
+    const [reviewText, setReviewText] = useState('');
+    const [savingReview, setSavingReview] = useState(false);
 
     useEffect(() => {
         setActiveStep(clampStep(initialStep));
@@ -168,8 +191,19 @@ export default function NewslistingEdit({
         return () => URL.revokeObjectURL(u);
     }, [coverFile]);
 
+    useEffect(() => {
+        if (!videoFile) {
+            setVideoPickUrl('');
+            return undefined;
+        }
+        const u = URL.createObjectURL(videoFile);
+        setVideoPickUrl(u);
+        return () => URL.revokeObjectURL(u);
+    }, [videoFile]);
+
     const bannerDisplaySrc = bannerPickUrl || bannerImgUrl;
     const coverDisplaySrc = coverPickUrl || coverImgUrl;
+    const videoDisplaySrc = videoPickUrl || videoServerUrl;
 
     const setBannerFromFile = useCallback(
         (file, meta = {}) => {
@@ -211,13 +245,17 @@ export default function NewslistingEdit({
         let c = false;
         (async () => {
             try {
-                const [{ data: opts }, { data: row }] = await Promise.all([
+                const [{ data: opts }, { data: row }, { data: clBundle }, { data: revBody }] = await Promise.all([
                     axios.get('/api/mwadmin/newslistings/options'),
                     axios.get(`/api/mwadmin/newslistings/${newslistingId}`),
+                    axios.get(`/api/mwadmin/newslistings/${newslistingId}/checklist`),
+                    axios.get(`/api/mwadmin/newslistings/${newslistingId}/reviews`),
                 ]);
                 if (c) return;
                 setCategories(opts.categories || []);
                 setNewsSources(opts.news_sources || []);
+                setDesignations(opts.designations || []);
+                setAllUsers(opts.users || []);
                 const d = row.data;
                 const catId = String(d.category_id ?? '');
                 const { data: sub } = await axios.get('/api/mwadmin/newslistings/options', {
@@ -225,7 +263,6 @@ export default function NewslistingEdit({
                 });
                 if (c) return;
                 setSubcategories(sub.subcategories || []);
-                setFlowchartTemplateId(Number(d.flowchart_templateid ?? 0) || 0);
                 setArticleContent(d.article_content != null ? String(d.article_content) : '');
                 setForm({
                     category_id: catId,
@@ -257,6 +294,30 @@ export default function NewslistingEdit({
                 setCoverImgUrl(d.cover_img_url && String(d.cover_img_url).trim() ? String(d.cover_img_url) : '');
                 setBannerSourceFile(null);
                 setCoverSourceFile(null);
+                setVideoFile(null);
+                setVideoServerUrl(
+                    d.youtube_video_url && String(d.youtube_video_url).trim() ? String(d.youtube_video_url) : ''
+                );
+
+                const cl = clBundle?.data ?? {};
+                setChecklistTemplates(cl.templates || []);
+                const ft = Number(cl.flowchart_templateid ?? 0) || 0;
+                setSelectedTemplateId(ft > 0 ? String(ft) : '');
+                setChecklistRows(
+                    (cl.rows || []).map((r, i) => ({
+                        _key: `saved-${r.id ?? i}`,
+                        plan: Number(r.plan) || 1,
+                        activity_name: r.activity_name ?? '',
+                        responsibility_name: r.responsibility_name ?? '',
+                        user_id: r.user_id ? String(r.user_id) : '',
+                        activity_status: Number(r.activity_status) || 1,
+                        remarks: r.remarks ?? '',
+                        date: r.date || null,
+                        time: r.time || '',
+                        sort: r.sort ?? '',
+                    }))
+                );
+                setReviewItems(Array.isArray(revBody?.data) ? revBody.data : []);
             } catch {
                 if (!c) dialog.toast('Unable to load content.', 'error');
             } finally {
@@ -267,6 +328,12 @@ export default function NewslistingEdit({
             c = true;
         };
     }, [newslistingId]);
+
+    useEffect(() => {
+        if (!form.youtube_video_check) {
+            setVideoFile(null);
+        }
+    }, [form.youtube_video_check]);
 
     useEffect(() => {
         const cid = form.category_id;
@@ -343,6 +410,9 @@ export default function NewslistingEdit({
             appendCommonFields(fd);
             if (bannerFile) fd.append('banner_img', bannerFile);
             if (coverFile) fd.append('cover_img', coverFile);
+            if (videoFile) {
+                fd.append('youtube_video_file', videoFile);
+            }
 
             await axios.post(`/api/mwadmin/newslistings/${newslistingId}?_method=PUT`, fd, {
                 headers: { 'Content-Type': 'multipart/form-data' },
@@ -355,6 +425,14 @@ export default function NewslistingEdit({
             setCoverFile(null);
             setBannerSourceFile(null);
             setCoverSourceFile(null);
+            setVideoFile(null);
+            setVideoServerUrl(
+                r.youtube_video_url && String(r.youtube_video_url).trim() ? String(r.youtube_video_url) : ''
+            );
+            setForm((f) => ({
+                ...f,
+                youtube_video: r.youtube_video != null ? String(r.youtube_video) : '',
+            }));
             setArticleContent(r.article_content != null ? String(r.article_content) : articleContent);
             dialog.toast('News content updated successfully.', 'success');
         } catch (err) {
@@ -385,6 +463,114 @@ export default function NewslistingEdit({
             dialog.toast(d?.message || 'Unable to save text article.', 'error');
         } finally {
             setSavingArticle(false);
+        }
+    };
+
+    const resolveDesignationId = (row) => {
+        if (row.responsibility_id != null && row.responsibility_id !== '') {
+            return String(row.responsibility_id);
+        }
+        const name = (row.responsibility_name || '').trim();
+        if (!name) return '';
+        const d = designations.find((x) => (x.designation || '').trim() === name);
+        return d ? String(d.id) : '';
+    };
+
+    const usersForChecklistRow = (row) => {
+        const rid = resolveDesignationId(row);
+        if (!rid) return allUsers;
+        return allUsers.filter((u) => String(u.designation ?? '') === rid);
+    };
+
+    const onLoadChecklistTemplate = async () => {
+        if (!selectedTemplateId) {
+            dialog.toast('Select a Flow Chart Template.', 'error');
+            return;
+        }
+        setChecklistPreviewLoading(true);
+        try {
+            const { data } = await axios.post(`/api/mwadmin/newslistings/${newslistingId}/checklist/preview`, {
+                template_id: parseInt(selectedTemplateId, 10),
+            });
+            const bp = data?.data?.blueprint || [];
+            setChecklistRows(
+                bp.map((b, i) => ({
+                    _key: `bp-${Date.now()}-${i}`,
+                    plan: b.plan,
+                    activity_name: b.activity_name,
+                    responsibility_name: b.responsibility_name,
+                    responsibility_id: b.responsibility_id,
+                    user_id: '',
+                    activity_status: 1,
+                    remarks: '',
+                    date: null,
+                    time: '',
+                    sort: String(b.sort ?? i),
+                }))
+            );
+            dialog.toast('Template loaded. Assign users and save.', 'success');
+        } catch (err) {
+            const d = err?.response?.data;
+            dialog.toast(d?.message || 'Unable to load template.', 'error');
+        } finally {
+            setChecklistPreviewLoading(false);
+        }
+    };
+
+    const onSaveChecklist = async (e) => {
+        e.preventDefault();
+        if (!selectedTemplateId) {
+            dialog.toast('Select a Flow Chart Template.', 'error');
+            return;
+        }
+        if (!checklistRows.length) {
+            dialog.toast('Load a template or keep saved rows before saving.', 'error');
+            return;
+        }
+        setSavingChecklist(true);
+        try {
+            await axios.put(`/api/mwadmin/newslistings/${newslistingId}/checklist`, {
+                template_id: parseInt(selectedTemplateId, 10),
+                rows: checklistRows.map((r) => ({
+                    plan: r.plan,
+                    activity_name: r.activity_name,
+                    responsibility_name: r.responsibility_name,
+                    user_id: r.user_id ? parseInt(r.user_id, 10) : null,
+                    activity_status: r.activity_status,
+                    remarks: r.remarks || '',
+                    date: r.date || null,
+                    time: r.time || '',
+                    sort: r.sort != null ? String(r.sort) : '',
+                })),
+            });
+            dialog.toast('P2D CheckList saved.', 'success');
+        } catch (err) {
+            const d = err?.response?.data;
+            dialog.toast(d?.message || 'Unable to save checklist.', 'error');
+        } finally {
+            setSavingChecklist(false);
+        }
+    };
+
+    const onSubmitReview = async (e) => {
+        e.preventDefault();
+        const t = reviewText.trim();
+        if (!t) {
+            dialog.toast('Enter review feedback.', 'error');
+            return;
+        }
+        setSavingReview(true);
+        try {
+            await axios.post(`/api/mwadmin/newslistings/${newslistingId}/reviews`, { review: t });
+            const { data: revBody } = await axios.get(`/api/mwadmin/newslistings/${newslistingId}/reviews`);
+            setReviewItems(Array.isArray(revBody?.data) ? revBody.data : []);
+            setReviewText('');
+            dialog.toast('Review submitted.', 'success');
+        } catch (err) {
+            const d = err?.response?.data;
+            dialog.toast(d?.message || 'Unable to submit review.', 'error');
+        } finally {
+            setSavingReview(false);
         }
     };
 
@@ -427,12 +613,12 @@ export default function NewslistingEdit({
                     </div>
                     <h1 className="mwadmin-title">{docTitle}</h1>
 
-                    <section className="mwadmin-panel mwadmin-form-panel">
-                        <ul className="mwadmin-news-create-tabs" role="tablist">
+                    <section className="mwadmin-panel mwadmin-form-panel mwadmin-news-wizard">
+                        <ul className="mwadmin-news-wizard-tabs" role="tablist">
                             {LEGACY_EDIT_STEPS.map((t) => {
-                                const isComments = t.id === 5;
                                 const liClass = tabItemClassLegacy(isSuper, activeStep, modules, t.id);
                                 const title = tabTitleLegacy(isSuper, modules, t.id);
+                                const canTab = canEditNewslistingStep(isSuper, modules, t.id);
                                 const isActive = liClass === 'active';
                                 return (
                                     <li
@@ -442,9 +628,7 @@ export default function NewslistingEdit({
                                         className={liClass}
                                         title={title}
                                     >
-                                        {isComments ? (
-                                            <span>{t.label}</span>
-                                        ) : isSuper ? (
+                                        {canTab ? (
                                             <button
                                                 type="button"
                                                 className="mwadmin-news-edit-tab-btn"
@@ -460,6 +644,7 @@ export default function NewslistingEdit({
                             })}
                         </ul>
 
+                        <div className="mwadmin-news-wizard-body">
                         {activeStep === 1 && (
                             <form onSubmit={onSubmit} className="mwadmin-form-grid mwadmin-news-create-form">
                                 <div>
@@ -725,7 +910,7 @@ export default function NewslistingEdit({
                                 </div>
                                 <div className="mwadmin-form-actions mwadmin-news-edit-step-actions">
                                     <button type="submit" disabled={saving}>
-                                        {saving ? 'Saving...' : 'Save'}
+                                        {saving ? 'Saving...' : pageVariant === 'create' ? 'Save' : 'Update'}
                                     </button>
                                     <button
                                         type="button"
@@ -740,53 +925,235 @@ export default function NewslistingEdit({
                         )}
 
                         {activeStep === 2 && (
-                            <div className="mwadmin-news-edit-step-panel">
+                            <form onSubmit={onSaveChecklist} className="mwadmin-news-edit-step-panel">
                                 <h2 className="mwadmin-news-edit-step-title">P2D CheckList</h2>
-                                <p className="mwadmin-news-edit-step-intro">
-                                    Legacy workflow: checklist rows come from the selected flowchart template and are
-                                    tracked per activity. Flowchart template id for this content:{' '}
-                                    <strong>{flowchartTemplateId || '— (not set)'}</strong>.
-                                </p>
-                                <p className="mwadmin-news-edit-step-intro">
-                                    Full checklist grid (assignments, dates, status per activity) will match legacy once
-                                    content-chart APIs are wired.
-                                </p>
-                                <p className="mwadmin-news-edit-step-intro">
-                                    <strong>Workflow order (same as legacy tabs):</strong> P2D CheckList → Text Article →
-                                    Multimedia → Reviews. Use <strong>Next: Text Article</strong> below, then continue with
-                                    each step&apos;s Next button (Multimedia, then Reviews).
-                                </p>
+                                <div className="mwadmin-news-checklist-template-row">
+                                    <div>
+                                        <label>
+                                            Flow Chart Template <span className="mwadmin-required">*</span>
+                                        </label>
+                                        <select
+                                            value={selectedTemplateId}
+                                            onChange={(e) => setSelectedTemplateId(e.target.value)}
+                                        >
+                                            <option value="">Please select</option>
+                                            {checklistTemplates.map((t) => (
+                                                <option key={t.id} value={String(t.id)}>
+                                                    {t.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="mwadmin-news-checklist-load">
+                                        <button
+                                            type="button"
+                                            className="mwadmin-news-checklist-load-btn"
+                                            disabled={checklistPreviewLoading || !selectedTemplateId}
+                                            onClick={onLoadChecklistTemplate}
+                                        >
+                                            {checklistPreviewLoading ? 'Loading…' : 'Load'}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <h3 className="mwadmin-news-checklist-subtitle">P2D Checklist</h3>
+                                <div className="mwadmin-news-checklist-table-wrap">
+                                    <table className="mwadmin-news-checklist-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Plan</th>
+                                                <th>Activity</th>
+                                                <th>Responsibility</th>
+                                                <th>User</th>
+                                                <th>Date</th>
+                                                <th>Time</th>
+                                                <th>Remarks</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {checklistRows.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan={8} className="mwadmin-news-checklist-empty">
+                                                        Select a template and click Load, or saved rows will appear here.
+                                                    </td>
+                                                </tr>
+                                            ) : (
+                                                checklistRows.map((row, idx) => (
+                                                    <tr key={row._key || idx}>
+                                                        <td>
+                                                            <select
+                                                                value={String(row.plan)}
+                                                                onChange={(e) =>
+                                                                    setChecklistRows((rows) =>
+                                                                        rows.map((r, i) =>
+                                                                            i === idx
+                                                                                ? {
+                                                                                      ...r,
+                                                                                      plan: parseInt(e.target.value, 10),
+                                                                                  }
+                                                                                : r
+                                                                        )
+                                                                    )
+                                                                }
+                                                            >
+                                                                {PLAN_OPTS.map((p) => (
+                                                                    <option key={p.id} value={String(p.id)}>
+                                                                        {p.label}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                        </td>
+                                                        <td>
+                                                            <input
+                                                                type="text"
+                                                                value={row.activity_name}
+                                                                readOnly
+                                                                className="mwadmin-input-readonly"
+                                                            />
+                                                        </td>
+                                                        <td>
+                                                            <input
+                                                                type="text"
+                                                                value={row.responsibility_name}
+                                                                readOnly
+                                                                className="mwadmin-input-readonly"
+                                                            />
+                                                        </td>
+                                                        <td>
+                                                            <select
+                                                                value={row.user_id}
+                                                                onChange={(e) =>
+                                                                    setChecklistRows((rows) =>
+                                                                        rows.map((r, i) =>
+                                                                            i === idx
+                                                                                ? { ...r, user_id: e.target.value }
+                                                                                : r
+                                                                        )
+                                                                    )
+                                                                }
+                                                            >
+                                                                <option value="">Please select</option>
+                                                                {usersForChecklistRow(row).map((u) => (
+                                                                    <option key={u.userid} value={String(u.userid)}>
+                                                                        {[u.first_name, u.last_name]
+                                                                            .filter(Boolean)
+                                                                            .join(' ') || String(u.userid)}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                        </td>
+                                                        <td>
+                                                            <DmyDateInput
+                                                                density="compact"
+                                                                value={isoDateToDmy(row.date)}
+                                                                onChange={(dmy) => {
+                                                                    const iso = dmyToIsoDate(dmy);
+                                                                    setChecklistRows((rows) =>
+                                                                        rows.map((r, i) =>
+                                                                            i === idx
+                                                                                ? {
+                                                                                      ...r,
+                                                                                      date:
+                                                                                          iso && iso !== 'INVALID'
+                                                                                              ? iso
+                                                                                              : null,
+                                                                                  }
+                                                                                : r
+                                                                        )
+                                                                    );
+                                                                }}
+                                                                placeholder="dd-mm-yyyy"
+                                                            />
+                                                        </td>
+                                                        <td className="mwadmin-news-checklist-time-cell">
+                                                            <MwadminTimeInput
+                                                                density="compact"
+                                                                preferNativeDialog
+                                                                value={row.time || ''}
+                                                                onChange={(hhmm) =>
+                                                                    setChecklistRows((rows) =>
+                                                                        rows.map((r, i) =>
+                                                                            i === idx ? { ...r, time: hhmm } : r
+                                                                        )
+                                                                    )
+                                                                }
+                                                            />
+                                                        </td>
+                                                        <td>
+                                                            <input
+                                                                type="text"
+                                                                value={row.remarks}
+                                                                onChange={(e) =>
+                                                                    setChecklistRows((rows) =>
+                                                                        rows.map((r, i) =>
+                                                                            i === idx
+                                                                                ? { ...r, remarks: e.target.value }
+                                                                                : r
+                                                                        )
+                                                                    )
+                                                                }
+                                                            />
+                                                        </td>
+                                                        <td>
+                                                            <select
+                                                                value={String(row.activity_status)}
+                                                                onChange={(e) =>
+                                                                    setChecklistRows((rows) =>
+                                                                        rows.map((r, i) =>
+                                                                            i === idx
+                                                                                ? {
+                                                                                      ...r,
+                                                                                      activity_status: parseInt(
+                                                                                          e.target.value,
+                                                                                          10
+                                                                                      ),
+                                                                                  }
+                                                                                : r
+                                                                        )
+                                                                    )
+                                                                }
+                                                            >
+                                                                {CHECKLIST_STATUS_OPTS.map((s) => (
+                                                                    <option key={s.id} value={String(s.id)}>
+                                                                        {s.label}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+
                                 <div className="mwadmin-form-actions mwadmin-news-edit-step-actions">
                                     <button type="button" onClick={() => goToStep(1)}>
                                         ← P2D Process
+                                    </button>
+                                    <button type="submit" disabled={savingChecklist}>
+                                        {savingChecklist ? 'Saving…' : 'Update'}
                                     </button>
                                     <button type="button" className="mwadmin-news-edit-next-btn" onClick={() => goToStep(3)}>
                                         Next: Text Article →
                                     </button>
                                 </div>
-                            </div>
+                            </form>
                         )}
 
                         {activeStep === 3 && (
                             <form onSubmit={onSaveTextArticle} className="mwadmin-news-edit-step-panel">
                                 <h2 className="mwadmin-news-edit-step-title">Text Article</h2>
-                                <div style={{ gridColumn: '1 / -1' }}>
-                                    <label htmlFor="news-text-article-body">Article body</label>
-                                    <textarea
-                                        id="news-text-article-body"
-                                        className="mwadmin-textarea"
-                                        rows={16}
-                                        value={articleContent}
-                                        onChange={(e) => setArticleContent(e.target.value)}
-                                        placeholder="Full article HTML or text (legacy textarticle.article_content)."
-                                    />
+                                <div className="mwadmin-news-text-article-editor">
+                                    <CkeEditor4 value={articleContent} onChange={setArticleContent} height={420} />
                                 </div>
                                 <div className="mwadmin-form-actions mwadmin-news-edit-step-actions">
                                     <button type="button" onClick={() => goToStep(2)}>
                                         ← P2D CheckList
                                     </button>
                                     <button type="submit" disabled={savingArticle}>
-                                        {savingArticle ? 'Saving…' : 'Save text article'}
+                                        {savingArticle ? 'Saving…' : 'Update'}
                                     </button>
                                     <button type="button" className="mwadmin-news-edit-next-btn" onClick={() => goToStep(4)}>
                                         Next: Multimedia →
@@ -798,9 +1165,118 @@ export default function NewslistingEdit({
                         {activeStep === 4 && (
                             <form onSubmit={onSubmit} className="mwadmin-form-grid mwadmin-news-create-form">
                                 <h2 className="mwadmin-form-grid-full mwadmin-news-edit-step-title">Multimedia</h2>
+
+                                <div className="mwadmin-form-grid-full mwadmin-news-mm-video-block">
+                                    <h3 className="mwadmin-news-mm-subtitle">
+                                        Video Uploading{' '}
+                                        <span className="mwadmin-news-mm-info" title="Choose manual file name or YouTube URL">
+                                            i
+                                        </span>
+                                    </h3>
+                                    <div className="mwadmin-news-mm-video-options">
+                                        <label className="mwadmin-news-create-check">
+                                            <input
+                                                type="checkbox"
+                                                checked={form.youtube_video_check}
+                                                onChange={(e) => {
+                                                    const on = e.target.checked;
+                                                    setForm((f) => ({
+                                                        ...f,
+                                                        youtube_video_check: on,
+                                                        youtube_url_check: on ? false : f.youtube_url_check,
+                                                    }));
+                                                }}
+                                            />
+                                            <span>Manually Upload</span>
+                                        </label>
+                                        <label className="mwadmin-news-create-check">
+                                            <input
+                                                type="checkbox"
+                                                checked={form.youtube_url_check}
+                                                onChange={(e) => {
+                                                    const on = e.target.checked;
+                                                    setForm((f) => ({
+                                                        ...f,
+                                                        youtube_url_check: on,
+                                                        youtube_video_check: on ? false : f.youtube_video_check,
+                                                    }));
+                                                }}
+                                            />
+                                            <span>You-Tube Video UrL</span>
+                                        </label>
+                                    </div>
+                                    {form.youtube_url_check ? (
+                                        <>
+                                            <label>
+                                                You Tube UrL <span className="mwadmin-required">*</span>
+                                            </label>
+                                            <input
+                                                value={form.youtube_url}
+                                                onChange={(e) => setForm((f) => ({ ...f, youtube_url: e.target.value }))}
+                                                placeholder="https://www.youtube.com/watch?v=…"
+                                            />
+                                            <div className="mwadmin-news-youtube-preview">
+                                                {youtubeEmbedSrc(form.youtube_url) ? (
+                                                    <iframe
+                                                        title="YouTube preview"
+                                                        src={youtubeEmbedSrc(form.youtube_url)}
+                                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                        allowFullScreen
+                                                    />
+                                                ) : (
+                                                    <div className="mwadmin-news-youtube-placeholder">Video preview</div>
+                                                )}
+                                            </div>
+                                        </>
+                                    ) : null}
+                                    {form.youtube_video_check ? (
+                                        <div className="mwadmin-form-grid-full mwadmin-news-mm-video-upload-block">
+                                            <label className="mwadmin-news-mm-video-label">Manual video</label>
+                                            <div
+                                                className="mwadmin-news-mm-video-card mwadmin-category-image-preview-wrap--clickable"
+                                                role="button"
+                                                tabIndex={0}
+                                                aria-label="Open video upload"
+                                                onClick={() => setVideoEditorOpen(true)}
+                                                onKeyDown={(ev) => {
+                                                    if (ev.key === 'Enter' || ev.key === ' ') {
+                                                        ev.preventDefault();
+                                                        setVideoEditorOpen(true);
+                                                    }
+                                                }}
+                                            >
+                                                {videoDisplaySrc ? (
+                                                    <video
+                                                        className="mwadmin-news-mm-video-preview"
+                                                        src={videoDisplaySrc}
+                                                        controls
+                                                        playsInline
+                                                        preload="metadata"
+                                                    />
+                                                ) : (
+                                                    <div className="mwadmin-news-mm-video-placeholder-card">
+                                                        NO VIDEO YET
+                                                        <span className="mwadmin-category-image-click-hint">
+                                                            Click to choose file and preview
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            {videoFile || form.youtube_video ? (
+                                                <p className="mwadmin-news-mm-video-filename">
+                                                    {videoFile
+                                                        ? `Pending upload: ${videoFile.name}`
+                                                        : `Stored file: ${form.youtube_video}`}
+                                                </p>
+                                            ) : null}
+                                        </div>
+                                    ) : null}
+                                </div>
+
+                                <h3 className="mwadmin-form-grid-full mwadmin-news-mm-subtitle">Image management</h3>
                                 <div className="mwadmin-form-grid-full mwadmin-category-images-row">
                                     <div className="mwadmin-category-image-block">
-                                        <label>Banner Image</label>
+                                        <label>Banner Image (Size — 800px × 526px)</label>
                                         <div className="mwadmin-category-image-field">
                                             <div
                                                 className="mwadmin-category-image-preview-wrap mwadmin-category-image-preview-wrap--banner mwadmin-category-image-preview-wrap--clickable"
@@ -827,7 +1303,7 @@ export default function NewslistingEdit({
                                         </div>
                                     </div>
                                     <div className="mwadmin-category-image-block">
-                                        <label>Cover Image</label>
+                                        <label>Cover Image (Size — 385px × 165px)</label>
                                         <div className="mwadmin-category-image-field">
                                             <div
                                                 className="mwadmin-category-image-preview-wrap mwadmin-category-image-preview-wrap--box mwadmin-category-image-preview-wrap--clickable"
@@ -855,42 +1331,6 @@ export default function NewslistingEdit({
                                     </div>
                                 </div>
                                 <div className="mwadmin-form-grid-full">
-                                    <label className="mwadmin-news-create-check">
-                                        <input
-                                            type="checkbox"
-                                            checked={form.youtube_url_check}
-                                            onChange={(e) =>
-                                                setForm((f) => ({ ...f, youtube_url_check: e.target.checked }))
-                                            }
-                                        />
-                                        <span>YouTube URL (use)</span>
-                                    </label>
-                                    <input
-                                        value={form.youtube_url}
-                                        onChange={(e) => setForm((f) => ({ ...f, youtube_url: e.target.value }))}
-                                        placeholder="Full URL for this link"
-                                        disabled={!form.youtube_url_check}
-                                    />
-                                </div>
-                                <div className="mwadmin-form-grid-full">
-                                    <label className="mwadmin-news-create-check">
-                                        <input
-                                            type="checkbox"
-                                            checked={form.youtube_video_check}
-                                            onChange={(e) =>
-                                                setForm((f) => ({ ...f, youtube_video_check: e.target.checked }))
-                                            }
-                                        />
-                                        <span>Uploaded video file (use)</span>
-                                    </label>
-                                    <input
-                                        value={form.youtube_video}
-                                        onChange={(e) => setForm((f) => ({ ...f, youtube_video: e.target.value }))}
-                                        placeholder="Filename (legacy stores video file name)"
-                                        disabled={!form.youtube_video_check}
-                                    />
-                                </div>
-                                <div className="mwadmin-form-grid-full">
                                     <label>YouTube subtitles / notes</label>
                                     <textarea
                                         className="mwadmin-textarea"
@@ -908,7 +1348,7 @@ export default function NewslistingEdit({
                                     <button type="submit" disabled={saving}>
                                         {saving ? 'Saving...' : 'Save multimedia'}
                                     </button>
-                                    <button type="button" className="mwadmin-news-edit-next-btn" onClick={() => goToStep(6)}>
+                                    <button type="button" className="mwadmin-news-edit-next-btn" onClick={() => goToStep(5)}>
                                         Next: Reviews →
                                     </button>
                                 </div>
@@ -917,41 +1357,42 @@ export default function NewslistingEdit({
 
                         {activeStep === 5 && (
                             <div className="mwadmin-news-edit-step-panel">
-                                <h2 className="mwadmin-news-edit-step-title">Comments</h2>
-                                <p className="mwadmin-news-edit-step-intro">
-                                    This tab is reserved in legacy but not used in the current workflow.
-                                </p>
-                                <div className="mwadmin-form-actions mwadmin-news-edit-step-actions">
-                                    <button type="button" onClick={() => goToStep(4)}>
-                                        ← Multimedia
-                                    </button>
-                                    <button type="button" className="mwadmin-news-edit-next-btn" onClick={() => goToStep(6)}>
-                                        Next: Reviews →
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-
-                        {activeStep === 6 && (
-                            <div className="mwadmin-news-edit-step-panel">
                                 <h2 className="mwadmin-news-edit-step-title">Reviews</h2>
-                                <div className="mwadmin-news-review-summary">
-                                    <p>
-                                        <strong>Title:</strong> {form.title}
-                                    </p>
-                                    <p>
-                                        <strong>Status:</strong> {form.status1}
-                                    </p>
-                                    <p>
-                                        <strong>P2D case:</strong> {form.p2d_caseno}
-                                    </p>
-                                    <p>
-                                        <strong>Permalink:</strong> {form.permalink}
-                                    </p>
-                                </div>
-                                <p className="mwadmin-news-edit-step-intro">
-                                    Detailed reviewer workflow (legacy reviewerfeedback) can be added here.
-                                </p>
+                                <form onSubmit={onSubmitReview} className="mwadmin-news-review-form">
+                                    <h3 className="mwadmin-news-review-subtitle">Review Feedback</h3>
+                                    <textarea
+                                        className="mwadmin-textarea mwadmin-news-review-textarea"
+                                        rows={8}
+                                        value={reviewText}
+                                        onChange={(e) => setReviewText(e.target.value)}
+                                        placeholder="Enter review feedback…"
+                                    />
+                                    <div className="mwadmin-news-review-submit-row">
+                                        <button type="submit" disabled={savingReview}>
+                                            {savingReview ? 'Submitting…' : 'Submit'}
+                                        </button>
+                                    </div>
+                                </form>
+                                <h3 className="mwadmin-news-review-subtitle">Previous Feedback</h3>
+                                <ul className="mwadmin-news-review-list">
+                                    {reviewItems.length === 0 ? (
+                                        <li className="mwadmin-news-review-empty">No previous feedback yet.</li>
+                                    ) : (
+                                        reviewItems.map((rv) => (
+                                            <li key={rv.id} className="mwadmin-news-review-item">
+                                                <div className="mwadmin-news-review-meta">
+                                                    <strong>{(rv.reviewer_name || '').trim() || 'Reviewer'}</strong>
+                                                    <span className="mwadmin-news-review-date">
+                                                        {rv.modifieddate
+                                                            ? String(rv.modifieddate)
+                                                            : ''}
+                                                    </span>
+                                                </div>
+                                                <div className="mwadmin-news-review-body">{rv.review}</div>
+                                            </li>
+                                        ))
+                                    )}
+                                </ul>
                                 <div className="mwadmin-form-actions mwadmin-news-edit-step-actions">
                                     <button type="button" onClick={() => goToStep(4)}>
                                         ← Multimedia
@@ -960,6 +1401,7 @@ export default function NewslistingEdit({
                                 </div>
                             </div>
                         )}
+                        </div>
                     </section>
                 </div>
                 <MwadminImageEditorModal
@@ -983,6 +1425,22 @@ export default function NewslistingEdit({
                     initialImageFile={coverSourceFile || coverFile}
                     initialImageUrl={coverSourceFile || coverFile ? null : coverDisplaySrc || null}
                     onApply={(file, meta) => setCoverFromFile(file, meta)}
+                />
+                <MwadminVideoUploadModal
+                    open={videoEditorOpen}
+                    onClose={() => setVideoEditorOpen(false)}
+                    title="Video upload"
+                    pendingFile={videoFile}
+                    serverVideoUrl={videoServerUrl}
+                    maxBytes={MAX_NEWS_VIDEO_BYTES}
+                    notify={notify}
+                    onApply={(file) => {
+                        setVideoFile(file);
+                        if (!file) {
+                            setVideoServerUrl('');
+                            setForm((f) => ({ ...f, youtube_video: '' }));
+                        }
+                    }}
                 />
             </MwadminLayout>
         </>

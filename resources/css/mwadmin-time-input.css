@@ -1,0 +1,156 @@
+/**
+ * MwadminTimeInput — trigger row + fixed popover (portaled to body).
+ * Without these rules the popover columns can look “broken” in tight layouts.
+ */
+
+.mwadmin-time-input-wrap {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    gap: 6px;
+    width: 100%;
+    min-width: 0;
+    position: relative;
+    box-sizing: border-box;
+}
+
+.mwadmin-time-input-wrap--compact {
+    gap: 4px;
+}
+
+.mwadmin-time-input-field {
+    flex: 1 1 auto;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.mwadmin-time-input-clock {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    min-height: 34px;
+    padding: 0;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #f8fafc;
+    color: #475569;
+    cursor: pointer;
+}
+
+.mwadmin-time-input-clock:hover:not(:disabled) {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+}
+
+.mwadmin-time-input-clock:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.mwadmin-time-picker-popover {
+    width: 200px;
+    max-width: calc(100vw - 16px);
+    box-sizing: border-box;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    box-shadow:
+        0 10px 40px rgba(15, 23, 42, 0.18),
+        0 2px 8px rgba(15, 23, 42, 0.08);
+    padding: 10px 12px;
+}
+
+.mwadmin-time-picker-popover--dark {
+    background: #1e293b;
+    border-color: #475569;
+    box-shadow:
+        0 10px 40px rgba(0, 0, 0, 0.45),
+        0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.mwadmin-time-picker-cols {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    justify-content: center;
+    gap: 8px;
+}
+
+.mwadmin-time-picker-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    min-width: 44px;
+    gap: 4px;
+}
+
+.mwadmin-time-picker-col--ap {
+    min-width: 40px;
+}
+
+.mwadmin-time-picker-sep {
+    align-self: center;
+    font-size: 18px;
+    font-weight: 700;
+    color: #64748b;
+    padding: 0 2px;
+}
+
+.mwadmin-time-picker-popover--dark .mwadmin-time-picker-sep {
+    color: #94a3b8;
+}
+
+.mwadmin-time-picker-step {
+    border: none;
+    background: #f1f5f9;
+    color: #334155;
+    border-radius: 4px;
+    width: 28px;
+    height: 22px;
+    line-height: 1;
+    font-size: 11px;
+    cursor: pointer;
+    padding: 0;
+}
+
+.mwadmin-time-picker-popover--dark .mwadmin-time-picker-step {
+    background: #334155;
+    color: #e2e8f0;
+}
+
+.mwadmin-time-picker-step:hover {
+    background: #e2e8f0;
+}
+
+.mwadmin-time-picker-popover--dark .mwadmin-time-picker-step:hover {
+    background: #475569;
+}
+
+.mwadmin-time-picker-val {
+    font-size: 16px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: #0f172a;
+    min-height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mwadmin-time-picker-popover--dark .mwadmin-time-picker-val {
+    color: #f1f5f9;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-time-input-clock {
+    background: #334155;
+    border-color: #475569;
+    color: #e2e8f0;
+}
+
+.mwadmin-shell.mwadmin-theme-dark .mwadmin-time-input-clock:hover:not(:disabled) {
+    background: #475569;
+    border-color: #64748b;
+}

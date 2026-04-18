@@ -69,6 +69,11 @@ Route::middleware('web')->prefix('mwadmin')->group(function (): void {
             Route::get('/newslistings/options', [NewslistingApiController::class, 'options'])->name('api.mwadmin.newslistings.options');
             Route::get('/newslistings/next-meta', [NewslistingApiController::class, 'nextMeta'])->name('api.mwadmin.newslistings.next-meta');
             Route::put('/newslistings/{id}/text-article', [NewslistingApiController::class, 'updateTextArticle'])->name('api.mwadmin.newslistings.text-article');
+            Route::get('/newslistings/{id}/checklist', [NewslistingApiController::class, 'checklist'])->name('api.mwadmin.newslistings.checklist');
+            Route::post('/newslistings/{id}/checklist/preview', [NewslistingApiController::class, 'previewChecklistTemplate'])->name('api.mwadmin.newslistings.checklist.preview');
+            Route::put('/newslistings/{id}/checklist', [NewslistingApiController::class, 'saveChecklist'])->name('api.mwadmin.newslistings.checklist.save');
+            Route::get('/newslistings/{id}/reviews', [NewslistingApiController::class, 'reviews'])->name('api.mwadmin.newslistings.reviews');
+            Route::post('/newslistings/{id}/reviews', [NewslistingApiController::class, 'storeReview'])->name('api.mwadmin.newslistings.reviews.store');
             Route::apiResource('/newslistings', NewslistingApiController::class)->parameters(['newslistings' => 'id']);
         });
 

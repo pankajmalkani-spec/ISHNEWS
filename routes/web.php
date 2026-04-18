@@ -190,7 +190,7 @@ Route::prefix('mwadmin')->group(function (): void {
                 $initial = 1;
                 if ($step !== null && ctype_digit($step)) {
                     $n = (int) $step;
-                    if ($n >= 1 && $n <= 6) {
+                    if ($n >= 1 && $n <= 5) {
                         $initial = $n;
                     }
                 }
@@ -203,13 +203,14 @@ Route::prefix('mwadmin')->group(function (): void {
                         'createWizard' => true,
                     ])
                 );
-            })->where(['step' => '[1-6]'])->middleware('mwadmin.canFlag:newslisting,allow_edit')->name('mwadmin.newslisting.create.wizard');
+            /** Same module access as listing; do not require `allow_edit` here — creators often only have `allow_add` after P2D save. */
+            })->where(['step' => '[1-5]'])->name('mwadmin.newslisting.create.wizard');
             Route::get('/newslisting/create', fn (Request $request) => Inertia::render('Mwadmin/Newslisting/Create', $authProps($request)))->middleware('mwadmin.canFlag:newslisting,allow_add')->name('mwadmin.newslisting.create');
             Route::get('/newslisting/{id}/edit/{step?}', function (Request $request, int $id, ?string $step = null) use ($authProps) {
                 $initial = 1;
                 if ($step !== null && ctype_digit($step)) {
                     $n = (int) $step;
-                    if ($n >= 1 && $n <= 6) {
+                    if ($n >= 1 && $n <= 5) {
                         $initial = $n;
                     }
                 }
@@ -221,7 +222,7 @@ Route::prefix('mwadmin')->group(function (): void {
                         'initialStep' => $initial,
                     ])
                 );
-            })->where(['step' => '[1-6]'])->middleware('mwadmin.canFlag:newslisting,allow_edit')->name('mwadmin.newslisting.edit');
+            })->where(['step' => '[1-5]'])->middleware('mwadmin.canFlag:newslisting,allow_edit')->name('mwadmin.newslisting.edit');
         });
 
         Route::middleware('mwadmin.can:schedule')->group(function () use ($authProps): void {

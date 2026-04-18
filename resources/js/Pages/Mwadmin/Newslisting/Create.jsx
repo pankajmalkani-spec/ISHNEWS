@@ -348,22 +348,23 @@ export default function NewslistingCreate({
                     </div>
                     <h1 className="mwadmin-title">Add News Content</h1>
 
-                    <section className="mwadmin-panel mwadmin-form-panel">
-                        <ul className="mwadmin-news-create-tabs" role="tablist">
+                    <section className="mwadmin-panel mwadmin-form-panel mwadmin-news-wizard">
+                        <ul className="mwadmin-news-wizard-tabs" role="tablist">
                             <li
                                 className={p2dProcessAllowed ? 'active' : 'disabled'}
                                 role="tab"
                                 aria-selected={p2dProcessAllowed}
                             >
-                                P2D Process
+                                <span className="mwadmin-news-wizard-tab-static">P2D Process</span>
                             </li>
                             {CREATE_LOCKED_TABS.map((t) => (
                                 <li key={t.id} className="disabled" title={t.title}>
-                                    {t.label}
+                                    <span className="mwadmin-news-wizard-tab-static">{t.label}</span>
                                 </li>
                             ))}
                         </ul>
 
+                        <div className="mwadmin-news-wizard-body">
                         {!p2dProcessAllowed ? (
                             <p className="mwadmin-news-create-tab-locked-msg">
                                 You have no rights to add P2D Process content. Contact your administrator.
@@ -787,6 +788,7 @@ export default function NewslistingCreate({
                             </div>
                         </form>
                         ) : null}
+                        </div>
                     </section>
                 </div>
                 <MwadminImageEditorModal

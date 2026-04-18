@@ -267,6 +267,12 @@ class NewslistingApiController extends Controller
             $coverName = $this->storeNewsImage($request->file('cover_img'), 'cover');
         }
 
+        $videoName = $this->resolveYoutubeVideoFilenameForUpdate(
+            $request,
+            $validated,
+            (string) ($existing->youtube_video ?? '')
+        );
+
         $descRaw = (string) ($validated['description'] ?? '');
         $description = $descRaw !== '' ? ucfirst($descRaw) : '';
         $description = Str::limit($description, 200, '');
@@ -295,7 +301,7 @@ class NewslistingApiController extends Controller
             'youtube_url_check' => $this->legacyTinyint($validated['youtube_url_check'] ?? null),
             'youtube_url' => Str::limit((string) ($validated['youtube_url'] ?? ''), 100, ''),
             'youtube_video_check' => $this->legacyTinyint($validated['youtube_video_check'] ?? null),
-            'youtube_video' => Str::limit((string) ($validated['youtube_video'] ?? ''), 100, ''),
+            'youtube_video' => Str::limit($videoName, 100, ''),
             'youtube_subtitles' => Str::limit((string) ($validated['youtube_subtitles'] ?? ''), 100, ''),
             'modifieddate' => $now,
             'modifiedby' => $userId,
@@ -380,6 +386,259 @@ class NewslistingApiController extends Controller
     }
 
     /**
+     * P2D CheckList: templates + saved rows (legacy `contentcharttrans` / `flowchartmst`).
+     */
+    public function checklist(Request $request, int $id): JsonResponse
+    {
+        if ($deny = $this->mwadminDenyUnless($request, 'newslisting', 'allow_view')) {
+            return $deny;
+        }
+
+        if (! DB::table('contenttrans')->where('id', $id)->exists()) {
+            return response()->json(['message' => 'Not found.'], 404);
+        }
+
+        $flowchartTemplateId = (int) (DB::table('contenttrans')->where('id', $id)->value('flowchart_templateid') ?? 0);
+
+        $templates = DB::table('flowchartmst')
+            ->where('status', 1)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        $rows = DB::table('contentcharttrans')
+            ->where('contentedit_id', $id)
+            ->orderBy('id')
+            ->get();
+
+        $mapped = $rows->map(fn ($r) => $this->mapContentchartRow((array) $r))->values();
+
+        return response()->json([
+            'data' => [
+                'flowchart_templateid' => $flowchartTemplateId,
+                'templates' => $templates,
+                'rows' => $mapped,
+            ],
+        ]);
+    }
+
+    /**
+     * Load blueprint rows from `flowcharttrans` (legacy `loadTemplate` when no rows exist for template+content).
+     */
+    public function previewChecklistTemplate(Request $request, int $id): JsonResponse
+    {
+        if ($deny = $this->mwadminDenyUnless($request, 'newslisting', 'allow_edit')) {
+            return $deny;
+        }
+
+        if (! DB::table('contenttrans')->where('id', $id)->exists()) {
+            return response()->json(['message' => 'Not found.'], 404);
+        }
+
+        $validated = $request->validate([
+            'template_id' => ['required', 'integer', Rule::exists('flowchartmst', 'id')],
+        ]);
+        $templateId = (int) $validated['template_id'];
+
+        $exists = DB::table('contentcharttrans')
+            ->where('contentedit_id', $id)
+            ->where('charttrans_id', $templateId)
+            ->exists();
+        if ($exists) {
+            return response()->json(['message' => 'Already Data Exist !!'], 422);
+        }
+
+        $lines = DB::table('flowcharttrans')
+            ->where('charttrans_id', $templateId)
+            ->where('contentedit_id', 0)
+            ->orderBy('sort')
+            ->get();
+
+        $desigs = DB::table('designation')->pluck('designation', 'id');
+
+        $blueprint = $lines->map(function ($line) use ($desigs) {
+            $rid = (int) $line->responsibilty;
+
+            return [
+                'plan' => (int) $line->plan,
+                'activity_name' => (string) $line->activity_name,
+                'responsibility_id' => $rid,
+                'responsibility_name' => (string) ($desigs[$rid] ?? ''),
+                'sort' => (int) $line->sort,
+            ];
+        })->values();
+
+        return response()->json(['data' => ['blueprint' => $blueprint]]);
+    }
+
+    /**
+     * Save checklist rows and set `contenttrans.flowchart_templateid` (legacy P2D CheckList update).
+     */
+    public function saveChecklist(Request $request, int $id): JsonResponse
+    {
+        if ($deny = $this->mwadminDenyUnless($request, 'newslisting', 'allow_edit')) {
+            return $deny;
+        }
+
+        if (! DB::table('contenttrans')->where('id', $id)->exists()) {
+            return response()->json(['message' => 'Not found.'], 404);
+        }
+
+        $validated = $request->validate([
+            'template_id' => ['required', 'integer', Rule::exists('flowchartmst', 'id')],
+            'rows' => ['required', 'array', 'min:1'],
+            'rows.*.plan' => ['required', 'integer', 'in:1,2,3'],
+            'rows.*.activity_name' => ['required', 'string', 'max:200'],
+            'rows.*.responsibility_name' => ['required', 'string', 'max:200'],
+            'rows.*.user_id' => ['nullable', 'integer', Rule::exists('users', 'userid')],
+            'rows.*.activity_status' => ['required', 'integer', 'in:1,2,3,4,5'],
+            'rows.*.remarks' => ['nullable', 'string', 'max:500'],
+            'rows.*.date' => ['nullable', 'date'],
+            'rows.*.time' => ['nullable', 'string', 'max:10'],
+            'rows.*.sort' => ['nullable', 'string', 'max:20'],
+        ]);
+
+        $templateId = (int) $validated['template_id'];
+        $userId = $this->resolveRealUserId($request);
+        $now = now();
+
+        DB::transaction(function () use ($validated, $id, $templateId, $userId, $now): void {
+            DB::table('contentcharttrans')->where('contentedit_id', $id)->delete();
+
+            foreach ($validated['rows'] as $row) {
+                $dateRaw = $row['date'] ?? null;
+                $timeRaw = isset($row['time']) ? trim((string) $row['time']) : '';
+                $combined = '';
+                if ($dateRaw !== null && $dateRaw !== '') {
+                    try {
+                        $t = $timeRaw !== '' ? $timeRaw : '00:00';
+                        $combined = Carbon::parse((string) $dateRaw.' '.$t)->format('Y-m-d H:i:s');
+                    } catch (\Throwable) {
+                        $combined = '';
+                    }
+                }
+                /** `contentcharttrans.date` is NOT NULL in legacy DB; strict MySQL rejects ''. */
+                if ($combined === '') {
+                    $combined = self::LEGACY_EMPTY_SCHEDULE_DATETIME;
+                }
+
+                DB::table('contentcharttrans')->insert([
+                    'charttrans_id' => $templateId,
+                    'contentedit_id' => $id,
+                    'plan' => (int) $row['plan'],
+                    'activity_status' => (int) $row['activity_status'],
+                    'activity_name' => (string) $row['activity_name'],
+                    'responsibilty' => (string) $row['responsibility_name'],
+                    'user_id' => (int) ($row['user_id'] ?? 0),
+                    'date' => $combined,
+                    'remarks' => (string) ($row['remarks'] ?? ''),
+                    'sort' => (string) ($row['sort'] ?? ''),
+                    'modifieddate' => $now,
+                    'modifiedby' => $userId,
+                ]);
+            }
+
+            DB::table('contenttrans')->where('id', $id)->update([
+                'flowchart_templateid' => $templateId,
+                'modifieddate' => $now,
+                'modifiedby' => $userId,
+            ]);
+        });
+
+        return response()->json(['message' => 'P2D CheckList saved.', 'success' => true]);
+    }
+
+    public function reviews(Request $request, int $id): JsonResponse
+    {
+        if ($deny = $this->mwadminDenyUnless($request, 'newslisting', 'allow_view')) {
+            return $deny;
+        }
+
+        if (! DB::table('contenttrans')->where('id', $id)->exists()) {
+            return response()->json(['message' => 'Not found.'], 404);
+        }
+
+        $rows = DB::table('reviewerfeedback as rf')
+            ->leftJoin('users as u', 'u.userid', '=', 'rf.modifiedby')
+            ->where('rf.contentedit_id', $id)
+            ->orderByDesc('rf.id')
+            ->get([
+                'rf.id',
+                'rf.review',
+                'rf.modifieddate',
+                'rf.modifiedby',
+                DB::raw("TRIM(CONCAT(COALESCE(u.first_name,''),' ',COALESCE(u.last_name,''))) as reviewer_name"),
+            ]);
+
+        return response()->json(['data' => $rows]);
+    }
+
+    public function storeReview(Request $request, int $id): JsonResponse
+    {
+        if ($deny = $this->mwadminDenyUnless($request, 'newslisting', 'allow_edit')) {
+            return $deny;
+        }
+
+        if (! DB::table('contenttrans')->where('id', $id)->exists()) {
+            return response()->json(['message' => 'Not found.'], 404);
+        }
+
+        $validated = $request->validate([
+            'review' => ['required', 'string', 'max:65535'],
+        ]);
+
+        $userId = $this->resolveRealUserId($request);
+        $now = now();
+
+        DB::table('reviewerfeedback')->insert([
+            'contentedit_id' => $id,
+            'review' => $validated['review'],
+            'modifieddate' => $now,
+            'modifiedby' => $userId,
+        ]);
+
+        return response()->json(['message' => 'Review added successfully.', 'success' => true]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function mapContentchartRow(array $r): array
+    {
+        $dmy = '';
+        $time = '';
+        $raw = $r['date'] ?? '';
+        if (is_string($raw) && trim($raw) !== '' && ! str_starts_with(trim($raw), '0000')) {
+            try {
+                $c = Carbon::parse($raw);
+                if (str_starts_with($c->format('Y-m-d'), '1970-01-01')) {
+                    $dmy = '';
+                    $time = '';
+                } else {
+                    $dmy = $c->format('Y-m-d');
+                    $time = $c->format('H:i');
+                }
+            } catch (\Throwable) {
+                $dmy = '';
+                $time = '';
+            }
+        }
+
+        return [
+            'id' => (int) ($r['id'] ?? 0),
+            'charttrans_id' => (int) ($r['charttrans_id'] ?? 0),
+            'plan' => (int) ($r['plan'] ?? 1),
+            'activity_name' => (string) ($r['activity_name'] ?? ''),
+            'responsibility_name' => (string) ($r['responsibilty'] ?? ''),
+            'user_id' => (int) ($r['user_id'] ?? 0),
+            'activity_status' => (int) ($r['activity_status'] ?? 1),
+            'remarks' => (string) ($r['remarks'] ?? ''),
+            'sort' => (string) ($r['sort'] ?? ''),
+            'date' => $dmy !== '' ? $dmy : null,
+            'time' => $time,
+        ];
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private function validateContent(Request $request, ?int $ignoreId): array
@@ -415,6 +674,8 @@ class NewslistingApiController extends Controller
             'youtube_url' => ['nullable', 'string', 'max:100'],
             'youtube_video_check' => ['nullable'],
             'youtube_video' => ['nullable', 'string', 'max:100'],
+            /** Manual upload (multipart); stored under `public/videos/` like legacy CodeIgniter. */
+            'youtube_video_file' => ['nullable', 'file', 'max:512000'],
             'youtube_subtitles' => ['nullable', 'string', 'max:100'],
             'members' => ['nullable', 'array'],
             'members.*.designation_id' => ['required_with:members', 'integer', 'exists:designation,id'],
@@ -731,6 +992,7 @@ class NewslistingApiController extends Controller
             'youtube_url' => (string) ($row['youtube_url'] ?? ''),
             'youtube_video_check' => (string) ((int) ($row['youtube_video_check'] ?? 0)),
             'youtube_video' => (string) ($row['youtube_video'] ?? ''),
+            'youtube_video_url' => $this->youtubeVideoPublicUrl((string) ($row['youtube_video'] ?? '')),
             'youtube_subtitles' => (string) ($row['youtube_subtitles'] ?? ''),
             'flowchart_templateid' => (int) ($row['flowchart_templateid'] ?? 0),
         ];
@@ -780,6 +1042,89 @@ class NewslistingApiController extends Controller
         }
         $basePath = $kind === 'banner' ? 'images/NewsContents/bannerImages' : 'images/NewsContents/coverImages';
         $fullPath = public_path($basePath.'/'.$filename);
+        if (is_file($fullPath)) {
+            @unlink($fullPath);
+        }
+    }
+
+    private function youtubeVideoPublicUrl(string $filename): ?string
+    {
+        if ($filename === '') {
+            return null;
+        }
+
+        return url('videos/'.$filename);
+    }
+
+    /**
+     * Legacy `./videos/` uploads — CodeIgniter allowed mp4, avi, asf, mov, flv.
+     *
+     * @param  array<string, mixed>  $validated
+     */
+    private function resolveYoutubeVideoFilenameForUpdate(Request $request, array $validated, string $existingFilename): string
+    {
+        $ytCheck = $this->legacyTinyint($validated['youtube_video_check'] ?? null);
+        $urlCheck = $this->legacyTinyint($validated['youtube_url_check'] ?? null);
+
+        if ($request->hasFile('youtube_video_file')) {
+            $file = $request->file('youtube_video_file');
+            if (! $file instanceof \Illuminate\Http\UploadedFile || ! $file->isValid()) {
+                abort(response()->json(['message' => 'Invalid video upload.'], 422));
+            }
+            $this->assertAllowedNewsVideoExtension($file);
+            if ($existingFilename !== '') {
+                $this->deleteNewsVideoIfExists($existingFilename);
+            }
+
+            return $this->storeNewsVideo($file);
+        }
+
+        if ($urlCheck === 1 || $ytCheck === 0) {
+            if ($existingFilename !== '') {
+                $this->deleteNewsVideoIfExists($existingFilename);
+            }
+
+            return '';
+        }
+
+        $posted = Str::limit((string) ($validated['youtube_video'] ?? ''), 100, '');
+        if ($posted === '') {
+            if ($existingFilename !== '') {
+                $this->deleteNewsVideoIfExists($existingFilename);
+            }
+
+            return '';
+        }
+
+        return $posted;
+    }
+
+    private function assertAllowedNewsVideoExtension(\Illuminate\Http\UploadedFile $file): void
+    {
+        $ext = strtolower($file->getClientOriginalExtension() ?: '');
+        $allowed = ['mp4', 'avi', 'asf', 'mov', 'flv'];
+        if (! in_array($ext, $allowed, true)) {
+            abort(response()->json(['message' => 'Video must be one of: '.implode(', ', $allowed)], 422));
+        }
+    }
+
+    private function storeNewsVideo(\Illuminate\Http\UploadedFile $file): string
+    {
+        $directory = public_path('videos');
+        File::ensureDirectoryExists($directory);
+        $ext = strtolower($file->getClientOriginalExtension() ?: 'mp4');
+        $filename = time().'_'.bin2hex(random_bytes(3)).'.'.$ext;
+        $file->move($directory, $filename);
+
+        return $filename;
+    }
+
+    private function deleteNewsVideoIfExists(string $filename): void
+    {
+        if ($filename === '') {
+            return;
+        }
+        $fullPath = public_path('videos/'.$filename);
         if (is_file($fullPath)) {
             @unlink($fullPath);
         }
