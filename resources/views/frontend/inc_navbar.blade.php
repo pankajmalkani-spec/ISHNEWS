@@ -33,7 +33,7 @@
                         <div class="news-post standart-post">
                           <div class="post-image">
                             <a href="{{ url('/videos/'.($item->categorycode ?? '').'/'.($item->permalink ?? '')) }}">
-                              <img src="{{ url('/images/NewsContents/coverImages/'.($item->cover_img ?: 'no_img.png')) }}" alt="{{ $item->content_title ?? '' }}">
+                              <img src="{{ \App\Support\FrontendMedia::coverImageUrl($item->cover_img ?? null) }}" alt="{{ $item->content_title ?? '' }}">
                             </a>
                             <a href="{{ url('/category/'.($item->categorycode ?? '').'/'.($item->subcatcode ?? '')) }}" class="category category-{{ $item->categorycode ?? '' }}">
                               {{ $item->subcatname ?? '' }}

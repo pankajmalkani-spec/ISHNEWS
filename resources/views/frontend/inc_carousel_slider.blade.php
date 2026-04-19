@@ -9,7 +9,7 @@
               @foreach(($cslider ?? []) as $cs)
                 <div class="item">
                   <div class="news-post standart-post">
-                    <div class="post-image"><a href="{{ $cs->website ?? '#' }}" target="_blank"><img src="{{ url('/images/sponsorLogo/'.($cs->logo ?? '')) }}" alt=""></a></div>
+                    <div class="post-image"><a href="{{ $cs->website ?? '#' }}" target="_blank"><img src="{{ \App\Support\FrontendMedia::sponsorLogoUrl($cs->logo ?? null) }}" alt=""></a></div>
                     <h3><a href="{{ $cs->website ?? '#' }}" target="_blank">{{ $cs->organization_name ?? '' }}</a></h3>
                     <a href="#" class="category sponsor-{{ strtolower($cs->package ?? '') }}"></a>
                   </div>

@@ -30,10 +30,28 @@
       </div>
 
       <div class="desktop-view">
+        @include('frontend.breaking_news_section')
         <section id="content-section">
           <div class="row">
             <div class="col-lg-9">
               @foreach(($CategorySet1 ?? []) as $TCatData)
+                @if((int) ($TCatData['sort'] ?? 0) === 1)
+                  @continue
+                @endif
+                {{-- Legacy CategorySet1[4]: horizontal Owl carousel (Awareness). Also accept code `awareness` if sort was changed in DB. --}}
+                @php
+                  $__homeSort = (int) ($TCatData['sort'] ?? 0);
+                  $__homeCode = strtolower((string) ($TCatData['code'] ?? ''));
+                @endphp
+                @if($__homeSort === 4 || $__homeCode === 'awareness')
+                  @include('frontend.category_carousel_section', ['TCatData' => $TCatData])
+                  @continue
+                @endif
+                {{-- Legacy CategorySet1[2]: large + 2×2 thumbs (Entertainment) --}}
+                @if($__homeSort === 2 || $__homeCode === 'entertainment')
+                  @include('frontend.category_entertainment_section', ['TCatData' => $TCatData])
+                  @continue
+                @endif
                 <div class="posts-block">
                   <div class="title-section">
                     <h1 class="{{ $TCatData['code'] ?? '' }}">{{ $TCatData['title'] ?? '' }}<a href="{{ url('/category/'.($TCatData['code'] ?? '')) }}" class="btn-more category category-{{ $TCatData['code'] ?? '' }}">More</a></h1>
@@ -44,7 +62,7 @@
                         <div class="news-post {{ $idx === 0 ? 'standart-post' : 'thumb-post' }}">
                           <div class="post-image">
                             <a href="{{ url('/videos/'.($slider->categorycode ?? '').'/'.($slider->permalink ?? '')) }}">
-                              <img src="{{ url('/images/NewsContents/coverImages/'.($slider->cover_img ?: 'no_img.png')) }}" alt="{{ $slider->title ?? '' }}">
+                              <img src="{{ \App\Support\FrontendMedia::coverImageUrl($slider->cover_img ?? null) }}" alt="{{ $slider->title ?? '' }}">
                             </a>
                             <a href="{{ url('/category/'.($slider->categorycode ?? '').'/'.($slider->subcategorycode ?? '')) }}" class="category category-{{ $slider->categorycode ?? '' }}">{{ $slider->subcategoryname ?? '' }}</a>
                           </div>

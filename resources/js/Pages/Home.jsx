@@ -15,8 +15,13 @@ function fmtDateTime(value) {
     });
 }
 
+const COVER_IMG_FALLBACK = '/images/NewsContents/coverImages/no_img.png';
+const SPONSOR_LOGO_FALLBACK = '/images/sponsorLogo/no_img.gif';
+
+/** Legacy-style cover path; if missing on disk, img onError falls back to {@link COVER_IMG_FALLBACK}. */
 function coverSrc(file) {
-    return file ? `/images/NewsContents/coverImages/${file}` : '/images/NewsContents/coverImages/no_img.png';
+    const s = file != null && file !== undefined ? String(file).trim() : '';
+    return s !== '' ? `/images/NewsContents/coverImages/${s}` : COVER_IMG_FALLBACK;
 }
 
 export default function Home({
@@ -174,7 +179,7 @@ export default function Home({
                                                                                         alt={item.content_title}
                                                                                         onError={(e) => {
                                                                                             e.currentTarget.onerror = null;
-                                                                                            e.currentTarget.src = '/images/NewsContents/coverImages/no_img.png';
+                                                                                            e.currentTarget.src = COVER_IMG_FALLBACK;
                                                                                         }}
                                                                                     />
                                                                                 </a>
@@ -216,7 +221,7 @@ export default function Home({
                                         alt={banner[0]?.title || 'Featured'}
                                         onError={(e) => {
                                             e.currentTarget.onerror = null;
-                                            e.currentTarget.src = '/images/NewsContents/coverImages/no_img.png';
+                                            e.currentTarget.src = COVER_IMG_FALLBACK;
                                         }}
                                     />
                                     <div className="hover-box">
@@ -240,7 +245,7 @@ export default function Home({
                                                 alt={item.title}
                                                 onError={(e) => {
                                                     e.currentTarget.onerror = null;
-                                                    e.currentTarget.src = '/images/NewsContents/coverImages/no_img.png';
+                                                    e.currentTarget.src = COVER_IMG_FALLBACK;
                                                 }}
                                             />
                                         </a>
@@ -283,7 +288,7 @@ export default function Home({
                                                                 alt={item.title}
                                                                 onError={(e) => {
                                                                     e.currentTarget.onerror = null;
-                                                                    e.currentTarget.src = '/images/NewsContents/coverImages/no_img.png';
+                                                                    e.currentTarget.src = COVER_IMG_FALLBACK;
                                                                 }}
                                                             />
                                                         </a>
@@ -312,7 +317,7 @@ export default function Home({
                                                                 alt={item.title}
                                                                 onError={(e) => {
                                                                     e.currentTarget.onerror = null;
-                                                                    e.currentTarget.src = '/images/NewsContents/coverImages/no_img.png';
+                                                                    e.currentTarget.src = COVER_IMG_FALLBACK;
                                                                 }}
                                                             />
                                                         </a>
@@ -341,7 +346,7 @@ export default function Home({
                                                                 alt={item.title}
                                                                 onError={(e) => {
                                                                     e.currentTarget.onerror = null;
-                                                                    e.currentTarget.src = '/images/NewsContents/coverImages/no_img.png';
+                                                                    e.currentTarget.src = COVER_IMG_FALLBACK;
                                                                 }}
                                                             />
                                                         </a>
@@ -372,7 +377,14 @@ export default function Home({
                                                     <div className="news-post standart-post">
                                                         <div className="post-image">
                                                             <a href={s.website || '#'} target="_blank" rel="noreferrer">
-                                                                <img src={`/images/sponsorLogo/${s.logo}`} alt={s.organization_name} />
+                                                                <img
+                                                                    src={`/images/sponsorLogo/${s.logo || 'no_img.gif'}`}
+                                                                    alt={s.organization_name}
+                                                                    onError={(e) => {
+                                                                        e.currentTarget.onerror = null;
+                                                                        e.currentTarget.src = SPONSOR_LOGO_FALLBACK;
+                                                                    }}
+                                                                />
                                                             </a>
                                                         </div>
                                                         <h3><a href={s.website || '#'} target="_blank" rel="noreferrer">{s.organization_name}</a></h3>

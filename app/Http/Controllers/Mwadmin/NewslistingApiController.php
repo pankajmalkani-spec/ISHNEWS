@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Mwadmin;
 
 use App\Http\Controllers\Controller;
+use App\Support\FrontendMedia;
 use App\Http\Controllers\Mwadmin\Concerns\AuthorizesMwadminPermissions;
 use App\Http\Controllers\Mwadmin\Concerns\ResolvesMwadminUser;
 use Carbon\Carbon;
@@ -922,7 +923,7 @@ class NewslistingApiController extends Controller
             'final_releasestatus' => (string) ($item['final_releasestatus'] ?? ''),
             'featured_content' => (string) ($item['featured_content'] ?? '0'),
             'cover_img' => (string) $cover,
-            'cover_img_url' => $cover !== '' ? url('images/NewsContents/coverImages/'.$cover) : null,
+            'cover_img_url' => FrontendMedia::coverImageUrl($cover !== '' ? $cover : null),
             'banner_img_url' => $banner !== '' ? url('images/NewsContents/bannerImages/'.$banner) : null,
         ];
     }
@@ -985,7 +986,7 @@ class NewslistingApiController extends Controller
             'banner_img' => $banner,
             'cover_img' => $cover,
             'banner_img_url' => $banner !== '' ? url('images/NewsContents/bannerImages/'.$banner) : null,
-            'cover_img_url' => $cover !== '' ? url('images/NewsContents/coverImages/'.$cover) : null,
+            'cover_img_url' => FrontendMedia::coverImageUrl($cover !== '' ? $cover : null),
             'final_releasestatus' => (string) ($row['final_releasestatus'] ?? '0'),
             'article_content' => (string) ($row['article_content'] ?? ''),
             'youtube_url_check' => (string) ((int) ($row['youtube_url_check'] ?? 0)),

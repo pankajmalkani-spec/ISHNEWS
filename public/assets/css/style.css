@@ -1142,6 +1142,59 @@ a.load-more:hover {
 #BreakingNews-section {
   padding: 20px 0 0; }
 
+/* Match legacy home: keep prev/next arrows clear of the “More” button */
+#BreakingNews-section .owl-theme .owl-controls {
+  margin-right: 75px; }
+
+/* Category horizontal scroll (legacy CategorySet1[4], e.g. Awareness) */
+.posts-block--horizontal-scroll .owl-theme .owl-controls {
+  margin-right: 75px; }
+
+/* Entertainment: uniform 2×2 tiles — equal image frames (crop with object-fit) */
+.posts-block--entertainment .entertainment-grid-row {
+  margin-left: -10px;
+  margin-right: -10px; }
+.posts-block--entertainment .entertainment-grid-col {
+  padding-left: 10px;
+  padding-right: 10px;
+  margin-bottom: 20px; }
+.posts-block--entertainment .entertainment-tile__image {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  margin-bottom: 10px;
+  background: #eceff1;
+  aspect-ratio: 16 / 9; }
+.posts-block--entertainment .entertainment-tile__image > a:first-child {
+  display: block;
+  width: 100%;
+  height: 100%; }
+.posts-block--entertainment .entertainment-tile__image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block; }
+.posts-block--entertainment .entertainment-tile__image a.category {
+  display: inline-block;
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  z-index: 2;
+  max-width: calc(100% - 8px); }
+.posts-block--entertainment .entertainment-tile {
+  text-align: left; }
+.posts-block--entertainment .entertainment-tile h2 {
+  font-size: 14px;
+  line-height: 1.35;
+  font-weight: 600;
+  margin: 0 0 4px;
+  text-transform: none; }
+.posts-block--entertainment .entertainment-tile h2 a {
+  color: #212121; }
+.posts-block--entertainment .entertainment-tile h2 a:hover {
+  color: #232323; }
+
 #Sponsor-section {
   background: #f8f9fa;
   padding: 10px 0; }
