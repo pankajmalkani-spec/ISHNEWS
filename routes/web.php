@@ -1,8 +1,10 @@
 <?php
 
+use App\Http\Controllers\Frontend\CategoryController;
 use App\Http\Controllers\Frontend\HomeController;
 use App\Http\Controllers\Frontend\PageController;
 use App\Http\Controllers\Frontend\SearchController;
+use App\Http\Controllers\Frontend\VideoController;
 use App\Http\Controllers\Mwadmin\AuthController;
 use App\Services\MwadminAccessService;
 use Illuminate\Http\Request;
@@ -18,6 +20,20 @@ Route::post('/contact', [PageController::class, 'contactSubmit'])->name('contact
 Route::get('/sitemap', [PageController::class, 'sitemap'])->name('sitemap');
 
 Route::get('/search', [SearchController::class, 'index'])->name('search');
+
+Route::get('/videos/{categoryCode}/{permalink}', [VideoController::class, 'show'])
+    ->where('categoryCode', '[a-zA-Z0-9_-]+')
+    ->where('permalink', '[^/]+')
+    ->name('video.show');
+
+Route::get('/category/{categoryCode}/load-more', [CategoryController::class, 'loadMore'])
+    ->where('categoryCode', '[a-zA-Z0-9_-]+')
+    ->name('category.load_more');
+
+Route::get('/category/{categoryCode}/{subcategoryCode?}', [CategoryController::class, 'show'])
+    ->where('categoryCode', '[a-zA-Z0-9_-]+')
+    ->where('subcategoryCode', '[a-zA-Z0-9_-]+')
+    ->name('category.show');
 
 Route::prefix('mwadmin')->group(function (): void {
     Route::get('/', fn () => redirect()->route('mwadmin.login'));

@@ -52,6 +52,37 @@ class FrontendMedia
         return is_file($path) ? url('images/AdvertiseImages/'.$trimmed) : null;
     }
 
+    /**
+     * Static theme images under `public/images/` (about page, merchandise slider, etc.).
+     * Uses the file from {@see public_path()} when present. Otherwise, if
+     * {@see config('ishnews.theme_image_origin')} or {@see config('ishnews.public_images_fallback_base')}
+     * is set (e.g. another dev server), loads from that origin; never defaults to a production host.
+     *
+     * @param  non-empty-string  $relativeWebPath  e.g. `images/box-about-problem.jpg`
+     */
+    public static function themeImageUrl(string $relativeWebPath): string
+    {
+        $relativeWebPath = ltrim(str_replace('\\', '/', $relativeWebPath), '/');
+        if ($relativeWebPath === '' || str_contains($relativeWebPath, '..')) {
+            return url('images/'.basename($relativeWebPath));
+        }
+
+        if (is_file(public_path($relativeWebPath))) {
+            return url($relativeWebPath);
+        }
+
+        $origin = trim((string) config('ishnews.theme_image_origin', ''));
+        if ($origin === '') {
+            $origin = trim((string) config('ishnews.public_images_fallback_base', ''));
+        }
+
+        if ($origin !== '' && filter_var($origin, FILTER_VALIDATE_URL)) {
+            return rtrim($origin, '/').'/'.$relativeWebPath;
+        }
+
+        return url($relativeWebPath);
+    }
+
     private static function resolveExistingBasename(string $stored, string $absoluteDir, string $fallbackBasename): string
     {
         $trimmed = trim($stored);
