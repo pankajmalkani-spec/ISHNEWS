@@ -19,6 +19,16 @@ Route::get('/contact', [PageController::class, 'contact'])->name('contact');
 Route::post('/contact', [PageController::class, 'contactSubmit'])->name('contact.submit');
 Route::get('/sitemap', [PageController::class, 'sitemap'])->name('sitemap');
 
+Route::get('/set-theme/{theme}', function (Request $request, string $theme) {
+    if (! in_array($theme, ['legacy', 'modern'], true)) {
+        abort(404);
+    }
+
+    return redirect()
+        ->back()
+        ->cookie('ish_frontend_theme', $theme, 60 * 24 * 365);
+})->name('theme.set');
+
 Route::get('/search', [SearchController::class, 'index'])->name('search');
 
 Route::get('/videos/{categoryCode}/{permalink}', [VideoController::class, 'show'])

@@ -1,8 +1,9 @@
 <?php $Base_url = url('/').'/'; ?>
+@php $ft = $frontendTheme ?? 'legacy'; @endphp
 <div class="top-line">
   <div class="container">
-    <div class="row">
-      <div class="col-md-8 col-sm-9">
+    <div class="row align-items-center">
+      <div class="col-md-5 col-sm-12 mb-2 mb-md-0">
         <ul class="info-list">
           <li><a href="{{ url('/about') }}" title="About Us">About</a></li>
           <li><a href="{{ url('/contact') }}" title="Contact Us">Contact</a></li>
@@ -10,7 +11,28 @@
           <li><a href="https://indiasigninghands.com/shop/" title="Shop With Us" target="_blank"><i class="fa fa-shopping-cart" aria-hidden="true"></i></a></li>
         </ul>
       </div>
-      <div class="col-md-4 col-sm-3">
+      <div class="col-md-3 col-sm-12 mb-2 mb-md-0 text-md-center">
+        @php
+          $toggleToModern = route('theme.set', ['theme' => 'modern']);
+          $toggleToLegacy = route('theme.set', ['theme' => 'legacy']);
+          $toggleHref = $ft === 'modern' ? $toggleToLegacy : $toggleToModern;
+        @endphp
+        <div class="ish-theme-toggle-wrap {{ $ft === 'modern' ? 'ish-theme-toggle-wrap--modern' : 'ish-theme-toggle-wrap--legacy' }}">
+          <span class="ish-theme-toggle__text ish-theme-toggle__text--legacy">Legacy</span>
+          <button type="button"
+            class="ish-theme-toggle"
+            role="switch"
+            aria-checked="{{ $ft === 'modern' ? 'true' : 'false' }}"
+            aria-label="Switch site appearance. Currently {{ $ft === 'modern' ? 'Modern' : 'Legacy' }}. Click to use {{ $ft === 'modern' ? 'Legacy' : 'Modern' }}."
+            onclick="window.location.href='{{ $toggleHref }}'">
+            <span class="ish-theme-toggle__track" aria-hidden="true">
+              <span class="ish-theme-toggle__thumb"></span>
+            </span>
+          </button>
+          <span class="ish-theme-toggle__text ish-theme-toggle__text--modern">Modern</span>
+        </div>
+      </div>
+      <div class="col-md-4 col-sm-12 text-md-right">
         <ul class="social-icons">
           <li><a class="youtube" href="https://www.youtube.com/ishnews" target="_blank"><i class="fa fa-youtube-play"></i></a></li>
           <li><a class="facebook" href="https://www.facebook.com/ISHNews/" target="_blank"><i class="fa fa-facebook"></i></a></li>

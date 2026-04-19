@@ -1,0 +1,95 @@
+/**
+ * Modern theme — layered on top of legacy CSS. Scope under body.ish-theme-modern.
+ */
+
+body.ish-theme-modern {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.ish-theme-modern * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+body.ish-theme-modern .top-line {
+  background: rgba(30, 30, 32, 0.92);
+  backdrop-filter: saturate(180%) blur(12px);
+  -webkit-backdrop-filter: saturate(180%) blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  transition: background 0.25s ease, border-color 0.25s ease;
+}
+
+body.ish-theme-modern .top-line ul.info-list li a,
+body.ish-theme-modern .top-line ul.social-icons li a {
+  transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+body.ish-theme-modern .top-line ul.info-list li a:hover,
+body.ish-theme-modern .top-line ul.social-icons li a:hover {
+  opacity: 0.85;
+}
+
+/* Toggle — refined for dark frosted bar */
+body.ish-theme-modern .ish-theme-toggle__text {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+body.ish-theme-modern .ish-theme-toggle-wrap--legacy .ish-theme-toggle__text--modern,
+body.ish-theme-modern .ish-theme-toggle-wrap--modern .ish-theme-toggle__text--legacy {
+  opacity: 0.45;
+}
+
+body.ish-theme-modern .ish-theme-toggle__track {
+  background: rgba(255, 255, 255, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+body.ish-theme-modern .ish-theme-toggle__thumb {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+}
+
+body.ish-theme-modern .ish-theme-toggle-wrap--modern .ish-theme-toggle__track {
+  background: rgba(52, 199, 89, 0.95);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+body.ish-theme-modern .ish-theme-toggle:focus-visible .ish-theme-toggle__track {
+  box-shadow: 0 0 0 2px rgba(30, 30, 32, 0.92), 0 0 0 4px rgba(100, 180, 255, 0.85);
+}
+
+body.ish-theme-modern #header-banner,
+body.ish-theme-modern #content-section .posts-block,
+body.ish-theme-modern .news-post.standart-post {
+  transition: box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+body.ish-theme-modern #content-section .posts-block.standard-box,
+body.ish-theme-modern .news-post.standart-post {
+  border-radius: 12px;
+}
+
+body.ish-theme-modern .news-post.standart-post {
+  overflow: hidden;
+}
+
+body.ish-theme-modern .news-post.standart-post .post-image img {
+  transition: transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+body.ish-theme-modern .news-post.standart-post:hover .post-image img {
+  transform: scale(1.03);
+}
+
+body.ish-theme-modern a {
+  transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+body.ish-theme-modern .navbar {
+  border-radius: 0 0 12px 12px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+}

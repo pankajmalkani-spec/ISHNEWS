@@ -3568,3 +3568,93 @@ footer {
 
   .masonry-box .iso-call.colum-4 .news-post {
     width: 100%; } }
+
+/* Theme toggle (header): Legacy + Modern */
+/* Explicit light text on .top-line blue bar — body color is dark and would hide labels */
+.top-line .ish-theme-toggle-wrap {
+  color: #f5f5f5;
+}
+
+.ish-theme-toggle-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 1.2;
+  color: #f5f5f5;
+}
+
+.ish-theme-toggle__text {
+  user-select: none;
+  white-space: nowrap;
+  transition: opacity 0.2s ease, font-weight 0.2s ease;
+}
+
+.ish-theme-toggle-wrap--legacy .ish-theme-toggle__text--legacy {
+  font-weight: 700;
+  opacity: 1;
+}
+
+.ish-theme-toggle-wrap--legacy .ish-theme-toggle__text--modern {
+  font-weight: 400;
+  opacity: 0.55;
+}
+
+.ish-theme-toggle-wrap--modern .ish-theme-toggle__text--modern {
+  font-weight: 700;
+  opacity: 1;
+}
+
+.ish-theme-toggle-wrap--modern .ish-theme-toggle__text--legacy {
+  font-weight: 400;
+  opacity: 0.55;
+}
+
+.ish-theme-toggle {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  line-height: 0;
+  vertical-align: middle;
+}
+
+.ish-theme-toggle:focus {
+  outline: none;
+}
+
+.ish-theme-toggle:focus-visible .ish-theme-toggle__track {
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px #0066cc;
+}
+
+.ish-theme-toggle__track {
+  display: inline-block;
+  position: relative;
+  width: 44px;
+  height: 26px;
+  border-radius: 13px;
+  background: #9e9e9e;
+  transition: background 0.22s ease;
+}
+
+.ish-theme-toggle__thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ish-theme-toggle-wrap--modern .ish-theme-toggle__thumb {
+  transform: translateX(18px);
+}
+
+.ish-theme-toggle-wrap--modern .ish-theme-toggle__track {
+  background: #2e7d32;
+}

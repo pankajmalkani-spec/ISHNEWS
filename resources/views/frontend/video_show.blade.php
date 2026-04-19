@@ -17,7 +17,7 @@
   <title>{{ $pageTitle ?? 'Video' }} | ISH News</title>
   @include('frontend.inc_htmlhead')
 </head>
-<body>
+<body class="ish-theme ish-theme-{{ $frontendTheme ?? 'legacy' }}">
 <div id="container">
   <header class="clearfix">
     @include('frontend.inc_header')
