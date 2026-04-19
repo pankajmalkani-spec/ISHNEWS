@@ -34,44 +34,27 @@
         <section id="content-section">
           <div class="row">
             <div class="col-lg-9">
-              @foreach(($CategorySet1 ?? []) as $TCatData)
-                @if((int) ($TCatData['sort'] ?? 0) === 1)
-                  @continue
-                @endif
-                {{-- Legacy CategorySet1[4]: horizontal Owl carousel (Awareness). Also accept code `awareness` if sort was changed in DB. --}}
+              {{-- Dynamic sections: layout is determined only by categorymst.sort (2–5). Sort 1 = Breaking News above. --}}
+              @foreach([2, 3, 4, 5] as $slot)
                 @php
-                  $__homeSort = (int) ($TCatData['sort'] ?? 0);
-                  $__homeCode = strtolower((string) ($TCatData['code'] ?? ''));
+                  $TCatData = ($CategorySet1 ?? [])[$slot] ?? null;
                 @endphp
-                @if($__homeSort === 4 || $__homeCode === 'awareness')
-                  @include('frontend.category_carousel_section', ['TCatData' => $TCatData])
+                @if(
+                    ! $TCatData
+                    || empty($TCatData['news_list'])
+                    || count($TCatData['news_list']) === 0
+                )
                   @continue
                 @endif
-                {{-- Legacy CategorySet1[2]: large + 2×2 thumbs (Entertainment) --}}
-                @if($__homeSort === 2 || $__homeCode === 'entertainment')
+                @if($slot === 2)
                   @include('frontend.category_entertainment_section', ['TCatData' => $TCatData])
-                  @continue
+                @elseif($slot === 3)
+                  @include('frontend.category_sort3_two_column', ['TCatData' => $TCatData])
+                @elseif($slot === 4)
+                  @include('frontend.category_carousel_section', ['TCatData' => $TCatData])
+                @else
+                  @include('frontend.category_sort5_big_sidebar', ['TCatData' => $TCatData])
                 @endif
-                <div class="posts-block">
-                  <div class="title-section">
-                    <h1 class="{{ $TCatData['code'] ?? '' }}">{{ $TCatData['title'] ?? '' }}<a href="{{ url('/category/'.($TCatData['code'] ?? '')) }}" class="btn-more category category-{{ $TCatData['code'] ?? '' }}">More</a></h1>
-                  </div>
-                  <div class="row">
-                    @foreach(($TCatData['news_list'] ?? []) as $idx => $slider)
-                      <div class="col-md-{{ $idx === 0 ? '6' : '3' }}">
-                        <div class="news-post {{ $idx === 0 ? 'standart-post' : 'thumb-post' }}">
-                          <div class="post-image">
-                            <a href="{{ url('/videos/'.($slider->categorycode ?? '').'/'.($slider->permalink ?? '')) }}">
-                              <img src="{{ \App\Support\FrontendMedia::coverImageUrl($slider->cover_img ?? null) }}" alt="{{ $slider->title ?? '' }}">
-                            </a>
-                            <a href="{{ url('/category/'.($slider->categorycode ?? '').'/'.($slider->subcategorycode ?? '')) }}" class="category category-{{ $slider->categorycode ?? '' }}">{{ $slider->subcategoryname ?? '' }}</a>
-                          </div>
-                          <h2><a href="{{ url('/videos/'.($slider->categorycode ?? '').'/'.($slider->permalink ?? '')) }}">{{ $slider->title ?? '' }}</a></h2>
-                        </div>
-                      </div>
-                    @endforeach
-                  </div>
-                </div>
               @endforeach
             </div>
             <div class="col-lg-3 sidebar-sticky">

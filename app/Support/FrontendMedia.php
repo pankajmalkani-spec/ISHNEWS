@@ -32,6 +32,26 @@ class FrontendMedia
         return url(self::SPONSOR_DIR.'/'.$name);
     }
 
+    /**
+     * Sidebar / frontend ads: {@see public_path('images/AdvertiseImages')}. Returns null if missing or invalid (no placeholder URL).
+     */
+    public static function advertisementImageUrlIfExists(?string $storedFilename): ?string
+    {
+        $trimmed = trim((string) ($storedFilename ?? ''));
+        if ($trimmed === '' || preg_match('/^[A-Za-z0-9][A-Za-z0-9._-]*$/', $trimmed) !== 1) {
+            return null;
+        }
+
+        $lower = strtolower($trimmed);
+        if ($lower === 'no_img.png' || $lower === 'no_img.gif') {
+            return null;
+        }
+
+        $path = public_path('images/AdvertiseImages/'.$trimmed);
+
+        return is_file($path) ? url('images/AdvertiseImages/'.$trimmed) : null;
+    }
+
     private static function resolveExistingBasename(string $stored, string $absoluteDir, string $fallbackBasename): string
     {
         $trimmed = trim($stored);

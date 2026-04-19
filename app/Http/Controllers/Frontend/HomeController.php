@@ -102,7 +102,7 @@ class HomeController extends Controller
             ->get();
 
         $advertisement = DB::table('advertisement')
-            ->select('id', 'title', 'img_url', 'annual_rates')
+            ->select('id', 'title', 'img_url', 'ad_url', 'annual_rates')
             ->where('status', 1)
             ->whereRaw("CAST(start_date AS CHAR(10)) <= ?", [$today])
             ->whereRaw("CAST(end_date AS CHAR(10)) >= ?", [$today])

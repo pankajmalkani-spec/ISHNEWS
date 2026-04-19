@@ -1,5 +1,5 @@
 {{--
-  Legacy `home.php` "Third-Posts-block (H-Scrolling)": CategorySet1[4] — horizontal Owl carousel (e.g. Awareness).
+  Legacy CategorySet1[4]: horizontal Owl carousel — driven by sort 4 only (title/category from DB).
 --}}
 @php
     $newsList = $TCatData['news_list'] ?? [];

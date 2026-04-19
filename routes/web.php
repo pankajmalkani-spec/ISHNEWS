@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Frontend\HomeController;
+use App\Http\Controllers\Frontend\PageController;
+use App\Http\Controllers\Frontend\SearchController;
 use App\Http\Controllers\Mwadmin\AuthController;
 use App\Services\MwadminAccessService;
 use Illuminate\Http\Request;
@@ -9,6 +11,13 @@ use Inertia\Inertia;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/index', [HomeController::class, 'index'])->name('home.index');
+
+Route::get('/about', [PageController::class, 'about'])->name('about');
+Route::get('/contact', [PageController::class, 'contact'])->name('contact');
+Route::post('/contact', [PageController::class, 'contactSubmit'])->name('contact.submit');
+Route::get('/sitemap', [PageController::class, 'sitemap'])->name('sitemap');
+
+Route::get('/search', [SearchController::class, 'index'])->name('search');
 
 Route::prefix('mwadmin')->group(function (): void {
     Route::get('/', fn () => redirect()->route('mwadmin.login'));
