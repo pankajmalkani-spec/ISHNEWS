@@ -1275,7 +1275,7 @@ export default function NewslistingEdit({
                                         <label>Banner Image (Size — 800px × 526px)</label>
                                         <div className="mwadmin-category-image-field">
                                             <div
-                                                className="mwadmin-category-image-preview-wrap mwadmin-category-image-preview-wrap--banner mwadmin-category-image-preview-wrap--clickable"
+                                                className="mwadmin-category-image-preview-wrap mwadmin-category-image-preview-wrap--news-banner mwadmin-category-image-preview-wrap--clickable"
                                                 role="button"
                                                 tabIndex={0}
                                                 aria-label="Open banner editor"
@@ -1302,7 +1302,7 @@ export default function NewslistingEdit({
                                         <label>Cover Image (Size — 385px × 165px)</label>
                                         <div className="mwadmin-category-image-field">
                                             <div
-                                                className="mwadmin-category-image-preview-wrap mwadmin-category-image-preview-wrap--box mwadmin-category-image-preview-wrap--clickable"
+                                                className="mwadmin-category-image-preview-wrap mwadmin-category-image-preview-wrap--news-cover mwadmin-category-image-preview-wrap--clickable"
                                                 role="button"
                                                 tabIndex={0}
                                                 aria-label="Open cover editor"

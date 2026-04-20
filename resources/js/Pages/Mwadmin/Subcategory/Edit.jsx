@@ -7,8 +7,9 @@ import MwadminStatusBadge from '../../../Components/Mwadmin/MwadminStatusBadge';
 import { useClassicDialog } from '../../../Components/Mwadmin/ClassicDialog';
 import { MwadminFieldError } from '../../../Components/Mwadmin/MwadminMotionFeedback';
 
-const BANNER_OUT = { w: 1280, h: 360 };
-const BOX_OUT = { w: 640, h: 640 };
+// Legacy mwadmin subcategory cropper exports square 220x220 for both banner and box.
+const BANNER_OUT = { w: 220, h: 220 };
+const BOX_OUT = { w: 220, h: 220 };
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const NAME_RE = /^[a-zA-Z_.\s-]+$/;
 
@@ -301,7 +302,7 @@ export default function SubcategoryEdit({ authUser = {}, subcategoryId }) {
                                         <label>Banner Image</label>
                                         <div className="mwadmin-category-image-field">
                                             <div
-                                                className="mwadmin-category-image-preview-wrap mwadmin-category-image-preview-wrap--banner mwadmin-category-image-preview-wrap--clickable"
+                                                className="mwadmin-category-image-preview-wrap mwadmin-category-image-preview-wrap--box mwadmin-category-image-preview-wrap--clickable"
                                                 role="button"
                                                 tabIndex={0}
                                                 aria-label="Open banner image editor"

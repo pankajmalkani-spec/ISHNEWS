@@ -1,7 +1,7 @@
-/** Output sizes for MwadminImageEditorModal — align with category/news layouts where applicable */
+/** Output sizes for MwadminImageEditorModal — aligned to legacy mwadmin crop exports. */
 
-export const MWADMIN_NEWS_BANNER = { w: 1280, h: 360 };
-export const MWADMIN_NEWS_COVER = { w: 640, h: 640 };
+export const MWADMIN_NEWS_BANNER = { w: 800, h: 526 };
+export const MWADMIN_NEWS_COVER = { w: 385, h: 165 };
 
-/** Advertisement creative — wide horizontal (no fixed legacy spec in API) */
-export const MWADMIN_AD_IMAGE = { w: 900, h: 300 };
+/** Advertisement image — matches legacy mwadmin/Advertisement CropAvatarLogo export. */
+export const MWADMIN_AD_IMAGE = { w: 196, h: 160 };

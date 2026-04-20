@@ -1,6 +1,7 @@
 /** Shared user create/edit validation and API error helpers */
 
-export const PROFILE_EDITOR_OUT = { w: 512, h: 512 };
+// Legacy mwadmin users cropper exports square 220x220.
+export const PROFILE_EDITOR_OUT = { w: 220, h: 220 };
 export const MAX_PROFILE_BYTES = 5 * 1024 * 1024;
 export const NAME_RE = /^[a-zA-Z\s]+$/;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

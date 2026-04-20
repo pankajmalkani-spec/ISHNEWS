@@ -3862,17 +3862,47 @@ html.mwadmin-ui-dark .mwadmin-video-upload-modal-footer {
     grid-column: 1 / -1;
 }
 
-/* Advertisement image — 900×300 export (cap width; full row was comically large on wide forms) */
+/* Advertisement image — legacy export 196×160. */
 .mwadmin-category-image-preview-wrap--ad {
     position: relative;
     box-sizing: border-box;
     width: 100%;
-    max-width: min(560px, 100%);
-    aspect-ratio: 900 / 300;
+    max-width: min(280px, 100%);
+    aspect-ratio: 196 / 160;
     min-height: 0;
 }
 
 .mwadmin-category-image-preview-wrap--ad .mwadmin-category-image-preview {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+/* Newslisting legacy exports: banner 800x526, cover 385x165 */
+.mwadmin-category-image-preview-wrap--news-banner {
+    position: relative;
+    box-sizing: border-box;
+    width: 100%;
+    aspect-ratio: 800 / 526;
+    min-height: 0;
+}
+
+.mwadmin-category-image-preview-wrap--news-cover {
+    position: relative;
+    box-sizing: border-box;
+    width: 100%;
+    aspect-ratio: 385 / 165;
+    min-height: 0;
+}
+
+.mwadmin-category-image-preview-wrap--news-banner .mwadmin-category-image-preview,
+.mwadmin-category-image-preview-wrap--news-cover .mwadmin-category-image-preview {
     position: absolute;
     inset: 0;
     margin: auto;
@@ -4116,6 +4146,11 @@ html.mwadmin-ui-dark .mwadmin-video-upload-modal-footer {
     background-color: #fff;
     overflow: hidden;
     flex-shrink: 0;
+}
+
+/* Match legacy cropper preview behavior (.avatar-preview img { width: 100%; }) */
+.mwadmin-live-preview-target img {
+    width: 100%;
 }
 
 .mwadmin-legacy-cropper-preview:hover {

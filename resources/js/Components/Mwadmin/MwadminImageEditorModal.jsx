@@ -115,7 +115,8 @@ export default function MwadminImageEditorModal({
     const [displayUrl, setDisplayUrl] = useState('');
     const [zoom, setZoom] = useState(DEFAULT_ZOOM_MULTIPLIER);
     const [rotation, setRotation] = useState(0);
-    const [opts, setOpts] = useState({ format: 'jpg', quality: 92 });
+    // Legacy crop classes save PNG by default; keep same default for closer parity.
+    const [opts, setOpts] = useState({ format: 'png', quality: 92 });
     const [dragOver, setDragOver] = useState(false);
     const [cropperReady, setCropperReady] = useState(false);
     const baseZoomRef = useRef(1);
@@ -368,7 +369,7 @@ export default function MwadminImageEditorModal({
                             displayUrl ? (
                                 <figure key={`pv-${box}-${i}`} className="mwadmin-category-export-preview mwadmin-legacy-export-preview">
                                     <div
-                                        className={`mwadmin-category-export-preview-frame mwadmin-export-preview-frame--aspect mwadmin-live-preview-target mwadmin-legacy-cropper-preview ${IMAGE_EDITOR_PREVIEW_SIZE_CLASS[i] || ''}`}
+                                        className={`mwadmin-live-preview-target mwadmin-legacy-cropper-preview ${IMAGE_EDITOR_PREVIEW_SIZE_CLASS[i] || ''}`}
                                         style={{
                                             width: box,
                                             height: box,
