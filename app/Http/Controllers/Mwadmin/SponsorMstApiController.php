@@ -7,6 +7,7 @@ use App\Http\Controllers\Mwadmin\Concerns\AuthorizesMwadminPermissions;
 use App\Http\Controllers\Mwadmin\Concerns\ResolvesMwadminUser;
 use App\Models\SponsorCategory;
 use App\Models\SponsorMst;
+use App\Support\FrontendMedia;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -20,17 +21,20 @@ class SponsorMstApiController extends Controller
     /**
      * Build a public URL for sponsor logos. Legacy rows may store a bare filename,
      * a relative path under images/sponsorLogo, or a full http(s) URL.
+     * Missing/invalid local logos resolve to {@see FrontendMedia::sponsorLogoUrl(null)}.
      *
      * Uses {@see asset()} so URLs match APP_URL / subfolder installs (same idea as CI base_url).
      */
-    private function logoPublicUrl(?string $filename): ?string
+    private function logoPublicUrl(?string $filename): string
     {
+        $fallback = FrontendMedia::sponsorLogoUrl(null);
+
         if ($filename === null) {
-            return null;
+            return $fallback;
         }
         $s = trim((string) $filename);
         if ($s === '' || strcasecmp($s, 'null') === 0) {
-            return null;
+            return $fallback;
         }
         if (preg_match('#^https?://#i', $s)) {
             return $s;
@@ -44,7 +48,7 @@ class SponsorMstApiController extends Controller
             if (preg_match('#^/images/sponsorLogo/(.+)$#i', $s, $m)) {
                 $enc = $this->encodePathSegments($m[1]);
 
-                return $enc === '' ? null : asset('images/sponsorLogo/'.$enc);
+                return $enc === '' ? $fallback : asset('images/sponsorLogo/'.$enc);
             }
 
             return url($s);
@@ -55,7 +59,7 @@ class SponsorMstApiController extends Controller
         $s = ltrim($s, '/');
         $enc = $this->encodePathSegments($s);
 
-        return $enc === '' ? null : asset('images/sponsorLogo/'.$enc);
+        return $enc === '' ? $fallback : asset('images/sponsorLogo/'.$enc);
     }
 
     /** URL-encode each path segment (handles spaces and special chars in legacy filenames). */

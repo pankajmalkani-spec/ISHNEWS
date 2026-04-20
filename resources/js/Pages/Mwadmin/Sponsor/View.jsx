@@ -1,4 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
+import { SPONSOR_LOGO_PLACEHOLDER_PATH } from '../../../constants/sponsorPlaceholder';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import MwadminLayout from '../../../Components/Mwadmin/Layout';
@@ -121,11 +122,11 @@ export default function SponsorView({ authUser = {}, sponsorId }) {
                             <div className="mwadmin-form-grid-full">
                                 <label>Logo</label>
                                 <div className="mwadmin-sponsor-view-logo-wrap">
-                                    {row.logo_url ? (
-                                        <img src={row.logo_url} alt="" className="mwadmin-sponsor-view-logo-img" />
-                                    ) : (
-                                        <span className="mwadmin-grid-action-muted">—</span>
-                                    )}
+                                    <img
+                                        src={row.logo_url || SPONSOR_LOGO_PLACEHOLDER_PATH}
+                                        alt="No image available"
+                                        className="mwadmin-sponsor-view-logo-img"
+                                    />
                                 </div>
                             </div>
                         </div>

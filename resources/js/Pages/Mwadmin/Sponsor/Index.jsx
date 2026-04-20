@@ -8,6 +8,7 @@ import { useClassicDialog } from '../../../Components/Mwadmin/ClassicDialog';
 import MwadminStatusBadge from '../../../Components/Mwadmin/MwadminStatusBadge';
 import MwadminThemedAgGrid from '../../../Components/Mwadmin/MwadminThemedAgGrid';
 import { canAdd, canDelete, canEdit, canViewDetail } from '../../../lib/mwadminPermissions';
+import { SPONSOR_LOGO_PLACEHOLDER_PATH } from '../../../constants/sponsorPlaceholder';
 import { formatSponsorDateDisplay } from './sponsorDateFormat';
 
 function encodeLogoPathSegments(rel) {
@@ -78,9 +79,9 @@ function sponsorListingLogoSrc(data, publicRoot = '') {
     return enc ? withRoot(`/images/sponsorLogo/${enc}`) : '';
 }
 
-/** Placeholder asset under `public/images/sponsorLogo/` (same style as category `no_img.gif`). */
+/** Placeholder asset under `public/images/sponsorLogo/`. */
 function sponsorListingNoLogoPlaceholderSrc(publicRoot = '') {
-    const path = '/images/sponsorLogo/no_img.gif';
+    const path = '/images/sponsorLogo/no_img.png';
     const root = typeof publicRoot === 'string' ? publicRoot.replace(/\/$/, '') : '';
     if (root) return `${root}${path}`;
     if (typeof window !== 'undefined') return new URL(path, window.location.origin).href;

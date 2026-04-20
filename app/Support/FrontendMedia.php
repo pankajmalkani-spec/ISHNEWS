@@ -10,7 +10,7 @@ class FrontendMedia
 {
     public const COVER_FALLBACK = 'no_img.png';
 
-    public const SPONSOR_FALLBACK = 'no_img.gif';
+    public const SPONSOR_FALLBACK = 'no_img.png';
 
     /** @var non-empty-string */
     private const COVER_DIR = 'images/NewsContents/coverImages';

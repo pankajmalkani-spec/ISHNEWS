@@ -1,4 +1,5 @@
 import { Head } from '@inertiajs/react';
+import { SPONSOR_LOGO_PLACEHOLDER_PATH } from '../constants/sponsorPlaceholder';
 
 function fmtDateTime(value) {
     if (!value) return '';
@@ -16,7 +17,7 @@ function fmtDateTime(value) {
 }
 
 const COVER_IMG_FALLBACK = '/images/NewsContents/coverImages/no_img.png';
-const SPONSOR_LOGO_FALLBACK = '/images/sponsorLogo/no_img.gif';
+const SPONSOR_LOGO_FALLBACK = '/images/sponsorLogo/no_img.png';
 
 /** Legacy-style cover path; if missing on disk, img onError falls back to {@link COVER_IMG_FALLBACK}. */
 function coverSrc(file) {
@@ -378,7 +379,7 @@ export default function Home({
                                                         <div className="post-image">
                                                             <a href={s.website || '#'} target="_blank" rel="noreferrer">
                                                                 <img
-                                                                    src={`/images/sponsorLogo/${s.logo || 'no_img.gif'}`}
+                                                                    src={`/images/sponsorLogo/${s.logo || 'no_img.png'}`}
                                                                     alt={s.organization_name}
                                                                     onError={(e) => {
                                                                         e.currentTarget.onerror = null;
