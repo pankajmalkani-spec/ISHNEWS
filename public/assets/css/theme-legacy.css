@@ -9,6 +9,17 @@ body.ish-theme-legacy {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Centered main column on legacy home only; header/nav/footer stay full viewport width */
+body.ish-theme-legacy .ish-main-column {
+  max-width: 1190px;
+  margin-left: auto;
+  margin-right: auto;
+  background: #fff;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+
 /* ——— Main column: match live tighter padding between the five sections ——— */
 body.ish-theme-legacy #content-section {
   padding: 14px 0 20px;

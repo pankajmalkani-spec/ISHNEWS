@@ -11,6 +11,7 @@
           <li><a href="https://indiasigninghands.com/shop/" title="Shop With Us" target="_blank"><i class="fa fa-shopping-cart" aria-hidden="true"></i></a></li>
         </ul>
       </div>
+      @if(config('ish.theme_toggle_enabled'))
       <div class="col-md-3 col-sm-12 mb-2 mb-md-0 text-md-center">
         @php
           $toggleToModern = route('theme.set', ['theme' => 'modern']);
@@ -32,7 +33,8 @@
           <span class="ish-theme-toggle__text ish-theme-toggle__text--modern">Modern</span>
         </div>
       </div>
-      <div class="col-md-4 col-sm-12 text-md-right">
+      @endif
+      <div class="col-md-{{ config('ish.theme_toggle_enabled') ? '4' : '7' }} col-sm-12 text-md-right">
         <ul class="social-icons">
           <li><a class="youtube" href="https://www.youtube.com/ishnews" target="_blank"><i class="fa fa-youtube-play"></i></a></li>
           <li><a class="facebook" href="https://www.facebook.com/ISHNews/" target="_blank"><i class="fa fa-facebook"></i></a></li>

@@ -20,6 +20,9 @@ Route::post('/contact', [PageController::class, 'contactSubmit'])->name('contact
 Route::get('/sitemap', [PageController::class, 'sitemap'])->name('sitemap');
 
 Route::get('/set-theme/{theme}', function (Request $request, string $theme) {
+    if (! config('ish.theme_toggle_enabled')) {
+        return redirect()->back();
+    }
     if (! in_array($theme, ['legacy', 'modern'], true)) {
         abort(404);
     }

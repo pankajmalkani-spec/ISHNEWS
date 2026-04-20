@@ -651,7 +651,7 @@ body {
   background: #fff; }
 
 body.boxed-style {
-  background: #E3E4E8; }
+  background: #fff; }
   body.boxed-style #container {
     max-width: 1190px;
     margin: 0 auto;

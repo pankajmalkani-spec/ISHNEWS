@@ -11,9 +11,12 @@ class ShareFrontendTheme
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $theme = (string) $request->cookie('ish_frontend_theme', 'legacy');
-        if (! in_array($theme, ['legacy', 'modern'], true)) {
-            $theme = 'legacy';
+        $theme = 'legacy';
+        if (config('ish.theme_toggle_enabled')) {
+            $theme = (string) $request->cookie('ish_frontend_theme', 'legacy');
+            if (! in_array($theme, ['legacy', 'modern'], true)) {
+                $theme = 'legacy';
+            }
         }
 
         View::share('frontendTheme', $theme);

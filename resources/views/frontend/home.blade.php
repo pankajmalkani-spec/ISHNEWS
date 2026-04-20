@@ -36,57 +36,61 @@
   @else
   <div id="content">
     @include('frontend.banner')
-    <div class="container">
-      <div class="row">
-        <div class="col-lg-12">
-          <div class="search-box">
-            <form name="frmSearch" id="frmSearch" role="search" class="search-form" method="get" action="{{ url('/search') }}">
-              <input id="sKeywordHome" name="sKeyword" class="form-control mr-sm-2" type="search" placeholder="Search here" aria-label="Search">
-              <button class="btn btn-primary my-2 my-sm-0" type="submit"><i class="fa fa-search"></i></button>
-            </form>
+    <div class="ish-main-column">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-12">
+            <div class="search-box">
+              <form name="frmSearch" id="frmSearch" role="search" class="search-form" method="get" action="{{ url('/search') }}">
+                <input id="sKeywordHome" name="sKeyword" class="form-control mr-sm-2" type="search" placeholder="Search here" aria-label="Search">
+                <button class="btn btn-primary my-2 my-sm-0" type="submit"><i class="fa fa-search"></i></button>
+              </form>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
       <div class="desktop-view">
-        @include('frontend.breaking_news_section')
-        <section id="content-section">
-          <div class="row">
-            <div class="col-lg-9">
-              @foreach([2, 3, 4, 5] as $slot)
-                @php
-                  $TCatData = ($CategorySet1 ?? [])[$slot] ?? null;
-                @endphp
-                @if(
-                    ! $TCatData
-                    || empty($TCatData['news_list'])
-                    || count($TCatData['news_list']) === 0
-                )
-                  @continue
-                @endif
-                @if($slot === 2)
-                  @include('frontend.category_entertainment_section', ['TCatData' => $TCatData])
-                @elseif($slot === 3)
-                  @include('frontend.category_sort3_two_column', ['TCatData' => $TCatData])
-                @elseif($slot === 4)
-                  @include('frontend.category_carousel_section', ['TCatData' => $TCatData])
-                @else
-                  @include('frontend.category_sort5_big_sidebar', ['TCatData' => $TCatData])
-                @endif
-              @endforeach
-            </div>
-            <div class="col-lg-3 sidebar-sticky">
-              <div class="sidebar theiaStickySidebar">
-                @include('frontend.sidebar_shop')
-                @include('frontend.sidebar_ads')
-                @include('frontend.sidebar_sm')
+        <div class="container">
+          @include('frontend.breaking_news_section')
+          <section id="content-section">
+            <div class="row">
+              <div class="col-lg-9">
+                @foreach([2, 3, 4, 5] as $slot)
+                  @php
+                    $TCatData = ($CategorySet1 ?? [])[$slot] ?? null;
+                  @endphp
+                  @if(
+                      ! $TCatData
+                      || empty($TCatData['news_list'])
+                      || count($TCatData['news_list']) === 0
+                  )
+                    @continue
+                  @endif
+                  @if($slot === 2)
+                    @include('frontend.category_entertainment_section', ['TCatData' => $TCatData])
+                  @elseif($slot === 3)
+                    @include('frontend.category_sort3_two_column', ['TCatData' => $TCatData])
+                  @elseif($slot === 4)
+                    @include('frontend.category_carousel_section', ['TCatData' => $TCatData])
+                  @else
+                    @include('frontend.category_sort5_big_sidebar', ['TCatData' => $TCatData])
+                  @endif
+                @endforeach
+              </div>
+              <div class="col-lg-3 sidebar-sticky">
+                <div class="sidebar theiaStickySidebar">
+                  @include('frontend.sidebar_shop')
+                  @include('frontend.sidebar_ads')
+                  @include('frontend.sidebar_sm')
+                </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </div>
       </div>
-    @include('frontend.inc_carousel_slider')
+      @include('frontend.inc_carousel_slider')
+    </div>
   </div>
   @endif
 
