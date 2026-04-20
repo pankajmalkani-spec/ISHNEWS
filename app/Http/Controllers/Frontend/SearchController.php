@@ -12,7 +12,7 @@ class SearchController extends Controller
 {
     public function index(Request $request): View
     {
-        $keyword = trim((string) $request->query('sKeyword', ''));
+        $keyword = trim((string) $request->query('sKeyword', $request->query('keyword', '')));
         $now = now()->format('Y-m-d H:i:s');
 
         $results = collect();

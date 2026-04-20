@@ -144,5 +144,20 @@ $(document).ready(function () {
     messages: { sKeyword: 'Please enter the text to search.' },
     submitHandler: function (form) { form.submit(); }
   });
+
+  // Keep navbar search reliable even when validation plugin is delayed/blocked.
+  $('form[name="frmNavSearchModern"]').on('submit', function (e) {
+    var $form = $(this);
+    var $input = $form.find('input[name="sKeyword"]');
+    var keyword = ($input.val() || '').trim();
+    if (keyword === '') {
+      e.preventDefault();
+      if ($input.length) $input.focus();
+      return false;
+    }
+    e.preventDefault();
+    window.location.href = "{{ url('/search') }}" + '?sKeyword=' + encodeURIComponent(keyword);
+    return false;
+  });
 });
 </script>
