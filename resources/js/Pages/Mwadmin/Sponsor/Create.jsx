@@ -6,7 +6,7 @@ import MwadminImageEditorModal from '../../../Components/Mwadmin/MwadminImageEdi
 import MwadminLayout from '../../../Components/Mwadmin/Layout';
 import { useClassicDialog } from '../../../Components/Mwadmin/ClassicDialog';
 import { laravelErrorFirstLine } from '../../../lib/laravelApiError';
-import { dmyToIsoDate, normalizeWebsiteUrl, SPONSOR_LOGO_EXPORT } from './sponsorDateFormat';
+import { dmyToIsoDate, normalizeWebsiteUrl, SPONSOR_LOGO_EXPORT, SPONSOR_LOGO_SLOT_STYLE } from './sponsorDateFormat';
 
 const MAX_LOGO_BYTES = 5 * 1024 * 1024;
 
@@ -143,7 +143,7 @@ export default function SponsorCreate({ authUser = {} }) {
                             Back
                         </Link>
                     </div>
-                    <h1 className="mwadmin-title">Add Sponsor</h1>
+                    <h1 className="mwadmin-title">Create Sponsor</h1>
                     <section className="mwadmin-panel mwadmin-form-panel">
                         <form onSubmit={onSubmit} className="mwadmin-form-grid">
                             <div>
@@ -168,15 +168,54 @@ export default function SponsorCreate({ authUser = {} }) {
                                     onChange={(e) => setForm((f) => ({ ...f, organization_name: e.target.value }))}
                                 />
                             </div>
-                            <div>
-                                <label>Website *</label>
-                                <input
-                                    type="url"
-                                    value={form.website}
-                                    maxLength={150}
-                                    onChange={(e) => setForm((f) => ({ ...f, website: e.target.value }))}
-                                />
+
+                            <div className="mwadmin-form-grid-full mwadmin-category-images-row mwadmin-category-images-row--align-form">
+                                <div className="mwadmin-category-image-block">
+                                    <label>Sponsor Logo (196px × 160px)</label>
+                                    <div className="mwadmin-category-image-field">
+                                        <div
+                                            className="mwadmin-category-image-preview-wrap mwadmin-category-image-preview-wrap--box mwadmin-sponsor-logo-preview mwadmin-category-image-preview-wrap--clickable"
+                                            style={SPONSOR_LOGO_SLOT_STYLE}
+                                            role="button"
+                                            tabIndex={0}
+                                            aria-label="Open logo editor"
+                                            onClick={() => setLogoEditorOpen(true)}
+                                            onKeyDown={(ev) => {
+                                                if (ev.key === 'Enter' || ev.key === ' ') {
+                                                    ev.preventDefault();
+                                                    setLogoEditorOpen(true);
+                                                }
+                                            }}
+                                        >
+                                            {logoPreview ? (
+                                                <img src={logoPreview} alt="" className="mwadmin-category-image-preview" />
+                                            ) : (
+                                                <div className="mwadmin-category-image-placeholder-card">
+                                                    NO IMAGE AVAILABLE
+                                                    <span className="mwadmin-category-image-click-hint">Click to upload and edit</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div
+                                    style={{
+                                        alignSelf: 'start',
+                                        justifySelf: 'stretch',
+                                        width: '100%',
+                                        minWidth: 0,
+                                    }}
+                                >
+                                    <label>Website *</label>
+                                    <input
+                                        type="url"
+                                        value={form.website}
+                                        maxLength={150}
+                                        onChange={(e) => setForm((f) => ({ ...f, website: e.target.value }))}
+                                    />
+                                </div>
                             </div>
+
                             <div>
                                 <label>Contact Name *</label>
                                 <input
@@ -225,8 +264,9 @@ export default function SponsorCreate({ authUser = {} }) {
                                     onChange={(dmy) => setForm((f) => ({ ...f, end_date: dmy }))}
                                 />
                             </div>
+                            <div aria-hidden="true" />
                             <div>
-                                <label>Status</label>
+                                <label>Status *</label>
                                 <select
                                     value={form.status}
                                     onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))}
@@ -234,35 +274,6 @@ export default function SponsorCreate({ authUser = {} }) {
                                     <option value="1">Active</option>
                                     <option value="0">In-Active</option>
                                 </select>
-                            </div>
-                            <div className="mwadmin-form-grid-full mwadmin-category-images-row">
-                                <div className="mwadmin-category-image-block">
-                                    <label>Logo</label>
-                                    <div className="mwadmin-category-image-field">
-                                        <div
-                                            className="mwadmin-category-image-preview-wrap mwadmin-category-image-preview-wrap--box mwadmin-sponsor-logo-preview mwadmin-category-image-preview-wrap--clickable"
-                                            role="button"
-                                            tabIndex={0}
-                                            aria-label="Open logo editor"
-                                            onClick={() => setLogoEditorOpen(true)}
-                                            onKeyDown={(ev) => {
-                                                if (ev.key === 'Enter' || ev.key === ' ') {
-                                                    ev.preventDefault();
-                                                    setLogoEditorOpen(true);
-                                                }
-                                            }}
-                                        >
-                                            {logoPreview ? (
-                                                <img src={logoPreview} alt="" className="mwadmin-category-image-preview" />
-                                            ) : (
-                                                <div className="mwadmin-category-image-placeholder-card">
-                                                    NO IMAGE AVAILABLE
-                                                    <span className="mwadmin-category-image-click-hint">Click to upload and edit</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
                             <div className="mwadmin-form-actions">
                                 <button type="submit" disabled={saving}>

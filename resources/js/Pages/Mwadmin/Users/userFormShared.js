@@ -2,6 +2,16 @@
 
 // Legacy mwadmin users cropper exports square 220x220.
 export const PROFILE_EDITOR_OUT = { w: 220, h: 220 };
+/** On-page profile preview tile; matches export and avoids stretched preview areas. */
+export const PROFILE_PREVIEW_SLOT_STYLE = {
+    width: 220,
+    maxWidth: 'min(220px, 100%)',
+    minHeight: 220,
+    maxHeight: 220,
+    aspectRatio: '1 / 1',
+    flex: '0 0 auto',
+    boxSizing: 'border-box',
+};
 export const MAX_PROFILE_BYTES = 5 * 1024 * 1024;
 export const NAME_RE = /^[a-zA-Z\s]+$/;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

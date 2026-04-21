@@ -74,6 +74,17 @@ export function formatSponsorDateDisplay(isoOrNull) {
  */
 export const SPONSOR_LOGO_EXPORT = { w: 196, h: 160 };
 
+/** On-page logo frame — matches legacy export; overrides wide-screen image-row min-height rules. */
+export const SPONSOR_LOGO_SLOT_STYLE = {
+    width: 196,
+    maxWidth: 'min(196px, 100%)',
+    minHeight: 160,
+    maxHeight: 160,
+    aspectRatio: '196 / 160',
+    flex: '0 0 auto',
+    boxSizing: 'border-box',
+};
+
 /** Add https:// when missing so Laravel `url` validation accepts common input (e.g. example.com). */
 export function normalizeWebsiteUrl(raw) {
     const t = String(raw ?? '').trim();

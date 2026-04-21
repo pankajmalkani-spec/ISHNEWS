@@ -7,6 +7,7 @@ import MwadminStatusBadge from '../../../Components/Mwadmin/MwadminStatusBadge';
 import { useClassicDialog } from '../../../Components/Mwadmin/ClassicDialog';
 import {
     PROFILE_EDITOR_OUT,
+    PROFILE_PREVIEW_SLOT_STYLE,
     buildUserFieldErrors,
     firstClientValidationMessage,
     formatApiErrors,
@@ -126,12 +127,51 @@ export default function UsersCreate({ authUser = {} }) {
                     <section className="mwadmin-panel mwadmin-form-panel">
                         <form onSubmit={onSubmit} className="mwadmin-form-grid" noValidate>
                             <div>
+                                <label>User Name *</label>
+                                <input
+                                    value={form.username}
+                                    onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))}
+                                />
+                            </div>
+                            <div>
+                                <label>
+                                    Role <span className="mwadmin-required">*</span>
+                                </label>
+                                <UserRolesPicker
+                                    roleOptions={roleOptions}
+                                    roleIds={form.role_ids}
+                                    onRoleIdsChange={(ids) => setForm((f) => ({ ...f, role_ids: ids }))}
+                                />
+                            </div>
+
+                            <div>
+                                <label>Password *</label>
+                                <input
+                                    type="password"
+                                    autoComplete="new-password"
+                                    value={form.password}
+                                    onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
+                                />
+                            </div>
+                            <div>
+                                <label>Confirm Password *</label>
+                                <input
+                                    type="password"
+                                    autoComplete="new-password"
+                                    value={form.confirm_password}
+                                    onChange={(e) => setForm((f) => ({ ...f, confirm_password: e.target.value }))}
+                                />
+                            </div>
+
+                            <div>
                                 <label>Salutation</label>
                                 <input
                                     value={form.salutation}
                                     onChange={(e) => setForm((f) => ({ ...f, salutation: e.target.value }))}
                                 />
                             </div>
+                            <div aria-hidden="true" />
+
                             <div>
                                 <label>First Name *</label>
                                 <input
@@ -146,21 +186,7 @@ export default function UsersCreate({ authUser = {} }) {
                                     onChange={(e) => setForm((f) => ({ ...f, last_name: e.target.value }))}
                                 />
                             </div>
-                            <div>
-                                <label>User Name *</label>
-                                <input
-                                    value={form.username}
-                                    onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))}
-                                />
-                            </div>
-                            <div>
-                                <label>Email *</label>
-                                <input
-                                    type="email"
-                                    value={form.email}
-                                    onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                                />
-                            </div>
+
                             <div>
                                 <label>
                                     Designation <span className="mwadmin-required">*</span>
@@ -187,44 +213,14 @@ export default function UsersCreate({ authUser = {} }) {
                                     }
                                 />
                             </div>
-                            <div>
-                                <label>Password *</label>
-                                <input
-                                    type="password"
-                                    autoComplete="new-password"
-                                    value={form.password}
-                                    onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
-                                />
-                            </div>
-                            <div>
-                                <label>Confirm Password *</label>
-                                <input
-                                    type="password"
-                                    autoComplete="new-password"
-                                    value={form.confirm_password}
-                                    onChange={(e) => setForm((f) => ({ ...f, confirm_password: e.target.value }))}
-                                />
-                            </div>
-                            <div>
-                                <label>Status</label>
-                                <div className="mwadmin-category-status-row">
-                                    <select
-                                        value={form.status}
-                                        onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))}
-                                    >
-                                        <option value="1">Active</option>
-                                        <option value="0">In-Active</option>
-                                    </select>
-                                    <MwadminStatusBadge value={form.status === '1' ? 1 : 0} />
-                                </div>
-                            </div>
 
-                            <div className="mwadmin-form-grid-full mwadmin-category-images-row">
-                                <div className="mwadmin-category-image-block mwadmin-category-image-block--full">
+                            <div className="mwadmin-form-grid-full mwadmin-category-images-row mwadmin-category-images-row--align-form">
+                                <div className="mwadmin-category-image-block">
                                     <label>Profile Photo</label>
                                     <div className="mwadmin-category-image-field">
                                         <div
                                             className="mwadmin-category-image-preview-wrap mwadmin-category-image-preview-wrap--box mwadmin-user-profile-preview mwadmin-category-image-preview-wrap--clickable"
+                                            style={PROFILE_PREVIEW_SLOT_STYLE}
                                             role="button"
                                             tabIndex={0}
                                             aria-label="Open profile photo editor"
@@ -247,17 +243,40 @@ export default function UsersCreate({ authUser = {} }) {
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-
-                            <div className="mwadmin-form-grid-full">
-                                <label>
-                                    Role <span className="mwadmin-required">*</span>
-                                </label>
-                                <UserRolesPicker
-                                    roleOptions={roleOptions}
-                                    roleIds={form.role_ids}
-                                    onRoleIdsChange={(ids) => setForm((f) => ({ ...f, role_ids: ids }))}
-                                />
+                                <div
+                                    className="mwadmin-user-profile-side-fields"
+                                    style={{
+                                        alignSelf: 'start',
+                                        justifySelf: 'stretch',
+                                        width: '100%',
+                                        minWidth: 0,
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: 14,
+                                    }}
+                                >
+                                    <div>
+                                        <label>Email *</label>
+                                        <input
+                                            type="email"
+                                            value={form.email}
+                                            onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label>Status</label>
+                                        <div className="mwadmin-category-status-row">
+                                            <select
+                                                value={form.status}
+                                                onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))}
+                                            >
+                                                <option value="1">Active</option>
+                                                <option value="0">In-Active</option>
+                                            </select>
+                                            <MwadminStatusBadge value={form.status === '1' ? 1 : 0} />
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             <div className="mwadmin-form-actions">

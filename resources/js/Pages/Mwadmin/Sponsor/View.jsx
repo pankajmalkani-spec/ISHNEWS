@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import MwadminLayout from '../../../Components/Mwadmin/Layout';
 import MwadminStatusBadge from '../../../Components/Mwadmin/MwadminStatusBadge';
 import { useClassicDialog } from '../../../Components/Mwadmin/ClassicDialog';
-import { formatSponsorDateDisplay, normalizeWebsiteUrl } from './sponsorDateFormat';
+import { formatSponsorDateDisplay, normalizeWebsiteUrl, SPONSOR_LOGO_SLOT_STYLE } from './sponsorDateFormat';
 
 function displayText(v) {
     const s = v == null ? '' : String(v).trim();
@@ -69,6 +69,12 @@ export default function SponsorView({ authUser = {}, sponsorId }) {
                                 <input readOnly value={String(row.id)} />
                             </div>
                             <div>
+                                <label>Status</label>
+                                <div className="mwadmin-sponsor-view-status-cell">
+                                    <MwadminStatusBadge value={row.status} />
+                                </div>
+                            </div>
+                            <div>
                                 <label>Category</label>
                                 <input readOnly value={displayText(row.category_name)} />
                             </div>
@@ -76,6 +82,48 @@ export default function SponsorView({ authUser = {}, sponsorId }) {
                                 <label>Organization</label>
                                 <input readOnly value={displayText(row.organization_name)} />
                             </div>
+
+                            <div className="mwadmin-form-grid-full mwadmin-category-images-row mwadmin-category-images-row--align-form">
+                                <div className="mwadmin-category-image-block">
+                                    <label>Sponsor Logo (196px × 160px)</label>
+                                    <div className="mwadmin-category-image-field">
+                                        <div
+                                            className="mwadmin-category-image-preview-wrap mwadmin-category-image-preview-wrap--box mwadmin-sponsor-logo-preview"
+                                            style={SPONSOR_LOGO_SLOT_STYLE}
+                                        >
+                                            <img
+                                                src={row.logo_url || SPONSOR_LOGO_PLACEHOLDER_PATH}
+                                                alt=""
+                                                className="mwadmin-category-image-preview"
+                                                onError={(e) => {
+                                                    e.currentTarget.src = SPONSOR_LOGO_PLACEHOLDER_PATH;
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div
+                                    style={{
+                                        alignSelf: 'start',
+                                        justifySelf: 'stretch',
+                                        width: '100%',
+                                        minWidth: 0,
+                                    }}
+                                >
+                                    <label>Website</label>
+                                    {websiteHref ? (
+                                        <div className="mwadmin-sponsor-view-website-block">
+                                            <input readOnly value={row.website} />
+                                            <a href={websiteHref} target="_blank" rel="noopener noreferrer">
+                                                Open in new tab
+                                            </a>
+                                        </div>
+                                    ) : (
+                                        <input readOnly value="—" />
+                                    )}
+                                </div>
+                            </div>
+
                             <div>
                                 <label>Contact</label>
                                 <input readOnly value={displayText(row.contact_name)} />
@@ -99,35 +147,6 @@ export default function SponsorView({ authUser = {}, sponsorId }) {
                             <div>
                                 <label>End Date</label>
                                 <input readOnly value={formatSponsorDateDisplay(row.end_date)} />
-                            </div>
-                            <div>
-                                <label>Status</label>
-                                <div className="mwadmin-sponsor-view-status-cell">
-                                    <MwadminStatusBadge value={row.status} />
-                                </div>
-                            </div>
-                            <div className="mwadmin-form-grid-full">
-                                <label>Website</label>
-                                {websiteHref ? (
-                                    <div className="mwadmin-sponsor-view-website-block">
-                                        <input readOnly value={row.website} />
-                                        <a href={websiteHref} target="_blank" rel="noopener noreferrer">
-                                            Open in new tab
-                                        </a>
-                                    </div>
-                                ) : (
-                                    <input readOnly value="—" />
-                                )}
-                            </div>
-                            <div className="mwadmin-form-grid-full">
-                                <label>Logo</label>
-                                <div className="mwadmin-sponsor-view-logo-wrap">
-                                    <img
-                                        src={row.logo_url || SPONSOR_LOGO_PLACEHOLDER_PATH}
-                                        alt="No image available"
-                                        className="mwadmin-sponsor-view-logo-img"
-                                    />
-                                </div>
                             </div>
                         </div>
                         <div className="mwadmin-form-actions">

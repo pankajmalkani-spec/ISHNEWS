@@ -3,6 +3,7 @@ import { MwadminErrorBanner } from '../../../Components/Mwadmin/MwadminMotionFee
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import MwadminLayout from '../../../Components/Mwadmin/Layout';
+import { PROFILE_PREVIEW_SLOT_STYLE } from './userFormShared';
 
 export default function UsersView({ authUser = {}, userId }) {
     const [loading, setLoading] = useState(true);
@@ -27,6 +28,8 @@ export default function UsersView({ authUser = {}, userId }) {
         };
     }, [userId]);
 
+    const profileSrc = item?.profile_photo_url || '/images/categoryImages/boxImages/no_img.gif';
+
     return (
         <>
             <Head title="View User" />
@@ -35,21 +38,20 @@ export default function UsersView({ authUser = {}, userId }) {
                     <div className="mwadmin-pagebar">
                         <span>Administrator</span> <span className="sep">›</span> <span>Users</span>{' '}
                         <span className="sep">›</span> <strong>View User</strong>
-                        <Link href="/mwadmin/users" className="mwadmin-back-btn">Back</Link>
+                        <Link href="/mwadmin/users" className="mwadmin-back-btn">
+                            Back
+                        </Link>
                     </div>
                     <h1 className="mwadmin-title">View User</h1>
                     <section className="mwadmin-panel mwadmin-form-panel">
                         <MwadminErrorBanner message={error} />
-                        {loading ? <div>Loading...</div> : item ? (
+                        {loading ? (
+                            <div>Loading...</div>
+                        ) : item ? (
                             <div className="mwadmin-form-grid">
-                                <div><label>Salutation</label><input value={item.salutation || ''} readOnly /></div>
-                                <div><label>First Name</label><input value={item.first_name || ''} readOnly /></div>
-                                <div><label>Last Name</label><input value={item.last_name || ''} readOnly /></div>
-                                <div><label>User Name</label><input value={item.username || ''} readOnly /></div>
-                                <div><label>Email</label><input value={item.email || ''} readOnly /></div>
                                 <div>
-                                    <label>Designation</label>
-                                    <input value={item.designation_name || ''} readOnly />
+                                    <label>User Name</label>
+                                    <input value={item.username || ''} readOnly />
                                 </div>
                                 <div>
                                     <label>Roles</label>
@@ -60,11 +62,74 @@ export default function UsersView({ authUser = {}, userId }) {
                                         className="mwadmin-input-readonly"
                                     />
                                 </div>
-                                <div><label>P2D Initials</label><input value={item.p2d_intials || ''} readOnly /></div>
-                                <div><label>Status</label><input value={item.status === 1 ? 'Active' : 'In-Active'} readOnly /></div>
+
                                 <div>
-                                    <label>Profile Photo</label>
-                                    <img className="mwadmin-thumb-view" src={item.profile_photo_url || '/images/categoryImages/boxImages/no_img.gif'} alt="" />
+                                    <label>Salutation</label>
+                                    <input value={item.salutation || ''} readOnly />
+                                </div>
+                                <div aria-hidden="true" />
+
+                                <div>
+                                    <label>First Name</label>
+                                    <input value={item.first_name || ''} readOnly />
+                                </div>
+                                <div>
+                                    <label>Last Name</label>
+                                    <input value={item.last_name || ''} readOnly />
+                                </div>
+
+                                <div>
+                                    <label>Designation</label>
+                                    <input value={item.designation_name || ''} readOnly />
+                                </div>
+                                <div>
+                                    <label>P2D Initials</label>
+                                    <input value={item.p2d_intials || ''} readOnly />
+                                </div>
+
+                                <div className="mwadmin-form-grid-full mwadmin-category-images-row mwadmin-category-images-row--align-form">
+                                    <div className="mwadmin-category-image-block">
+                                        <label>Profile Photo</label>
+                                        <div className="mwadmin-category-image-field">
+                                            <div
+                                                className="mwadmin-category-image-preview-wrap mwadmin-category-image-preview-wrap--box mwadmin-user-profile-preview"
+                                                style={PROFILE_PREVIEW_SLOT_STYLE}
+                                            >
+                                                <img
+                                                    className="mwadmin-category-image-preview"
+                                                    src={profileSrc}
+                                                    alt=""
+                                                    onError={(e) => {
+                                                        e.currentTarget.src = '/images/categoryImages/boxImages/no_img.gif';
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div
+                                        style={{
+                                            alignSelf: 'start',
+                                            justifySelf: 'stretch',
+                                            width: '100%',
+                                            minWidth: 0,
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            gap: 14,
+                                        }}
+                                    >
+                                        <div>
+                                            <label>Email</label>
+                                            <input value={item.email || ''} readOnly />
+                                        </div>
+                                        <div>
+                                            <label>Status</label>
+                                            <input value={item.status === 1 ? 'Active' : 'In-Active'} readOnly />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="mwadmin-form-actions">
+                                    <Link href="/mwadmin/users">Cancel</Link>
                                 </div>
                             </div>
                         ) : null}

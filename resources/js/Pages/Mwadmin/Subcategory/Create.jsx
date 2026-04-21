@@ -10,6 +10,16 @@ import { MwadminFieldError } from '../../../Components/Mwadmin/MwadminMotionFeed
 // Legacy mwadmin subcategory cropper exports square 220x220 for both banner and box.
 const BANNER_OUT = { w: 220, h: 220 };
 const BOX_OUT = { w: 220, h: 220 };
+/** Same as category: legacy tile size; overrides wide-screen min-height clamp on previews. */
+const CATEGORY_IMAGE_PREVIEW_SLOT_STYLE = {
+    width: 220,
+    maxWidth: 'min(220px, 100%)',
+    minHeight: 220,
+    maxHeight: 220,
+    aspectRatio: '1 / 1',
+    flex: '0 0 auto',
+    boxSizing: 'border-box',
+};
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const NAME_RE = /^[a-zA-Z_.\s-]+$/;
 
@@ -252,25 +262,14 @@ export default function SubcategoryCreate({ authUser = {} }) {
                                     onChange={(e) => setForm((f) => ({ ...f, color: e.target.value }))}
                                 />
                             </div>
-                            <div>
-                                <label>Sort *</label>
-                                <input
-                                    type="number"
-                                    min={0}
-                                    step={1}
-                                    value={form.sort}
-                                    onChange={(e) => setForm((f) => ({ ...f, sort: e.target.value }))}
-                                    onBlur={(e) => verifySort(e.target.value)}
-                                />
-                                <MwadminFieldError message={sortError} />
-                            </div>
 
-                            <div className="mwadmin-form-grid-full mwadmin-category-images-row">
+                            <div className="mwadmin-form-grid-full mwadmin-category-images-row mwadmin-category-images-row--align-form">
                                 <div className="mwadmin-category-image-block">
                                     <label>Banner Image</label>
                                     <div className="mwadmin-category-image-field">
                                         <div
                                             className="mwadmin-category-image-preview-wrap mwadmin-category-image-preview-wrap--box mwadmin-category-image-preview-wrap--clickable"
+                                            style={CATEGORY_IMAGE_PREVIEW_SLOT_STYLE}
                                             role="button"
                                             tabIndex={0}
                                             aria-label="Open banner image editor"
@@ -298,6 +297,7 @@ export default function SubcategoryCreate({ authUser = {} }) {
                                     <div className="mwadmin-category-image-field">
                                         <div
                                             className="mwadmin-category-image-preview-wrap mwadmin-category-image-preview-wrap--box mwadmin-category-image-preview-wrap--clickable"
+                                            style={CATEGORY_IMAGE_PREVIEW_SLOT_STYLE}
                                             role="button"
                                             tabIndex={0}
                                             aria-label="Open box image editor"
@@ -322,6 +322,18 @@ export default function SubcategoryCreate({ authUser = {} }) {
                                 </div>
                             </div>
 
+                            <div>
+                                <label>Sort *</label>
+                                <input
+                                    type="number"
+                                    min={0}
+                                    step={1}
+                                    value={form.sort}
+                                    onChange={(e) => setForm((f) => ({ ...f, sort: e.target.value }))}
+                                    onBlur={(e) => verifySort(e.target.value)}
+                                />
+                                <MwadminFieldError message={sortError} />
+                            </div>
                             <div>
                                 <label>Status</label>
                                 <div className="mwadmin-category-status-row">
