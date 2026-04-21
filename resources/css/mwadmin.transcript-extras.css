@@ -3807,6 +3807,38 @@ html.mwadmin-ui-dark .mwadmin-video-upload-modal-footer {
     }
 }
 
+/* Category create/edit: match .mwadmin-form-grid columns so Banner lines up with Color and Box with Sort. */
+.mwadmin-category-images-row.mwadmin-category-images-row--align-form {
+    grid-template-columns: repeat(2, minmax(240px, 1fr));
+    gap: 12px 18px;
+    justify-items: start;
+    align-items: start;
+}
+
+@media (max-width: 720px) {
+    .mwadmin-category-images-row.mwadmin-category-images-row--align-form {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (min-width: 721px) {
+    .mwadmin-category-images-row.mwadmin-category-images-row--align-form {
+        align-items: start;
+    }
+
+    .mwadmin-category-images-row.mwadmin-category-images-row--align-form .mwadmin-category-image-field {
+        flex: 0 0 auto;
+    }
+
+    .mwadmin-category-images-row.mwadmin-category-images-row--align-form
+        .mwadmin-category-image-preview-wrap--box:not(.mwadmin-user-profile-preview) {
+        flex: 0 0 auto;
+        aspect-ratio: 1 / 1;
+        min-height: 220px;
+        max-height: 220px;
+    }
+}
+
 .mwadmin-category-image-block {
     min-width: 0;
 }

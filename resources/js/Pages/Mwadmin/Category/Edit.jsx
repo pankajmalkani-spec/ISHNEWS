@@ -9,6 +9,16 @@ import { useClassicDialog } from '../../../Components/Mwadmin/ClassicDialog';
 // Legacy mwadmin category cropper exports square 220x220 for both banner and box.
 const BANNER_OUT = { w: 220, h: 220 };
 const BOX_OUT = { w: 220, h: 220 };
+/** Locks on-page preview tiles to legacy size; overrides wide-screen CSS min-height: clamp(...) on this row. */
+const CATEGORY_IMAGE_PREVIEW_SLOT_STYLE = {
+    width: 220,
+    maxWidth: 'min(220px, 100%)',
+    minHeight: 220,
+    maxHeight: 220,
+    aspectRatio: '1 / 1',
+    flex: '0 0 auto',
+    boxSizing: 'border-box',
+};
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
 function formatApiErrors(err) {
@@ -246,12 +256,13 @@ export default function CategoryEdit({ authUser = {}, categoryId }) {
                                 />
                             </div>
 
-                            <div className="mwadmin-form-grid-full mwadmin-category-images-row">
+                            <div className="mwadmin-form-grid-full mwadmin-category-images-row mwadmin-category-images-row--align-form">
                                 <div className="mwadmin-category-image-block">
                                     <label>Banner Image</label>
                                     <div className="mwadmin-category-image-field">
                                         <div
-                                        className="mwadmin-category-image-preview-wrap mwadmin-category-image-preview-wrap--box mwadmin-category-image-preview-wrap--clickable"
+                                            className="mwadmin-category-image-preview-wrap mwadmin-category-image-preview-wrap--box mwadmin-category-image-preview-wrap--clickable"
+                                            style={CATEGORY_IMAGE_PREVIEW_SLOT_STYLE}
                                             role="button"
                                             tabIndex={0}
                                             aria-label="Open banner image editor"
@@ -279,6 +290,7 @@ export default function CategoryEdit({ authUser = {}, categoryId }) {
                                     <div className="mwadmin-category-image-field">
                                         <div
                                             className="mwadmin-category-image-preview-wrap mwadmin-category-image-preview-wrap--box mwadmin-category-image-preview-wrap--clickable"
+                                            style={CATEGORY_IMAGE_PREVIEW_SLOT_STYLE}
                                             role="button"
                                             tabIndex={0}
                                             aria-label="Open box image editor"
