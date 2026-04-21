@@ -1150,6 +1150,24 @@ a.load-more:hover {
 .posts-block--horizontal-scroll .owl-theme .owl-controls {
   margin-right: 75px; }
 
+/*
+ * Owl carousels (Breaking + Awareness): `.standart-post` images default to width:100%; height:auto
+ * with no aspect box — a tall asset, wrong-aspect cover, or oversized placeholder dominates row height.
+ * Match sort-2 thumbs: fixed 16:10 frame + cover crop.
+ */
+#BreakingNews-section .standart-post .post-image,
+.posts-block--horizontal-scroll .standart-post .post-image {
+  overflow: hidden;
+  background: #eceff1; }
+
+#BreakingNews-section .standart-post .post-image > a:first-child img,
+.posts-block--horizontal-scroll .standart-post .post-image > a:first-child img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  display: block; }
+
 /* Sort 2 (legacy First-Posts-block): featured + 2×2 thumbs */
 .posts-block--sort-2 .posts-block--sort-2__row {
   margin-left: -10px;
@@ -1869,6 +1887,22 @@ ul.small-posts {
 /*-------------------------------------------------- */
 /* 1. Sidebar
 /*------------------------------------------------- */
+
+/*
+ * Sidebar “Recent News” (e.g. video page): same `.standart-post` rule as main carousels
+ * (width:100%; height:auto) lets tall / odd-aspect covers blow out the column.
+ */
+.sidebar .standart-post .post-image {
+  overflow: hidden;
+  background: #eceff1; }
+
+.sidebar .standart-post .post-image > a:first-child img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  display: block; }
+
 .sidebar {
   padding-left: 10px; }
   .sidebar .widget {
