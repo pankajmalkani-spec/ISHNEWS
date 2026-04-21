@@ -1151,21 +1151,19 @@ a.load-more:hover {
   margin-right: 75px; }
 
 /*
- * Owl carousels (Breaking + Awareness): `.standart-post` images default to width:100%; height:auto
- * with no aspect box — a tall asset, wrong-aspect cover, or oversized placeholder dominates row height.
- * Match sort-2 thumbs: fixed 16:10 frame + cover crop.
+ * Keep carousel cards visually uniform even when source cover ratios differ.
+ * This targets the horizontal category strip (e.g. Awareness) where one tall image
+ * can otherwise expand the row and look "too big".
  */
-#BreakingNews-section .standart-post .post-image,
 .posts-block--horizontal-scroll .standart-post .post-image {
   overflow: hidden;
   background: #eceff1; }
 
-#BreakingNews-section .standart-post .post-image > a:first-child img,
 .posts-block--horizontal-scroll .standart-post .post-image > a:first-child img {
   width: 100%;
-  height: auto;
-  aspect-ratio: 16 / 10;
+  height: 180px;
   object-fit: cover;
+  object-position: center;
   display: block; }
 
 /* Sort 2 (legacy First-Posts-block): featured + 2×2 thumbs */
@@ -1212,8 +1210,6 @@ a.load-more:hover {
 .posts-block--sort-2 .thumb-post .post-image a:first-child img {
   width: 100%;
   height: auto;
-  aspect-ratio: 16 / 10;
-  object-fit: cover;
   display: block; }
 
 #Sponsor-section {
@@ -1889,8 +1885,7 @@ ul.small-posts {
 /*------------------------------------------------- */
 
 /*
- * Sidebar “Recent News” (e.g. video page): same `.standart-post` rule as main carousels
- * (width:100%; height:auto) lets tall / odd-aspect covers blow out the column.
+ * Sidebar “Recent News”: 16:10 in a narrow column — wider export ratio makes tiles too short.
  */
 .sidebar .standart-post .post-image {
   overflow: hidden;
@@ -1899,8 +1894,6 @@ ul.small-posts {
 .sidebar .standart-post .post-image > a:first-child img {
   width: 100%;
   height: auto;
-  aspect-ratio: 16 / 10;
-  object-fit: cover;
   display: block; }
 
 .sidebar {
