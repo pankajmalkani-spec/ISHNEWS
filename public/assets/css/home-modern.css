@@ -439,10 +439,12 @@ button.ish-nav-modern__link--mega-trigger:active {
 }
 
 .ish-nav-mega__pill:hover,
+.ish-nav-mega__pill:focus-visible,
 .ish-nav-mega__pill--active {
   color: #fff;
   border-color: var(--ish-subcat-color);
   background: var(--ish-subcat-color);
+  border-radius: 999px;
 }
 
 .ish-nav-mega__card {
@@ -461,6 +463,7 @@ button.ish-nav-modern__link--mega-trigger:active {
 
 .ish-nav-mega__thumb {
   display: block;
+  position: relative;
   aspect-ratio: 16 / 10;
   overflow: hidden;
 }
@@ -470,6 +473,42 @@ button.ish-nav-modern__link--mega-trigger:active {
   height: 100%;
   object-fit: cover;
   transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.ish-nav-mega__thumb a.category {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  border-radius: 0 14px 14px 0;
+  padding: 5px 14px;
+  font-size: 11px;
+  line-height: 1.25;
+  color: #fff;
+  text-decoration: none;
+  display: inline-block;
+  z-index: 2;
+  background: rgba(0, 0, 0, 0.85);
+}
+
+.ish-nav-mega__thumb a.category-news {
+  background: rgba(47, 95, 169, 0.9);
+}
+
+.ish-nav-mega__thumb a.category-entertainment {
+  background: rgba(194, 24, 7, 0.9);
+}
+
+.ish-nav-mega__thumb a.category-deaf_buzz {
+  background: rgba(245, 205, 31, 0.9);
+  color: #232323;
+}
+
+.ish-nav-mega__thumb a.category-awareness {
+  background: rgba(175, 204, 51, 0.9);
+}
+
+.ish-nav-mega__thumb a.category-tv {
+  background: rgba(119, 25, 170, 0.9);
 }
 
 .ish-nav-mega__card:hover .ish-nav-mega__thumb img {
@@ -1486,12 +1525,39 @@ body.ish-home-modern.ish-modern-light .ish-nav-mega__pill--active {
   color: #ffffff;
   background: var(--ish-subcat-color);
   border-color: var(--ish-subcat-color);
+  border-radius: 999px;
   box-shadow: inset 0 0 0 1px rgba(255, 250, 240, 0.88), 0 6px 16px rgba(31, 36, 48, 0.08);
 }
 
 body.ish-home-modern.ish-modern-light .ish-nav-mega__card {
   background: #f8f0e3;
   border-color: #d6c6ad;
+}
+
+body.ish-home-modern.ish-modern-light .ish-nav-mega__thumb a.category {
+  background: rgba(185, 167, 137, 0.95);
+  color: #ffffff;
+}
+
+body.ish-home-modern.ish-modern-light .ish-nav-mega__thumb a.category-news {
+  background: rgba(47, 95, 169, 0.9);
+}
+
+body.ish-home-modern.ish-modern-light .ish-nav-mega__thumb a.category-entertainment {
+  background: rgba(194, 24, 7, 0.9);
+}
+
+body.ish-home-modern.ish-modern-light .ish-nav-mega__thumb a.category-deaf_buzz {
+  background: rgba(245, 205, 31, 0.9);
+  color: #232323;
+}
+
+body.ish-home-modern.ish-modern-light .ish-nav-mega__thumb a.category-awareness {
+  background: rgba(175, 204, 51, 0.9);
+}
+
+body.ish-home-modern.ish-modern-light .ish-nav-mega__thumb a.category-tv {
+  background: rgba(119, 25, 170, 0.9);
 }
 
 body.ish-home-modern.ish-modern-light .ish-hm-hero__content,

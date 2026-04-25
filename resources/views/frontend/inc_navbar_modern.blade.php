@@ -44,6 +44,7 @@
                             <article class="ish-nav-mega__card">
                               <a class="ish-nav-mega__thumb" href="{{ url('/videos/'.($item->categorycode ?? '').'/'.($item->permalink ?? '')) }}">
                                 <img src="{{ \App\Support\FrontendMedia::coverImageUrl($item->cover_img ?? null) }}" alt="" loading="lazy">
+                                <a class="category category-{{ $item->categorycode ?? '' }}" href="{{ url('/category/'.($item->categorycode ?? '')) }}">{{ \Str::upper(str_replace('_', ' ', $item->categorycode ?? '')) }}</a>
                               </a>
                               <a class="ish-nav-mega__card-title" href="{{ url('/videos/'.($item->categorycode ?? '').'/'.($item->permalink ?? '')) }}">{{ $item->content_title ?? '' }}</a>
                             </article>

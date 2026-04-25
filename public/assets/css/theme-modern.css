@@ -117,8 +117,9 @@ body.ish-theme-modern #content-section .filter-buttons a.category {
 }
 
 body.ish-theme-modern #content-section .standart-post .post-image a.category {
-  left: 10px;
-  bottom: 10px;
+  left: 0;
+  bottom: 0;
+  border-radius: 0 14px 14px 0;
 }
 
 body.ish-theme-modern .news-post.standart-post .post-image img {
