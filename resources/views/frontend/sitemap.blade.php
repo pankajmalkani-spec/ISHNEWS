@@ -8,7 +8,11 @@
     ul.small-posts > li > a { width: 10px; }
   </style>
 </head>
-<body class="ish-theme ish-theme-{{ $frontendTheme ?? 'legacy' }}">
+<body @class([
+  'ish-theme',
+  'ish-theme-'.($frontendTheme ?? 'legacy'),
+  'ish-home-modern' => ($frontendTheme ?? 'legacy') === 'modern',
+])>
 <div id="container">
   <header class="clearfix">
     @include('frontend.inc_header')

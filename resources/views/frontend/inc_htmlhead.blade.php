@@ -5,6 +5,7 @@
 <link rel="stylesheet" type="text/css" href="{{ url('/assets/css/style.css') }}">
 @if(($frontendTheme ?? 'legacy') === 'modern')
 <link rel="stylesheet" type="text/css" href="{{ url('/assets/css/theme-modern.css') }}">
+<link rel="stylesheet" type="text/css" href="{{ url('/assets/css/home-modern.css') }}">
 @else
 <link rel="stylesheet" type="text/css" href="{{ url('/assets/css/theme-legacy.css') }}">
 @endif

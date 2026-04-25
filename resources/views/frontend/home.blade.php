@@ -9,9 +9,6 @@
   <meta name="keywords" content="News, Deaf, Sign Language, Entertainment, Humour, Moral Stories, Jokes, Daily">
   <title>Information Beyond Words | ISH News</title>
   @include('frontend.inc_htmlhead')
-  @if($isModern)
-  <link rel="stylesheet" href="{{ url('/assets/css/home-modern.css') }}">
-  @endif
 </head>
 <body @class([
   'ish-theme',

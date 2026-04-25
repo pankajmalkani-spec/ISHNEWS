@@ -1,5 +1,8 @@
 <?php $Base_url = url('/').'/'; ?>
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+@if(($frontendTheme ?? 'legacy') === 'modern')
+  @include('frontend.inc_navbar_modern')
+@else
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
   <div class="container">
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
@@ -87,3 +90,4 @@ $(document).ready(function () {
     });
 });
 </script>
+@endif

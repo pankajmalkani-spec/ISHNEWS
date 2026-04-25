@@ -48,25 +48,24 @@
 </section>
 
 @if($bn && ! empty($bn['news_list']) && count($bn['news_list']) > 0)
-  <section class="ish-hm-section">
-    <div class="container">
-      <header class="ish-hm-section__head">
-        <h2 class="ish-hm-section__title">{{ $bn['title'] ?? 'News' }}</h2>
-        <a class="ish-hm-section__more" href="{{ url('/category/'.($bn['code'] ?? '')) }}">View all</a>
-      </header>
-      <div class="row ish-hm-grid">
+  <section class="ish-hm-row" aria-label="{{ $bn['title'] ?? 'Top stories' }}">
+    <div class="container-fluid">
+      <div class="ish-hm-row__head">
+        <h2 class="ish-hm-row__title">{{ $bn['title'] ?? 'Top stories' }}</h2>
+        <a class="ish-hm-row__more" href="{{ url('/category/'.($bn['code'] ?? '')) }}">View all</a>
+      </div>
+      <div class="ish-hm-row__track">
         @foreach($bn['news_list'] as $slider)
-          <div class="col-md-6 col-lg-4">
-            <article class="ish-hm-card">
-              <a class="ish-hm-card__img" href="{{ url('/videos/'.($slider->categorycode ?? '').'/'.($slider->permalink ?? '')) }}">
-                <img src="{{ \App\Support\FrontendMedia::coverImageUrl($slider->cover_img ?? null) }}" alt="" loading="lazy">
-              </a>
-              <div class="ish-hm-card__body">
-                <a class="ish-hm-card__cat" href="{{ url('/category/'.($slider->categorycode ?? '').'/'.($slider->subcategorycode ?? '')) }}">{{ $slider->subcategoryname ?? '' }}</a>
-                <h3 class="ish-hm-card__title"><a href="{{ url('/videos/'.($slider->categorycode ?? '').'/'.($slider->permalink ?? '')) }}">{{ $slider->title ?? '' }}</a></h3>
-              </div>
-            </article>
-          </div>
+          <article class="ish-hm-row-card">
+            <a class="ish-hm-row-card__media" href="{{ url('/videos/'.($slider->categorycode ?? '').'/'.($slider->permalink ?? '')) }}">
+              <img src="{{ \App\Support\FrontendMedia::coverImageUrl($slider->cover_img ?? null) }}" alt="" loading="lazy">
+              <span class="ish-hm-row-card__overlay" aria-hidden="true"></span>
+            </a>
+            <div class="ish-hm-row-card__body">
+              <a class="ish-hm-row-card__cat" href="{{ url('/category/'.($slider->categorycode ?? '').'/'.($slider->subcategorycode ?? '')) }}">{{ $slider->subcategoryname ?? '' }}</a>
+              <h3 class="ish-hm-row-card__title"><a href="{{ url('/videos/'.($slider->categorycode ?? '').'/'.($slider->permalink ?? '')) }}">{{ $slider->title ?? '' }}</a></h3>
+            </div>
+          </article>
         @endforeach
       </div>
     </div>
@@ -78,32 +77,31 @@
   @if(!$TCatData || empty($TCatData['news_list']) || count($TCatData['news_list']) === 0)
     @continue
   @endif
-  <section class="ish-hm-section">
-    <div class="container">
-      <header class="ish-hm-section__head">
-        <h2 class="ish-hm-section__title">{{ $TCatData['title'] ?? '' }}</h2>
-        <a class="ish-hm-section__more" href="{{ url('/category/'.($TCatData['code'] ?? '')) }}">View all</a>
-      </header>
-      <div class="row ish-hm-grid">
+  <section class="ish-hm-row" aria-label="{{ $TCatData['title'] ?? 'Category' }}">
+    <div class="container-fluid">
+      <div class="ish-hm-row__head">
+        <h2 class="ish-hm-row__title">{{ $TCatData['title'] ?? '' }}</h2>
+        <a class="ish-hm-row__more" href="{{ url('/category/'.($TCatData['code'] ?? '')) }}">View all</a>
+      </div>
+      <div class="ish-hm-row__track">
         @foreach($TCatData['news_list'] as $item)
-          <div class="col-6 col-md-4 col-lg-3">
-            <article class="ish-hm-card ish-hm-card--compact">
-              <a class="ish-hm-card__img" href="{{ url('/videos/'.($item->categorycode ?? '').'/'.($item->permalink ?? '')) }}">
-                <img src="{{ \App\Support\FrontendMedia::coverImageUrl($item->cover_img ?? null) }}" alt="" loading="lazy">
-              </a>
-              <div class="ish-hm-card__body">
-                <a class="ish-hm-card__cat" href="{{ url('/category/'.($item->categorycode ?? '').'/'.($item->subcategorycode ?? '')) }}">{{ $item->subcategoryname ?? '' }}</a>
-                <h3 class="ish-hm-card__title"><a href="{{ url('/videos/'.($item->categorycode ?? '').'/'.($item->permalink ?? '')) }}">{{ $item->title ?? '' }}</a></h3>
-              </div>
-            </article>
-          </div>
+          <article class="ish-hm-row-card">
+            <a class="ish-hm-row-card__media" href="{{ url('/videos/'.($item->categorycode ?? '').'/'.($item->permalink ?? '')) }}">
+              <img src="{{ \App\Support\FrontendMedia::coverImageUrl($item->cover_img ?? null) }}" alt="" loading="lazy">
+              <span class="ish-hm-row-card__overlay" aria-hidden="true"></span>
+            </a>
+            <div class="ish-hm-row-card__body">
+              <a class="ish-hm-row-card__cat" href="{{ url('/category/'.($item->categorycode ?? '').'/'.($item->subcategorycode ?? '')) }}">{{ $item->subcategoryname ?? '' }}</a>
+              <h3 class="ish-hm-row-card__title"><a href="{{ url('/videos/'.($item->categorycode ?? '').'/'.($item->permalink ?? '')) }}">{{ $item->title ?? '' }}</a></h3>
+            </div>
+          </article>
         @endforeach
       </div>
     </div>
   </section>
 @endforeach
 
-<section class="ish-hm-aside-wrap">
+<section class="ish-hm-aside-wrap ish-hm-aside-wrap--modern-hidden">
   <div class="container">
     <div class="row">
       <div class="col-lg-12">

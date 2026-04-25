@@ -11,49 +11,53 @@
         </button>
       </div>
 
-      <div class="ish-nav-modern__panel" id="ish-nav-modern-panel">
-        <ul class="ish-nav-modern__list">
-          <li class="ish-nav-modern__item">
-            <a class="ish-nav-modern__link ish-nav-modern__link--home" href="{{ url('/') }}">Home</a>
-          </li>
-          @foreach(($menu ?? []) as $cat)
-            <li class="ish-nav-modern__item ish-nav-modern__item--mega">
-              <button type="button" class="ish-nav-modern__link ish-nav-modern__link--mega-trigger" aria-expanded="false" aria-controls="ish-mega-{{ $loop->index }}" aria-haspopup="true">
-                {{ $cat['title'] ?? '' }}
-                <span class="ish-nav-modern__chev" aria-hidden="true"></span>
-              </button>
-              <div class="ish-nav-mega" id="ish-mega-{{ $loop->index }}" role="region" aria-label="{{ $cat['title'] ?? 'Category' }}">
-                <div class="ish-nav-mega__inner container">
-                  @if(!empty($cat['subcategories']) && count($cat['subcategories']) > 0)
-                    <div class="ish-nav-mega__filters">
-                      <a class="ish-nav-mega__pill ish-nav-mega__pill--active" href="{{ url('/category/'.($cat['code'] ?? '')) }}">All</a>
-                      @foreach($cat['subcategories'] as $sub)
-                        <a class="ish-nav-mega__pill" href="{{ url('/category/'.($cat['code'] ?? '').'/'.($sub->code ?? '')) }}">{{ $sub->name ?? '' }}</a>
-                      @endforeach
-                    </div>
-                  @endif
-                  @if(!empty($cat['latest']))
-                    <div class="row ish-nav-mega__grid">
-                      @foreach(collect($cat['latest'])->take(4) as $item)
-                        <div class="col-6 col-md-3">
-                          <article class="ish-nav-mega__card">
-                            <a class="ish-nav-mega__thumb" href="{{ url('/videos/'.($item->categorycode ?? '').'/'.($item->permalink ?? '')) }}">
-                              <img src="{{ \App\Support\FrontendMedia::coverImageUrl($item->cover_img ?? null) }}" alt="" loading="lazy">
-                            </a>
-                            <a class="ish-nav-mega__card-title" href="{{ url('/videos/'.($item->categorycode ?? '').'/'.($item->permalink ?? '')) }}">{{ $item->content_title ?? '' }}</a>
-                          </article>
-                        </div>
-                      @endforeach
-                    </div>
-                  @else
-                    <p class="ish-nav-mega__empty">Browse <a href="{{ url('/category/'.($cat['code'] ?? '')) }}">{{ $cat['title'] ?? 'category' }}</a>.</p>
-                  @endif
-                </div>
-              </div>
+      <div class="ish-nav-modern__center">
+        <div class="ish-nav-modern__panel" id="ish-nav-modern-panel">
+          <ul class="ish-nav-modern__list">
+            <li class="ish-nav-modern__item">
+              <a class="ish-nav-modern__link ish-nav-modern__link--home" href="{{ url('/') }}">Home</a>
             </li>
-          @endforeach
-        </ul>
+            @foreach(($menu ?? []) as $cat)
+              <li class="ish-nav-modern__item ish-nav-modern__item--mega">
+                <button type="button" class="ish-nav-modern__link ish-nav-modern__link--mega-trigger" aria-expanded="false" aria-controls="ish-mega-{{ $loop->index }}" aria-haspopup="true">
+                  {{ $cat['title'] ?? '' }}
+                  <span class="ish-nav-modern__chev" aria-hidden="true"></span>
+                </button>
+                <div class="ish-nav-mega" id="ish-mega-{{ $loop->index }}" role="region" aria-label="{{ $cat['title'] ?? 'Category' }}">
+                  <div class="ish-nav-mega__inner container">
+                    @if(!empty($cat['subcategories']) && count($cat['subcategories']) > 0)
+                      <div class="ish-nav-mega__filters">
+                        <a class="ish-nav-mega__pill ish-nav-mega__pill--active" href="{{ url('/category/'.($cat['code'] ?? '')) }}">All</a>
+                        @foreach($cat['subcategories'] as $sub)
+                          <a class="ish-nav-mega__pill" href="{{ url('/category/'.($cat['code'] ?? '').'/'.($sub->code ?? '')) }}">{{ $sub->name ?? '' }}</a>
+                        @endforeach
+                      </div>
+                    @endif
+                    @if(!empty($cat['latest']))
+                      <div class="row ish-nav-mega__grid">
+                        @foreach(collect($cat['latest'])->take(4) as $item)
+                          <div class="col-6 col-md-3">
+                            <article class="ish-nav-mega__card">
+                              <a class="ish-nav-mega__thumb" href="{{ url('/videos/'.($item->categorycode ?? '').'/'.($item->permalink ?? '')) }}">
+                                <img src="{{ \App\Support\FrontendMedia::coverImageUrl($item->cover_img ?? null) }}" alt="" loading="lazy">
+                              </a>
+                              <a class="ish-nav-mega__card-title" href="{{ url('/videos/'.($item->categorycode ?? '').'/'.($item->permalink ?? '')) }}">{{ $item->content_title ?? '' }}</a>
+                            </article>
+                          </div>
+                        @endforeach
+                      </div>
+                    @else
+                      <p class="ish-nav-mega__empty">Browse <a href="{{ url('/category/'.($cat['code'] ?? '')) }}">{{ $cat['title'] ?? 'category' }}</a>.</p>
+                    @endif
+                  </div>
+                </div>
+              </li>
+            @endforeach
+          </ul>
+        </div>
+      </div>
 
+      <div class="ish-nav-modern__actions">
         <form name="frmNavSearchModern" class="ish-nav-modern__search ish-nav-modern__search--nav" role="search" method="get" action="{{ url('/search') }}">
           <input name="sKeyword" type="search" placeholder="Search…" aria-label="Search" autocomplete="off">
           <button type="submit" aria-label="Submit search"><i class="fa fa-search"></i></button>
@@ -108,6 +112,25 @@
   });
 
   // Desktop (lg+): category label is a <button> — toggles mega (no navigation from label; use “All” / pills / cards).
+  function closeMegaItem(item) {
+    if (!item) return;
+    item.classList.remove('ish-nav-modern__item--mega-open');
+    var btn = item.querySelector('.ish-nav-modern__link--mega-trigger');
+    if (btn) btn.setAttribute('aria-expanded', 'false');
+  }
+
+  function closeAllMegaItems() {
+    nav.querySelectorAll('.ish-nav-modern__item--mega-open').forEach(closeMegaItem);
+  }
+
+  function openMegaItem(item) {
+    if (!item || !item.querySelector('.ish-nav-mega')) return;
+    closeAllMegaItems();
+    item.classList.add('ish-nav-modern__item--mega-open');
+    var btn = item.querySelector('.ish-nav-modern__link--mega-trigger');
+    if (btn) btn.setAttribute('aria-expanded', 'true');
+  }
+
   nav.querySelectorAll('.ish-nav-modern__link--mega-trigger').forEach(function (btn) {
     btn.addEventListener('click', function () {
       if (!window.matchMedia('(min-width: 992px)').matches) return;
@@ -123,6 +146,23 @@
         li.classList.add('ish-nav-modern__item--mega-open');
         btn.setAttribute('aria-expanded', 'true');
       }
+    });
+  });
+
+  nav.querySelectorAll('.ish-nav-modern__item--mega').forEach(function (item) {
+    var closeTimer = null;
+
+    item.addEventListener('mouseenter', function () {
+      if (!window.matchMedia('(min-width: 992px)').matches) return;
+      clearTimeout(closeTimer);
+      openMegaItem(item);
+    });
+
+    item.addEventListener('mouseleave', function () {
+      if (!window.matchMedia('(min-width: 992px)').matches) return;
+      closeTimer = setTimeout(function () {
+        closeMegaItem(item);
+      }, 150);
     });
   });
 

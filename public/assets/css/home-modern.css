@@ -6,7 +6,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 
 body.ish-home-modern {
-  /* Cursor.com–style: soft blue-gray (not crushed black) */
+  /* Modern dark streaming UI with better typography. */
   --ish-canvas: #22242f;
   --ish-canvas-deep: #1a1c26;
   --ish-canvas-raised: #2a2d3a;
@@ -14,8 +14,11 @@ body.ish-home-modern {
   --ish-rgb: 34, 36, 47;
   --ish-shadow: 15, 18, 32;
   background: var(--ish-canvas);
-  color: rgba(255, 255, 255, 0.9);
-  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: rgba(255, 255, 255, 0.92);
+  font-family: "Helvetica Neue", Arial, "Segoe UI", sans-serif;
+  font-size: 16px;
+  line-height: 1.45;
+  letter-spacing: 0.008em;
 }
 
 body.ish-home-modern #container {
@@ -58,24 +61,19 @@ body.ish-home-modern main#content {
   overflow: visible;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: linear-gradient(
-    180deg,
-    rgba(38, 40, 54, 0.97) 0%,
-    rgba(30, 32, 44, 0.96) 100%
-  );
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  background: rgba(8, 10, 14, 0.88);
+  backdrop-filter: blur(18px) saturate(180%);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 12px 40px rgba(var(--ish-shadow), 0.22);
 }
 
 .ish-nav-modern__bar-inner {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 16px;
-  min-height: 56px;
-  padding-top: 6px;
-  padding-bottom: 6px;
+  min-height: 62px;
+  padding: 10px 14px;
 }
 
 .ish-nav-modern__start {
@@ -136,19 +134,34 @@ body.ish-home-modern main#content {
   display: flex;
   flex: 1;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px 24px;
+  justify-content: center;
+  gap: 18px;
   flex-wrap: nowrap;
+  min-width: 0;
+}
+
+.ish-nav-modern__center {
+  display: flex;
+  flex: 1 1 auto;
+  justify-content: center;
+  min-width: 0;
+}
+
+.ish-nav-modern__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
+  gap: 12px;
   min-width: 0;
 }
 
 .ish-nav-modern__list {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: center;
-  flex: 1;
-  gap: 2px 4px;
+  gap: 0 16px;
   list-style: none;
   margin: 0;
   padding: 0;
@@ -177,22 +190,83 @@ body.ish-home-modern main#content {
 .ish-nav-modern__link {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 10px 12px;
-  color: rgba(255, 255, 255, 0.82);
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.05em;
+  gap: 14px;
+  padding: 10px 24px;
+  min-width: 160px;
+  width: auto;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   text-decoration: none;
-  border-radius: 8px;
-  line-height: 1.25;
-  transition: background 0.25s ease, color 0.25s ease, letter-spacing 0.25s ease;
+  border-radius: 999px;
+  line-height: 1.1;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+  transition: color 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+  position: relative;
+  outline: none;
+  overflow: visible;
+  text-overflow: unset;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ish-nav-modern__link::after {
+  content: "";
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  bottom: 8px;
+  height: 2px;
+  background: linear-gradient(90deg, #ff4b4b, #e50914);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.22s ease, opacity 0.22s ease;
+  opacity: 0;
+}
+
+.ish-nav-modern__link:hover,
+.ish-nav-modern__link:focus-visible {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.14);
+  transform: translateY(-1px);
+}
+
+.ish-nav-modern__item--mega.ish-nav-modern__item--mega-open > .ish-nav-modern__link,
+.ish-nav-modern__link--home.active,
+.ish-nav-modern__link--active {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.24);
+}
+
+@media (min-width: 992px) {
+  .ish-nav-modern__item--mega:hover .ish-nav-mega {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, 0);
+    pointer-events: auto;
+  }
+
+  .ish-nav-modern__item--mega:hover > .ish-nav-modern__link {
+    background: rgba(255, 255, 255, 0.18);
+    border-color: rgba(255, 255, 255, 0.24);
+  }
+}
+
+.ish-nav-modern__link:hover::after,
+.ish-nav-modern__link:focus-visible::after {
+  transform: scaleX(1);
 }
 
 @media (min-width: 992px) {
   .ish-nav-modern__link {
-    padding: 10px 14px;
+    padding: 10px 0;
   }
 }
 
@@ -209,23 +283,26 @@ button.ish-nav-modern__link--mega-trigger {
   text-align: inherit;
   color: inherit;
   width: auto;
-  max-width: 100%;
+  min-width: 152px;
+  max-width: none;
+  justify-content: center;
+  overflow: visible;
+  text-overflow: unset;
+  white-space: nowrap;
 }
 
-.ish-nav-modern__link:hover,
-.ish-nav-modern__link:focus-visible {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.07);
-  letter-spacing: 0.06em;
+button.ish-nav-modern__link--mega-trigger:focus,
+button.ish-nav-modern__link--mega-trigger:active {
   outline: none;
+  box-shadow: none;
 }
 
 .ish-nav-modern__chev {
   width: 0;
   height: 0;
-  border-left: 4px solid transparent;
-  border-right: 4px solid transparent;
-  border-top: 5px solid rgba(255, 255, 255, 0.45);
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid rgba(255, 255, 255, 0.65);
   transition: transform 0.25s ease;
 }
 
@@ -236,13 +313,13 @@ button.ish-nav-modern__link--mega-trigger {
 
 .ish-nav-modern__search {
   display: flex;
-  align-items: stretch;
+  align-items: center;
   flex-shrink: 0;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 999px;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.05);
-  box-shadow: 0 0 0 1px rgba(var(--ish-shadow), 0.2) inset;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(var(--ish-shadow), 0.12);
 }
 
 .ish-nav-modern__search input {
@@ -250,13 +327,27 @@ button.ish-nav-modern__link--mega-trigger {
   background: transparent;
   color: #fff;
   padding: 8px 12px;
-  min-width: 160px;
-  font-size: 14px;
+  min-width: 120px;
+  width: 140px;
+  font-size: 0.82rem;
   line-height: 1.35;
 }
 
+.ish-nav-modern__search button {
+  border: 0;
+  background: transparent;
+  color: #fff;
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: color 0.18s ease, background-color 0.18s ease;
+}
+
+.ish-nav-modern__search button:hover {
+  color: #e50914;
+}
+
 .ish-nav-modern__search input::placeholder {
-  color: rgba(255, 255, 255, 0.35);
+  color: rgba(255, 255, 255, 0.45);
 }
 
 .ish-nav-modern__search button {
@@ -290,10 +381,9 @@ button.ish-nav-modern__link--mega-trigger {
 
   .ish-nav-mega {
     position: absolute;
-    /* Pull up slightly so the panel’s box overlaps the nav strip — removes sub-pixel gap
-       where the pointer left the <li> before entering the mega (drops hover / blocks clicks). */
+    /* Pull up more so the panel overlaps the nav strip and reduces hover gaps. */
     left: 50%;
-    top: calc(100% - 1px);
+    top: calc(100% - 12px);
     width: min(1100px, 96vw);
     padding: 24px 16px 28px;
     margin-top: 0;
@@ -303,22 +393,22 @@ button.ish-nav-modern__link--mega-trigger {
     box-shadow: 0 24px 48px rgba(var(--ish-shadow), 0.35);
     opacity: 0;
     visibility: hidden;
-    transform: translate(-50%, 14px);
-    transition: opacity 0.38s cubic-bezier(0.22, 1, 0.36, 1),
-      transform 0.38s cubic-bezier(0.22, 1, 0.36, 1),
-      visibility 0.38s;
+    transform: translate(-50%, 0);
+    transition: none;
     pointer-events: none;
     /* Above page hero / content (nav is 2000; mega must win inside extended hit area). */
-    z-index: 5000;
+    z-index: 6000;
   }
 
-  /* Open via button (.mega-open) or keyboard focus moving into the panel (:focus-within). */
+  /* Open via hover, button click, or keyboard focus. */
+  .ish-nav-modern__item--mega:hover .ish-nav-mega,
   .ish-nav-modern__item--mega.ish-nav-modern__item--mega-open .ish-nav-mega,
-  .ish-nav-modern__item--mega:focus-within .ish-nav-mega {
-    opacity: 1;
-    visibility: visible;
-    transform: translate(-50%, 0);
-    pointer-events: auto;
+  .ish-nav-modern__item--mega:focus-within .ish-nav-mega,
+  .ish-nav-mega:hover {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: translate(-50%, 0) !important;
+    pointer-events: auto !important;
   }
 }
 
@@ -457,6 +547,10 @@ button.ish-nav-modern__link--mega-trigger {
     letter-spacing: 0.04em;
     padding: 12px 0;
     line-height: 1.35;
+    min-width: auto;
+    width: auto;
+    border-radius: 0;
+    justify-content: flex-start;
   }
 
   .ish-nav-modern__item--mega {
@@ -860,4 +954,143 @@ body.ish-home-modern footer .down-footer {
 body.ish-home-modern footer .footer-widget h1,
 body.ish-home-modern footer h2 a {
   color: rgba(255, 255, 255, 0.88);
+}
+
+/* Netflix-style row sections */
+.ish-hm-row {
+  padding: 36px 0 10px;
+}
+
+.ish-hm-row__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+  padding-right: 2px;
+}
+
+.ish-hm-row__title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+.ish-hm-row__more {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: rgba(255, 255, 255, 0.62);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.ish-hm-row__more:hover {
+  color: #fff;
+}
+
+.ish-hm-row__track {
+  display: flex;
+  align-items: stretch;
+  gap: 16px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ish-hm-row__track::-webkit-scrollbar {
+  height: 6px;
+}
+
+.ish-hm-row__track::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+}
+
+.ish-hm-row-card {
+  flex: 0 0 260px;
+  min-width: 240px;
+  max-width: 280px;
+  scroll-snap-align: start;
+  border-radius: 16px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 24px 60px rgba(var(--ish-shadow), 0.16);
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.ish-hm-row-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 30px 70px rgba(var(--ish-shadow), 0.24);
+}
+
+.ish-hm-row-card__media {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+}
+
+.ish-hm-row-card__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transition: transform 0.35s ease;
+}
+
+.ish-hm-row-card:hover .ish-hm-row-card__media img {
+  transform: scale(1.06);
+}
+
+.ish-hm-row-card__overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent 42%, rgba(var(--ish-rgb), 0.35) 100%);
+}
+
+.ish-hm-row-card__body {
+  padding: 16px 16px 20px;
+}
+
+.ish-hm-row-card__cat {
+  display: inline-block;
+  margin-bottom: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.65);
+  text-decoration: none;
+}
+
+.ish-hm-row-card__title {
+  margin: 0;
+  font-size: 1.02rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.ish-hm-row-card__title a {
+  color: rgba(255, 255, 255, 0.92);
+  text-decoration: none;
+}
+
+.ish-hm-row-card__title a:hover {
+  color: #fff;
+}
+
+.ish-hm-aside-wrap--modern-hidden {
+  display: none;
+}
+
+body.ish-home-modern #Sponsor-section {
+  display: none !important;
 }
