@@ -20,10 +20,20 @@
 @endphp
 
 @if(!empty($banner) && count($banner) > 0)
-  @php $hero = $banner[0]; @endphp
-  <section class="ish-hm-hero">
+  @php
+    $hero = $banner[0];
+    $heroImageUrl = \App\Support\FrontendMedia::coverImageUrl($hero->cover_img ?? null);
+    $heroMissingImage = \Illuminate\Support\Str::endsWith(parse_url($heroImageUrl, PHP_URL_PATH) ?: '', '/no_img.png');
+  @endphp
+  <section class="ish-hm-hero{{ $heroMissingImage ? ' ish-hm-hero--missing-image' : '' }}">
     <div class="ish-hm-hero__media">
-      <img src="{{ \App\Support\FrontendMedia::coverImageUrl($hero->cover_img ?? null) }}" alt="" loading="eager">
+      <img src="{{ $heroImageUrl }}" alt="" loading="eager">
+      @if($heroMissingImage)
+        <div class="ish-hm-hero__missing-label" aria-hidden="true">
+          <span>240 × 160</span>
+          <strong>No image available</strong>
+        </div>
+      @endif
       <div class="ish-hm-hero__gradient" aria-hidden="true"></div>
     </div>
     <div class="container ish-hm-hero__content">

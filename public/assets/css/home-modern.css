@@ -686,6 +686,10 @@ button.ish-nav-modern__link--mega-trigger:active {
   );
 }
 
+.ish-hm-hero__missing-label {
+  display: none;
+}
+
 .ish-hm-hero__content {
   position: relative;
   z-index: 1;
@@ -1619,6 +1623,21 @@ body.ish-home-modern.ish-modern-light .ish-hm-hero__gradient {
     rgba(255, 250, 240, 0.48) 68%,
     rgba(243, 234, 220, 0.72) 100%
   );
+}
+
+body.ish-home-modern.ish-modern-light .ish-hm-hero--missing-image .ish-hm-hero__media img {
+  opacity: 0.34;
+}
+
+body.ish-home-modern.ish-modern-light .ish-hm-hero--missing-image .ish-hm-hero__missing-label {
+  display: none;
+}
+
+body.ish-home-modern.ish-modern-light .ish-hm-hero--missing-image .ish-hm-hero__content {
+  z-index: 3;
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
 }
 
 body.ish-home-modern.ish-modern-light .ish-hm-hero__cat,
